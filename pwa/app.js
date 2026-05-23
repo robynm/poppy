@@ -7,6 +7,14 @@
 
 const { useState, useEffect, useMemo, useRef } = React;
 
+function useBodyScrollLock() {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+}
+
 // --- Inline SVG icons (replaces lucide-react) -------------------------------
 const Icon = ({ d, size = 16, stroke = 2, fill = "none", className = "", ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
@@ -1183,6 +1191,7 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
 
 // --- VIEW DRAWER (read-only details) --------------------------------------
 function ViewDrawer({ item, image, collections, onClose, onEdit }) {
+  useBodyScrollLock();
   if (!item) return null;
   const inCollections = (collections || []).filter(c => c.itemIds.includes(item.id));
 
@@ -1293,6 +1302,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
 // --- EDIT DRAWER ----------------------------------------------------------
 function EditDrawer({ item, image, customTags, brands, collections, onCustomTagsChange, onBrandsChange, onCollectionsChange, onReplaceImage, onClose, onSave, onDelete }) {
+  useBodyScrollLock();
   const [draft, setDraft] = useState(item);
   const [newTag, setNewTag] = useState("");
   const [newBrand, setNewBrand] = useState("");
@@ -1495,9 +1505,10 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
 }
 
 function AddItemModal({ onClose, onFile }) {
+  useBodyScrollLock();
   const inputRef = useRef();
   return (
-    <div className="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-4 sm:p-6 pt-16 sm:pt-6 overflow-y-auto">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-stone-50 max-w-md w-full p-6 sm:p-8 rounded-sm shadow-2xl fade-up">
         <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
@@ -1525,6 +1536,7 @@ function AddItemModal({ onClose, onFile }) {
 
 // --- MANAGE COLLECTIONS ---------------------------------------------------
 function ManageCollectionsModal({ collections, items, images, onSave, onClose, initialEditingId }) {
+  useBodyScrollLock();
   // If we opened straight into an edit/new flow, remember that — Cancel should close instead of returning to the list
   const directEdit = !!initialEditingId;
 
@@ -2071,6 +2083,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
 
 // --- Backup Modal ---------------------------------------------------------
 function BackupModal({ items, images, outfits, customTags, brands, collections, onClose, onImport }) {
+  useBodyScrollLock();
   const fileRef = useRef();
   const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'success', message}
   const [pending, setPending] = useState(null); // parsed valid backup awaiting strategy choice
@@ -2136,7 +2149,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
   })();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 pt-16 sm:pt-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-stone-50 max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-sm shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
         <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
