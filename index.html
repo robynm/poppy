@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#e8c8c3" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="My Wardrobe" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icons/favicon.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <title>My Wardrobe</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind via CDN (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; padding: 0; background: #f5f5f4; }
+    body { font-family: 'Inter', -apple-system, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+    .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .grain { background-image: radial-gradient(rgba(0,0,0,0.025) 1px, transparent 1px); background-size: 3px 3px; }
+    .item-card { transition: transform 0.4s cubic-bezier(.2,.7,.2,1), box-shadow 0.4s; }
+    .item-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -20px rgba(0,0,0,0.15); }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fade-up 0.5s cubic-bezier(.2,.7,.2,1) both; }
+    /* Safe area insets for notched phones */
+    header, footer, main { padding-left: max(env(safe-area-inset-left), 0px); padding-right: max(env(safe-area-inset-right), 0px); }
+    header { padding-top: env(safe-area-inset-top); }
+    footer { padding-bottom: env(safe-area-inset-bottom); }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="height:100vh;display:flex;align-items:center;justify-content:center;color:#78716c;letter-spacing:.3em;text-transform:uppercase;font-size:.75rem;">
+      Opening the wardrobe…
+    </div>
+  </div>
+
+  <!-- React + Babel for JSX (small app, no build step) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Seed data: window.SEED_ITEMS, window.SEED_IMAGES -->
+  <script src="seed.js"></script>
+
+  <script type="text/babel" src="app.js"></script>
+
+  <script>
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed', err));
+      });
+    }
+  </script>
+</body>
+</html>
