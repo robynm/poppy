@@ -596,6 +596,7 @@ function ClosetApp() {
   const [showBackup, setShowBackup] = useState(false);
   const [editingOutfit, setEditingOutfit] = useState(null); // outfit being edited (full object) or null
   const [activeCollection, setActiveCollection] = useState(null); // currently selected collection id (closet filter)
+  const [scrollToOutfitId, setScrollToOutfitId] = useState(null);
   const { canInstall, promptInstall } = useInstallPrompt();
 
   // Load — seed if first run, importing SEED_ITEMS + SEED_IMAGES from seed.js (loaded by index.html)
@@ -751,9 +752,10 @@ function ClosetApp() {
       )}
       {view === "collections" && (
         <CollectionsView
-          collections={collections} items={items} images={images}
+          collections={collections} items={items} images={images} outfits={outfits}
           onSave={saveCollections}
           onViewCollection={(id) => { setActiveCollection(id); setView("closet"); }}
+          onOpenOutfit={(id) => { setScrollToOutfitId(id); setView("outfits"); }}
         />
       )}
       {view === "outfits" && (
@@ -763,6 +765,8 @@ function ClosetApp() {
           onPutImage={putImage} onDeleteImage={deleteImage}
           onNewOutfit={() => { setEditingOutfit(null); setView("builder"); }}
           onEditOutfit={(o) => { setEditingOutfit(o); setView("builder"); }}
+          scrollToId={scrollToOutfitId}
+          onScrolled={() => setScrollToOutfitId(null)}
         />
       )}
       {view === "builder" && (
@@ -788,8 +792,8 @@ function ClosetApp() {
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-stone-50/95 backdrop-blur border-t border-stone-300" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="max-w-6xl mx-auto grid grid-cols-3">
           <BottomTab IconC={I.shirt}  label="Closet"      active={view === "closet"}      onClick={() => setView("closet")} />
-          <BottomTab IconC={I.folder} label="Collections" active={view === "collections"} onClick={() => setView("collections")} />
           <BottomTab IconC={I.layers} label="Outfits"     active={view === "outfits"}     onClick={() => setView("outfits")} />
+          <BottomTab IconC={I.folder} label="Collections" active={view === "collections"} onClick={() => setView("collections")} />
         </div>
       </nav>
 
@@ -1977,12 +1981,19 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 }
 
 // --- OUTFITS VIEW ----------------------------------------------------------
-function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit, onPutImage, onDeleteImage }) {
+function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit, onPutImage, onDeleteImage, scrollToId, onScrolled }) {
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
     onDeleteImage(`selfie_${id}`);
     onSave(outfits.filter(o => o.id !== id));
   };
+
+  useEffect(() => {
+    if (!scrollToId) return;
+    const el = document.getElementById(`outfit-${scrollToId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    onScrolled?.();
+  }, [scrollToId]);
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
@@ -2013,6 +2024,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
           {outfits.map((o, i) => (
             <OutfitCard
               key={o.id}
+              id={`outfit-${o.id}`}
               outfit={o}
               items={items}
               images={images}
@@ -2075,7 +2087,7 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
   );
 }
 
-function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDeleteImage, delay = 0 }) {
+function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDeleteImage, delay = 0, id }) {
   const pieces = outfit.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
   const selfieKey = `selfie_${outfit.id}`;
   const selfieUrl = images[selfieKey];
@@ -2088,7 +2100,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
   };
 
   return (
-    <div className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
+    <div id={id} className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 border-b border-stone-200 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(outfit.name)}</h3>
@@ -2139,7 +2151,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
 }
 
 // --- COLLECTIONS VIEW -----------------------------------------------------
-function CollectionsView({ collections, items, images, onSave, onViewCollection }) {
+function CollectionsView({ collections, items, images, outfits, onSave, onViewCollection, onOpenOutfit }) {
   const [editingId, setEditingId] = useState(null); // collection id being edited, 'new', or null
   const [showManager, setShowManager] = useState(false); // open manager modal directly to a target
 
@@ -2185,7 +2197,9 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
               collection={c}
               items={items}
               images={images}
+              outfits={outfits}
               onOpen={() => onViewCollection(c.id)}
+              onOpenOutfit={onOpenOutfit}
               onEdit={() => startEdit(c.id)}
               onDelete={() => handleDelete(c.id)}
               delay={i * 80}
@@ -2211,8 +2225,11 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
   );
 }
 
-function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, delay = 0 }) {
+function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutfit, onEdit, onDelete, delay = 0 }) {
   const pieces = items.filter(i => collection.itemIds.includes(i.id));
+  const collectionOutfits = (outfits || []).filter(o =>
+    o.itemIds.length > 0 && o.itemIds.every(id => collection.itemIds.includes(id))
+  );
   // Show up to 9 in a 3×3 grid; truncate only when there are 10+
   const TRUNCATE_AT = 10;
   const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
@@ -2259,6 +2276,32 @@ function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, d
           )}
         </div>
       )}
+      {collectionOutfits.length > 0 && (
+        <div className="px-4 py-3 border-t border-stone-200">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">Outfits</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {collectionOutfits.map(o => {
+              const opieces = o.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => onOpenOutfit?.(o.id)}
+                  className="shrink-0 w-28 border border-stone-200 px-1 text-left active:scale-95 transition-transform"
+                >
+                  <div className="grid grid-cols-3 gap-0.5 rounded-sm overflow-hidden mb-1">
+                    {opieces.slice(0, 3).map(p => (
+                      <div key={p.id} className="bg-stone-50 aspect-square flex items-center justify-center overflow-hidden">
+                        <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-0.5" />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] tracking-[0.1em] uppercase text-stone-600 truncate">{toTitle(o.name)}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className="p-3 sm:p-4 border-t border-stone-200">
         <button
           onClick={onOpen}
@@ -2297,7 +2340,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
     <div className="fade-up">
-      <div className="mb-6 sm:mb-10 flex items-start justify-between gap-4">
+      <div className="mb-3 sm:mb-5 flex items-start justify-between gap-4">
         <div>
           <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">The Studio</p>
           <h2 className="font-serif text-4xl sm:text-6xl leading-none">
@@ -2317,11 +2360,30 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         )}
       </div>
 
+      {/* Preview at top on mobile (sticky) */}
+      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-stone-100/95 backdrop-blur border-b border-stone-300 mb-4">
+        <div className="flex items-center gap-3 overflow-x-auto py-2">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 shrink-0">{selected.length} {selected.length === 1 ? "piece" : "pieces"}</p>
+          {chosenItems.length === 0 ? (
+            <span className="text-xs italic text-stone-400 font-serif">nothing selected yet…</span>
+          ) : (
+            chosenItems.map(p => (
+              <div key={p.id} className="bg-stone-50 border border-stone-200 rounded-sm shrink-0 w-14 h-14 flex items-center justify-center relative">
+                <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-1" />
+                <button onClick={() => toggleSelect(p.id)} className="absolute -top-1 -right-1 bg-stone-900 text-stone-50 rounded-full p-0.5">
+                  <I.x size={10} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Scope picker: entire wardrobe or a collection */}
       {(collections || []).length > 0 && (
         <div className="mb-4">
           <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Choose from</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setScopeCollection(null)}
               className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${scopeCollection === null ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300"}`}
@@ -2342,25 +2404,6 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
           </div>
         </div>
       )}
-
-      {/* Preview at top on mobile (sticky) */}
-      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-stone-100/95 backdrop-blur border-b border-stone-300 mb-4">
-        <div className="flex items-center gap-3 overflow-x-auto pb-1">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 shrink-0">{selected.length} {selected.length === 1 ? "piece" : "pieces"}</p>
-          {chosenItems.length === 0 ? (
-            <span className="text-xs italic text-stone-400 font-serif">nothing selected yet…</span>
-          ) : (
-            chosenItems.map(p => (
-              <div key={p.id} className="bg-stone-50 border border-stone-200 rounded-sm shrink-0 w-14 h-14 flex items-center justify-center relative">
-                <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-1" />
-                <button onClick={() => toggleSelect(p.id)} className="absolute -top-1 -right-1 bg-stone-900 text-stone-50 rounded-full p-0.5">
-                  <I.x size={10} />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-6 lg:gap-8">
         <div>
