@@ -485,15 +485,16 @@ function useDragReorder(onCommit) {
   const itemRefs = useRef(new Map()); // index -> element
   const [dragIndex, setDragIndex] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
-  const [pointerPos, setPointerPos] = useState({ x: 0, y: 0 });
-  const startedAtRef = useRef({ x: 0, y: 0 });
+  const grabOffsetRef = useRef({ x: 0, y: 0 }); // pointer offset from card top-left at grab time
+  const startRectRef = useRef(null);             // card dimensions at grab time
+  const lastPointerRef = useRef({ x: 0, y: 0 }); // current pointer (no state = no re-renders)
+  const ghostRef = useRef(null);                  // attached to the ghost DOM node
 
   const register = (index, el) => {
     if (el) itemRefs.current.set(index, el);
     else itemRefs.current.delete(index);
   };
 
-  // Compute which item the pointer is over by hit-testing each registered element.
   const findIndexAt = (clientX, clientY) => {
     for (const [idx, el] of itemRefs.current.entries()) {
       if (!el) continue;
@@ -508,9 +509,14 @@ function useDragReorder(onCommit) {
   useEffect(() => {
     if (dragIndex === null) return;
     const handleMove = (e) => {
-      const clientX = e.clientX, clientY = e.clientY;
-      setPointerPos({ x: clientX, y: clientY });
-      const over = findIndexAt(clientX, clientY);
+      const x = e.clientX, y = e.clientY;
+      lastPointerRef.current = { x, y };
+      if (ghostRef.current) {
+        const tx = x - grabOffsetRef.current.x;
+        const ty = y - grabOffsetRef.current.y;
+        ghostRef.current.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
+      }
+      const over = findIndexAt(x, y);
       if (over !== null) setHoverIndex(over);
       e.preventDefault();
     };
@@ -521,10 +527,7 @@ function useDragReorder(onCommit) {
       setHoverIndex(null);
       if (onCommit && from !== null) onCommit(from, to);
     };
-    const handleCancel = () => {
-      setDragIndex(null);
-      setHoverIndex(null);
-    };
+    const handleCancel = () => { setDragIndex(null); setHoverIndex(null); };
     window.addEventListener('pointermove', handleMove, { passive: false });
     window.addEventListener('pointerup', handleUp);
     window.addEventListener('pointercancel', handleCancel);
@@ -536,17 +539,21 @@ function useDragReorder(onCommit) {
   }, [dragIndex, hoverIndex, onCommit]);
 
   const onHandlePointerDown = (index) => (e) => {
-    // Only respond to left mouse or touch
     if (e.button !== undefined && e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
-    startedAtRef.current = { x: e.clientX, y: e.clientY };
-    setPointerPos({ x: e.clientX, y: e.clientY });
+    const el = itemRefs.current.get(index);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      startRectRef.current = { width: r.width };
+      grabOffsetRef.current = { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
     setDragIndex(index);
     setHoverIndex(index);
   };
 
-  return { register, dragIndex, hoverIndex, pointerPos, onHandlePointerDown };
+  return { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown };
 }
 
 // --- Install prompt --------------------------------------------------------
@@ -932,7 +939,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     onSaveItems(next);
   };
 
-  const { register, dragIndex, hoverIndex, onHandlePointerDown } = useDragReorder(handleReorder);
+  const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
 
   const counts = useMemo(() => ({
     total: items.length,
@@ -1150,6 +1157,31 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       </div>
       </main>
 
+      {dragIndex !== null && filtered[dragIndex] && (() => {
+        const item = filtered[dragIndex];
+        const image = images[item.id];
+        const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
+        const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
+        return (
+          <div
+            ref={(el) => {
+              ghostRef.current = el;
+              if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
+            }}
+            className="pointer-events-none fixed left-0 top-0 z-50 bg-stone-50 border border-stone-200 rounded-sm overflow-hidden"
+            style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
+          >
+            <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden">
+              {image ? <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" /> : <I.shirt size={32} className="text-stone-400" />}
+            </div>
+            <div className="p-2 sm:p-3">
+              <p className="font-serif text-sm sm:text-base leading-tight truncate">{toTitle(item.name)}</p>
+              <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-0.5">{item.category}</p>
+            </div>
+          </div>
+        );
+      })()}
+
       {viewing && !editing && (
         <ViewDrawer
           item={items.find(i => i.id === viewing)}
@@ -1171,7 +1203,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           onBrandsChange={onSaveBrands}
           onCollectionsChange={onSaveCollections}
           onReplaceImage={(id, blob) => onPutImage(id, blob)}
-          onClose={() => { setEditing(null); /* keep viewing open so the user returns to details */ }}
+          onClose={() => { setEditing(null); setViewing(null); }}
           onSave={(u) => { handleUpdate(u); setEditing(null); }}
           onDelete={() => { handleDelete(editing); setViewing(null); }}
         />
@@ -1222,7 +1254,7 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
     <div
       ref={cardRef}
       onClick={onClick}
-      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-30 border-stone-900" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : isSelected ? "border-stone-900 ring-2 ring-stone-900/20" : "border-stone-200"}`}
+      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-0" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : isSelected ? "border-stone-900 ring-2 ring-stone-900/20" : "border-stone-200"}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden relative">
