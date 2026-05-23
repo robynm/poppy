@@ -1,5 +1,5 @@
 // Service Worker for The Wardrobe PWA
-const CACHE_NAME = 'wardrobe-v14';
+const CACHE_NAME = 'wardrobe-v15';
 const CORE_ASSETS = [
   './',
   './index.html',
