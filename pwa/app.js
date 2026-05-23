@@ -855,9 +855,13 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
   const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
 
   const exitSelectMode = () => { setSelectMode(false); setSelectedIds(new Set()); setBulkSheet(null); };
-  const toggleItemSelect = (id) => setSelectedIds(prev => {
-    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next;
-  });
+  const toggleItemSelect = (id) => {
+    const next = new Set(selectedIds);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setSelectedIds(next);
+    if (next.size === 0) { setSelectMode(false); setBulkSheet(null); }
+    else setSelectMode(true);
+  };
 
   const activeCollectionObj = activeCollection ? collections.find(c => c.id === activeCollection) : null;
 
@@ -974,30 +978,19 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 
       {/* Add button / select mode bar */}
       <div className="mb-3">
-        {!selectMode ? (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setAdding(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
-            >
-              <I.plus size={14} /> Add Item
-            </button>
-            {items.length > 0 && (
-              <button
-                onClick={() => setSelectMode(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-300 bg-stone-50 text-stone-700 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
-              >
-                Select
-              </button>
-            )}
-          </div>
-        ) : (
+        {selectMode ? (
           <div className="flex items-center gap-4 py-1">
             <span className="text-sm text-stone-700">{selectedIds.size} selected</span>
             <button onClick={selectAll} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">All</button>
-            <button onClick={() => setSelectedIds(new Set())} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">None</button>
-            <button onClick={exitSelectMode} className="ml-auto text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">Done</button>
+            <button onClick={exitSelectMode} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">None</button>
           </div>
+        ) : (
+          <button
+            onClick={() => setAdding(true)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+          >
+            <I.plus size={14} /> Add Item
+          </button>
         )}
       </div>
 
@@ -1142,7 +1135,8 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               key={item.id}
               item={item}
               image={images[item.id]}
-              onClick={selectMode ? () => toggleItemSelect(item.id) : () => setViewing(item.id)}
+              onClick={() => setViewing(item.id)}
+              onSelectToggle={() => toggleItemSelect(item.id)}
               isSelected={selectedIds.has(item.id)}
               delay={i * 40}
               cardRef={(el) => register(i, el)}
@@ -1249,13 +1243,13 @@ function FilterRow({ label, children }) {
   );
 }
 
-function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef, isSelected }) {
+function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef, isSelected }) {
   return (
     <div
       ref={cardRef}
       onClick={onClick}
       className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-0" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : isSelected ? "border-stone-900 ring-2 ring-stone-900/20" : "border-stone-200"}`}
-      style={{ animationDelay: `${delay}ms` }}
+      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
       <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden relative">
         {image ? (
@@ -1274,10 +1268,14 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
             <I.grip size={14} />
           </button>
         )}
-        {isSelected && (
-          <div className="absolute top-1.5 right-1.5 bg-stone-900 text-stone-50 rounded-full p-0.5">
+        {onSelectToggle && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onSelectToggle(); }}
+            aria-label={isSelected ? "Deselect item" : "Select item"}
+            className={`absolute top-1.5 right-1.5 rounded-full p-0.5 transition-colors ${isSelected ? "bg-stone-900 text-stone-50" : "bg-stone-50/80 backdrop-blur text-stone-300 border border-stone-300"}`}
+          >
             <I.check size={12} />
-          </div>
+          </button>
         )}
       </div>
       <div className="p-2 sm:p-3">
