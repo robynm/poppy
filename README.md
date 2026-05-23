@@ -38,7 +38,7 @@ By default, the script:
 - Validates that every required file exists and that the manifest parses
 - Confirms every file referenced by the service worker is actually present
 - Bumps the service worker cache version (so phones know to fetch new code)
-- Writes a fresh `dist/wardrobe-pwa-v<N>.zip` that you can drag straight onto Netlify
+- Writes a fresh `dist/wardrobe-pwa-v<N>.zip`
 
 ### Flags
 
@@ -56,21 +56,14 @@ The service worker has a line like `const CACHE_NAME = 'wardrobe-v7';`. Every ti
 
 ## Deploying
 
-The app needs to be served over HTTPS to be installable. Pick one:
+Deploying via Github Pages:
 
-### Netlify Drop (easiest)
-
-1. Open <https://app.netlify.com/drop> in any browser — no account needed
-2. Unzip `dist/wardrobe-pwa-vN.zip` and drag the **unzipped folder** onto the drop area
-3. Netlify gives you a URL like `https://random-words-abc123.netlify.app`
-4. Open the URL in Chrome on your Android phone
-5. Chrome shows "Install app" — tap it. The icon lands on your home screen and the app opens full-screen.
-
-If you make a Netlify account and name your site, future deploys can update the same URL in place by dragging onto its deploys page.
-
-### Other free hosts
-
-GitHub Pages, Vercel, Cloudflare Pages, and Surge.sh all work the same way — upload the unzipped folder, get an HTTPS URL, install from your phone.
+```sh
+  python3 build.py          # bumps sw.js cache version
+  git commit -am "v6"
+  git tag v6
+  git push && git push --tags
+```
 
 ### Local testing (no HTTPS)
 
@@ -106,14 +99,3 @@ If you ever clear browser data for the Netlify URL (in Chrome's site settings), 
 - **Storage:** the app reports real device-reported usage on the Backup screen. The 5 MB cap you may remember from earlier versions no longer applies — photos now live in IndexedDB. The hard limit is your phone's free disk space.
 - **No automatic background removal** for new items you upload. Either remove backgrounds before uploading, or live with the white background. Claude can process photos for you if you send them in chat.
 - **iOS:** the app works, but Safari's PWA install flow is fussier than Chrome's. Use the Share sheet → "Add to Home Screen."
-
-## When something breaks
-
-If the app shows a blank screen or "Opening the wardrobe…" forever after an update, it's almost always a JSX syntax error in `app.js`. To diagnose:
-
-1. On your computer, open the Netlify URL in Chrome
-2. Hit F12 (DevTools) → Console tab
-3. Look for a red error — it'll name the file and line number
-4. Paste it to Claude in chat and a fix will follow
-
-For changes that affect more than just code (new asset files, manifest changes, icon updates), Claude will be explicit about which files moved.
