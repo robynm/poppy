@@ -732,50 +732,48 @@ function ClosetApp() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
-        {view === "closet" && (
-          <ClosetView
-            items={items} images={images} customTags={customTags} brands={brands} collections={collections}
-            activeCollection={activeCollection} onSetActiveCollection={setActiveCollection}
-            onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections}
-          />
-        )}
-        {view === "collections" && (
-          <CollectionsView
-            collections={collections} items={items} images={images}
-            onSave={saveCollections}
-            onViewCollection={(id) => { setActiveCollection(id); setView("closet"); }}
-          />
-        )}
-        {view === "outfits" && (
-          <OutfitsView
-            outfits={outfits} items={items} images={images}
-            onSave={saveOutfits}
-            onNewOutfit={() => { setEditingOutfit(null); setView("builder"); }}
-            onEditOutfit={(o) => { setEditingOutfit(o); setView("builder"); }}
-          />
-        )}
-        {view === "builder" && (
-          <BuilderView
-            items={items} images={images} collections={collections}
-            outfit={editingOutfit}
-            onSaveOutfit={(o) => {
-              if (editingOutfit) {
-                // Edit: replace existing by id
-                const next = outfits.map(x => x.id === o.id ? { ...o, updatedAt: Date.now() } : x);
-                saveOutfits(next);
-              } else {
-                // Create: prepend a new one
-                const next = [{ ...o, id: `o_${Date.now()}`, createdAt: Date.now() }, ...outfits];
-                saveOutfits(next);
-              }
-              setEditingOutfit(null);
-              setView("outfits");
-            }}
-            onCancel={() => { setEditingOutfit(null); setView("outfits"); }}
-          />
-        )}
-      </main>
+      {view === "closet" && (
+        <ClosetView
+          items={items} images={images} customTags={customTags} brands={brands} collections={collections}
+          activeCollection={activeCollection} onSetActiveCollection={setActiveCollection}
+          onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections}
+        />
+      )}
+      {view === "collections" && (
+        <CollectionsView
+          collections={collections} items={items} images={images}
+          onSave={saveCollections}
+          onViewCollection={(id) => { setActiveCollection(id); setView("closet"); }}
+        />
+      )}
+      {view === "outfits" && (
+        <OutfitsView
+          outfits={outfits} items={items} images={images}
+          onSave={saveOutfits}
+          onNewOutfit={() => { setEditingOutfit(null); setView("builder"); }}
+          onEditOutfit={(o) => { setEditingOutfit(o); setView("builder"); }}
+        />
+      )}
+      {view === "builder" && (
+        <BuilderView
+          items={items} images={images} collections={collections}
+          outfit={editingOutfit}
+          onSaveOutfit={(o) => {
+            if (editingOutfit) {
+              // Edit: replace existing by id
+              const next = outfits.map(x => x.id === o.id ? { ...o, updatedAt: Date.now() } : x);
+              saveOutfits(next);
+            } else {
+              // Create: prepend a new one
+              const next = [{ ...o, id: `o_${Date.now()}`, createdAt: Date.now() }, ...outfits];
+              saveOutfits(next);
+            }
+            setEditingOutfit(null);
+            setView("outfits");
+          }}
+          onCancel={() => { setEditingOutfit(null); setView("outfits"); }}
+        />
+      )}
 
       {/* BOTTOM NAV — mobile-first */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-stone-50/95 backdrop-blur border-t border-stone-300" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -940,7 +938,9 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
     + activeBrands.length;
 
   return (
-    <div className="fade-up">
+    <>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+      <div className="fade-up">
       <div className="mb-6 sm:mb-10">
         <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Personal Inventory</p>
         <h2 className="font-serif text-4xl sm:text-6xl leading-none">Everything you own,<br/><em className="text-stone-600">at a glance.</em></h2>
@@ -1115,6 +1115,9 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         </div>
       )}
 
+      </div>
+      </main>
+
       {viewing && !editing && (
         <ViewDrawer
           item={items.find(i => i.id === viewing)}
@@ -1142,7 +1145,7 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         />
       )}
       {adding && <AddItemModal onClose={() => setAdding(false)} onFile={handleAddItem} />}
-    </div>
+    </>
   );
 }
 
@@ -1196,7 +1199,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
   const inCollections = (collections || []).filter(c => c.itemIds.includes(item.id));
 
   return (
-    <div className="fixed inset-0 z-40 flex sm:justify-end">
+    <div className="fixed inset-0 z-50 flex sm:justify-end">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative w-full sm:max-w-md bg-stone-50 h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -1357,7 +1360,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex sm:justify-end">
+    <div className="fixed inset-0 z-50 flex sm:justify-end">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative w-full sm:max-w-md bg-stone-50 h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -1508,7 +1511,7 @@ function AddItemModal({ onClose, onFile }) {
   useBodyScrollLock();
   const inputRef = useRef();
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-stone-50 max-w-md w-full p-6 sm:p-8 rounded-sm shadow-2xl fade-up">
         <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
@@ -1719,6 +1722,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   const handleDelete = (id) => { if (confirm("Delete this outfit?")) onSave(outfits.filter(o => o.id !== id)); };
 
   return (
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
     <div className="fade-up">
       <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
         <div>
@@ -1757,6 +1761,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
         </div>
       )}
     </div>
+    </main>
   );
 }
 
@@ -1809,7 +1814,9 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
   };
 
   return (
-    <div className="fade-up">
+    <>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+      <div className="fade-up">
       <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Curated Sets</p>
@@ -1850,6 +1857,9 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
         </div>
       )}
 
+      </div>
+      </main>
+
       {showManager && (
         <ManageCollectionsModal
           collections={collections}
@@ -1860,7 +1870,7 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
           onClose={() => { setShowManager(false); setEditingId(null); }}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -1949,6 +1959,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
   };
 
   return (
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
     <div className="fade-up">
       <div className="mb-6 sm:mb-10 flex items-start justify-between gap-4">
         <div>
@@ -2078,6 +2089,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         </aside>
       </div>
     </div>
+    </main>
   );
 }
 
