@@ -1010,7 +1010,17 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           <I.flower size={12} className="text-poppy-500" />
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Your Closet</p>
         </div> */}
-        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">Your closet,<br/><em className="text-poppy-600">all in one place.</em></h2>
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Your closet,</h2>
+        <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
+        <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">all in one place.</em></h3>
+        {!selectMode &&           <button
+            onClick={() => setAdding(true)}
+            style={{flexShrink: 0}}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
+          >
+            <I.plus size={16} /> Add a Piece
+          </button>}
+        </div>
         <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl">
           <span className="font-bold text-ink-800">{counts.total}</span> pieces · <span className="font-bold text-ink-800">{counts.tops}</span> tops · <span className="font-bold text-ink-800">{counts.bottoms}</span> bottoms
         </p>
@@ -1022,20 +1032,13 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 
       {/* Add button / select mode bar */}
       <div className="mb-3">
-        {selectMode ? (
+        {selectMode  && (
           <div className="flex items-center gap-3 py-1 bg-poppy-50 px-4 py-2.5 rounded-full">
             <span className="text-sm font-bold text-poppy-700">{selectedIds.size} selected</span>
             <button onClick={selectAll} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">All</button>
             <button onClick={exitSelectMode} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">None</button>
           </div>
-        ) : (
-          <button
-            onClick={() => setAdding(true)}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
-          >
-            <I.plus size={16} /> Add a Piece
-          </button>
-        )}
+        ) }
       </div>
 
       {/* Search + filter toggle */}
@@ -1164,8 +1167,8 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
         </div>
       )}
 
-      <div className="flex-1 h-px bg-cream-200"></div>
-      
+      <div className="flex-1 h-px bg-cream-200 mb-3"></div>
+
       {filtered.length === 0 ? (
         <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
