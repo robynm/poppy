@@ -736,9 +736,9 @@ function ClosetApp() {
 
       {view === "closet" && (
         <ClosetView
-          items={items} images={images} customTags={customTags} brands={brands} collections={collections}
+          items={items} images={images} customTags={customTags} brands={brands} collections={collections} outfits={outfits}
           activeCollection={activeCollection} onSetActiveCollection={setActiveCollection}
-          onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections}
+          onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections} onSaveOutfits={saveOutfits}
         />
       )}
       {view === "collections" && (
@@ -828,7 +828,7 @@ function BottomTab({ IconC, label, active, onClick, count }) {
 }
 
 // --- CLOSET VIEW ----------------------------------------------------------
-function ClosetView({ items, images, customTags, brands, collections, activeCollection, onSetActiveCollection, onSaveItems, onPutImage, onDeleteImage, onSaveCustomTags, onSaveBrands, onSaveCollections }) {
+function ClosetView({ items, images, customTags, brands, collections, outfits, activeCollection, onSetActiveCollection, onSaveItems, onPutImage, onDeleteImage, onSaveCustomTags, onSaveBrands, onSaveCollections, onSaveOutfits }) {
   const [activeCategories, setActiveCategories] = useState([]);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
@@ -840,9 +840,17 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
   const [viewing, setViewing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkSheet, setBulkSheet] = useState(null); // "tags" | "collections" | "outfits"
   const setActiveCollection = onSetActiveCollection;
 
   const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+
+  const exitSelectMode = () => { setSelectMode(false); setSelectedIds(new Set()); setBulkSheet(null); };
+  const toggleItemSelect = (id) => setSelectedIds(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next;
+  });
 
   const activeCollectionObj = activeCollection ? collections.find(c => c.id === activeCollection) : null;
 
@@ -857,6 +865,8 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
     if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   }), [items, activeCollectionObj, activeStatuses, activeBrands, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
+
+  const selectAll = () => setSelectedIds(new Set(filtered.map(i => i.id)));
 
   const handleAddItem = async (file) => {
     if (!file) return;
@@ -955,14 +965,33 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         <p className="text-sm italic text-stone-500 mb-4">"{activeCollectionObj.description}"</p>
       )}
 
-      {/* Add button — on its own row */}
+      {/* Add button / select mode bar */}
       <div className="mb-3">
-        <button
-          onClick={() => setAdding(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
-        >
-          <I.plus size={14} /> Add Item
-        </button>
+        {!selectMode ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+            >
+              <I.plus size={14} /> Add Item
+            </button>
+            {items.length > 0 && (
+              <button
+                onClick={() => setSelectMode(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-300 bg-stone-50 text-stone-700 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+              >
+                Select
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 py-1">
+            <span className="text-sm text-stone-700">{selectedIds.size} selected</span>
+            <button onClick={selectAll} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">All</button>
+            <button onClick={() => setSelectedIds(new Set())} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">None</button>
+            <button onClick={exitSelectMode} className="ml-auto text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">Done</button>
+          </div>
+        )}
       </div>
 
       {/* Search + filter toggle */}
@@ -1106,12 +1135,13 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
               key={item.id}
               item={item}
               image={images[item.id]}
-              onClick={() => setViewing(item.id)}
+              onClick={selectMode ? () => toggleItemSelect(item.id) : () => setViewing(item.id)}
+              isSelected={selectedIds.has(item.id)}
               delay={i * 40}
               cardRef={(el) => register(i, el)}
-              reorderHandle={onHandlePointerDown(i)}
-              isDragging={dragIndex === i}
-              isDropTarget={dragIndex !== null && hoverIndex === i && dragIndex !== i}
+              reorderHandle={selectMode ? null : onHandlePointerDown(i)}
+              isDragging={!selectMode && dragIndex === i}
+              isDropTarget={!selectMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
             />
           ))}
         </div>
@@ -1147,6 +1177,33 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         />
       )}
       {adding && <AddItemModal onClose={() => setAdding(false)} onFile={handleAddItem} />}
+
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-stone-50/95 backdrop-blur border-t border-stone-300 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+            <span className="text-sm text-stone-700 mr-auto">{selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""}</span>
+            <button onClick={() => setBulkSheet("tags")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Tags</button>
+            <button onClick={() => setBulkSheet("collections")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Collections</button>
+            <button onClick={() => setBulkSheet("outfits")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Outfits</button>
+          </div>
+        </div>
+      )}
+
+      {bulkSheet && (
+        <BulkSheet
+          type={bulkSheet}
+          selectedIds={selectedIds}
+          items={items}
+          customTags={customTags}
+          collections={collections}
+          outfits={outfits}
+          onSaveItems={onSaveItems}
+          onSaveCustomTags={onSaveCustomTags}
+          onSaveCollections={onSaveCollections}
+          onSaveOutfits={onSaveOutfits}
+          onClose={() => setBulkSheet(null)}
+        />
+      )}
     </>
   );
 }
@@ -1160,12 +1217,12 @@ function FilterRow({ label, children }) {
   );
 }
 
-function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef }) {
+function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef, isSelected }) {
   return (
     <div
       ref={cardRef}
       onClick={onClick}
-      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-30 border-stone-900" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : "border-stone-200"}`}
+      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-30 border-stone-900" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : isSelected ? "border-stone-900 ring-2 ring-stone-900/20" : "border-stone-200"}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden relative">
@@ -1184,6 +1241,11 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
           >
             <I.grip size={14} />
           </button>
+        )}
+        {isSelected && (
+          <div className="absolute top-1.5 right-1.5 bg-stone-900 text-stone-50 rounded-full p-0.5">
+            <I.check size={12} />
+          </div>
         )}
       </div>
       <div className="p-2 sm:p-3">
@@ -1534,6 +1596,171 @@ function AddItemModal({ onClose, onFile }) {
           onChange={(e) => onFile(e.target.files?.[0])}
           className="hidden"
         />
+      </div>
+    </div>
+  );
+}
+
+// --- BULK ACTION SHEET ----------------------------------------------------
+function BulkSheet({ type, selectedIds, items, customTags, collections, outfits, onSaveItems, onSaveCustomTags, onSaveCollections, onSaveOutfits, onClose }) {
+  useBodyScrollLock();
+  const count = selectedIds.size;
+
+  // Tags: which to add
+  const [addSeasons, setAddSeasons] = useState([]);
+  const [addOccasions, setAddOccasions] = useState([]);
+  const [addCustom, setAddCustom] = useState([]);
+  const [newTag, setNewTag] = useState("");
+
+  const toggleTag = (list, setList, v) => setList(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
+
+  const addNewTag = () => {
+    const t = newTag.trim().toLowerCase();
+    if (!t) return;
+    if (!customTags.includes(t)) onSaveCustomTags([...customTags, t]);
+    if (!addCustom.includes(t)) setAddCustom(prev => [...prev, t]);
+    setNewTag("");
+  };
+
+  // Collections / Outfits: track desired state per id ("all" | "some" | "none")
+  const [collState, setCollState] = useState(() => {
+    const ids = [...selectedIds];
+    const m = {};
+    (collections || []).forEach(c => {
+      const allIn = ids.every(id => c.itemIds.includes(id));
+      m[c.id] = allIn ? "all" : ids.some(id => c.itemIds.includes(id)) ? "some" : "none";
+    });
+    return m;
+  });
+  const [outfitState, setOutfitState] = useState(() => {
+    const ids = [...selectedIds];
+    const m = {};
+    (outfits || []).forEach(o => {
+      const allIn = ids.every(id => o.itemIds.includes(id));
+      m[o.id] = allIn ? "all" : ids.some(id => o.itemIds.includes(id)) ? "some" : "none";
+    });
+    return m;
+  });
+
+  const toggleColl = (id) => setCollState(prev => ({ ...prev, [id]: prev[id] === "all" ? "none" : "all" }));
+  const toggleOutfit = (id) => setOutfitState(prev => ({ ...prev, [id]: prev[id] === "all" ? "none" : "all" }));
+
+  const apply = () => {
+    const arr = [...selectedIds];
+    if (type === "tags") {
+      onSaveItems(items.map(it => {
+        if (!selectedIds.has(it.id)) return it;
+        return {
+          ...it,
+          seasons: [...new Set([...(it.seasons || []), ...addSeasons])],
+          occasions: [...new Set([...(it.occasions || []), ...addOccasions])],
+          custom: [...new Set([...(it.custom || []), ...addCustom])],
+        };
+      }));
+    } else if (type === "collections") {
+      onSaveCollections((collections || []).map(c => {
+        const d = collState[c.id];
+        if (d === "all") return { ...c, itemIds: [...new Set([...c.itemIds, ...arr])] };
+        if (d === "none") return { ...c, itemIds: c.itemIds.filter(id => !selectedIds.has(id)) };
+        return c;
+      }));
+    } else if (type === "outfits") {
+      onSaveOutfits((outfits || []).map(o => {
+        const d = outfitState[o.id];
+        if (d === "all") return { ...o, itemIds: [...new Set([...o.itemIds, ...arr])] };
+        if (d === "none") return { ...o, itemIds: o.itemIds.filter(id => !selectedIds.has(id)) };
+        return o;
+      }));
+    }
+    onClose();
+  };
+
+  const titles = { tags: "Apply Tags", collections: "Collections", outfits: "Outfits" };
+
+  return (
+    <div className="fixed inset-0 z-50 flex sm:justify-end">
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full sm:max-w-md bg-stone-50 shadow-2xl fade-up flex flex-col h-full">
+        <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50 shrink-0">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500">{count} item{count !== 1 ? "s" : ""} selected</p>
+            <h3 className="font-serif text-2xl">{titles[type]}</h3>
+          </div>
+          <button onClick={onClose} className="text-stone-500 p-2 -m-2"><I.x size={20} /></button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6">
+          {type === "tags" && (
+            <>
+              <p className="text-sm text-stone-600">Selected tags will be added to all {count} items. Existing tags are preserved.</p>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Seasons</p>
+                <div className="flex flex-wrap gap-2">
+                  {SEASON_OPTIONS.map(s => <Chip key={s} tone="season" active={addSeasons.includes(s)} onClick={() => toggleTag(addSeasons, setAddSeasons, s)}>{s}</Chip>)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Occasions</p>
+                <div className="flex flex-wrap gap-2">
+                  {OCCASION_OPTIONS.map(o => <Chip key={o} tone="occasion" active={addOccasions.includes(o)} onClick={() => toggleTag(addOccasions, setAddOccasions, o)}>{o}</Chip>)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Custom Tags</p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {customTags.length === 0 && <span className="text-xs text-stone-400 italic">none yet — add one below</span>}
+                  {customTags.map(t => <Chip key={t} tone="custom" active={addCustom.includes(t)} onClick={() => toggleTag(addCustom, setAddCustom, t)}>{t}</Chip>)}
+                </div>
+                <div className="flex gap-2">
+                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNewTag()} placeholder="new tag…" className="flex-1 bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm py-1" />
+                  <button onClick={addNewTag} className="px-3 py-1 bg-stone-900 text-stone-50 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Add</button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {type === "collections" && (
+            (collections || []).length === 0
+              ? <p className="text-sm text-stone-500 italic">No collections yet.</p>
+              : <div className="space-y-2">
+                  {(collections || []).map(c => {
+                    const st = collState[c.id] || "none";
+                    return (
+                      <button key={c.id} onClick={() => toggleColl(c.id)} className={`w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left ${st === "all" ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}>
+                        <I.folder size={16} className="shrink-0" />
+                        <span className="flex-1 font-serif text-lg truncate">{toTitle(c.name)}</span>
+                        {st === "some" && <span className="text-[9px] tracking-[0.2em] uppercase opacity-50">partial</span>}
+                        {st === "all" && <I.check size={16} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+          )}
+
+          {type === "outfits" && (
+            (outfits || []).length === 0
+              ? <p className="text-sm text-stone-500 italic">No outfits yet.</p>
+              : <div className="space-y-2">
+                  {(outfits || []).map(o => {
+                    const st = outfitState[o.id] || "none";
+                    return (
+                      <button key={o.id} onClick={() => toggleOutfit(o.id)} className={`w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left ${st === "all" ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}>
+                        <I.layers size={16} className="shrink-0" />
+                        <span className="flex-1 font-serif text-lg truncate">{toTitle(o.name)}</span>
+                        {st === "some" && <span className="text-[9px] tracking-[0.2em] uppercase opacity-50">partial</span>}
+                        {st === "all" && <I.check size={16} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+          )}
+        </div>
+
+        <div className="p-4 sm:p-6 border-t border-stone-200 bg-stone-50 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}>
+          <button onClick={apply} className="w-full flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95">
+            <I.check size={14} /> Apply to {count} item{count !== 1 ? "s" : ""}
+          </button>
+        </div>
       </div>
     </div>
   );
