@@ -2108,12 +2108,12 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
           </button>
         </div>
       </div>
-      {selfieUrl && (
-        <div className="px-4 pt-4 bg-gradient-to-br from-stone-100 to-stone-200 flex justify-center">
-          <img src={selfieUrl} alt="Outfit selfie" className="max-h-56 object-contain rounded-sm" />
-        </div>
-      )}
-      <div className={`p-4 bg-gradient-to-br from-stone-100 to-stone-200 grid grid-cols-3 gap-2 min-h-[200px]`}>
+      <div className="p-4 bg-gradient-to-br from-stone-100 to-stone-200 grid grid-cols-3 gap-2 min-h-[200px]">
+        {selfieUrl && (
+          <div className="row-span-2 overflow-hidden rounded-sm relative">
+            <img src={selfieUrl} alt="Outfit selfie" className="absolute inset-0 w-full h-full object-contain" />
+          </div>
+        )}
         {pieces.map(p => (
           <div key={p.id} className="bg-stone-50 rounded-sm overflow-hidden flex items-center justify-center aspect-square">
             <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
