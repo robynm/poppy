@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Build script for My Wardrobe PWA.
+Build script for Poppy PWA.
 
 What it does:
   1. Bumps the service worker cache version (sw.js: CACHE_NAME)
   2. Validates that referenced files exist and that key sources parse
-  3. Zips the pwa/ folder into dist/wardrobe-pwa-vN.zip
+  3. Zips the pwa/ folder into dist/poppy-pwa-vN.zip
 
 Usage:
   python3 build.py                 # bump SW version + zip
@@ -65,7 +65,7 @@ def header(s):  print(f"\n{C.B}{s}{C.X}")
 
 
 # --- version bumping --------------------------------------------------------
-SW_VERSION_RE = re.compile(r"^(const CACHE_NAME = 'wardrobe-v)(\d+)(';)\s*$", re.MULTILINE)
+SW_VERSION_RE = re.compile(r"^(const CACHE_NAME = 'poppy-v)(\d+)(';)\s*$", re.MULTILINE)
 
 def read_sw_version() -> int:
     text = SW_FILE.read_text()
@@ -154,7 +154,7 @@ def quick_js_check(path: Path) -> bool:
 # --- packaging --------------------------------------------------------------
 def make_zip(version: int) -> Path:
     DIST.mkdir(exist_ok=True)
-    zip_path = DIST / f"wardrobe-pwa-v{version}.zip"
+    zip_path = DIST / f"poppy-pwa-v{version}.zip"
     if zip_path.exists():
         zip_path.unlink()
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -180,7 +180,7 @@ def format_size(n: int) -> str:
 
 # --- main -------------------------------------------------------------------
 def main():
-    ap = argparse.ArgumentParser(description="Build the My Wardrobe PWA package.")
+    ap = argparse.ArgumentParser(description="Build the Poppy PWA package.")
     ap.add_argument("--no-bump", action="store_true", help="Don't bump the service worker version")
     ap.add_argument("--set", type=int, metavar="N", help="Set the service worker version to N")
     ap.add_argument("--clean", action="store_true", help="Remove dist/ before building")

@@ -1,13 +1,13 @@
 {
-  "name": "My Wardrobe",
-  "short_name": "Wardrobe",
-  "description": "A private catalogue of your closet — tag pieces and compose outfits.",
+  "name": "Poppy",
+  "short_name": "Poppy",
+  "description": "Your closet, blooming. Tag the pieces you own and compose looks worth keeping.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5f5f4",
-  "theme_color": "#e8c8c3",
+  "background_color": "#FFFBF6",
+  "theme_color": "#FF5A36",
   "lang": "en",
   "icons": [
     {

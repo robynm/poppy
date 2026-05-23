@@ -3,43 +3,183 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#e8c8c3" />
+  <meta name="theme-color" content="#FF5A36" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="My Wardrobe" />
+  <meta name="apple-mobile-web-app-title" content="Poppy" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" href="icons/favicon.png" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <title>My Wardrobe</title>
+  <title>Poppy</title>
 
-  <!-- Fonts -->
+  <!-- Fonts: Fraunces for display headings (playful, organic), Nunito for body (rounded, friendly) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,500;1,9..144,600;1,9..144,700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <!-- Tailwind via CDN (Play CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Poppy design tokens — a warm, blossoming palette
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans:    ['Nunito', '-apple-system', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            // The poppy red-orange — the brand's heartbeat
+            poppy: {
+              50:  '#FFF1EB',
+              100: '#FFE0D2',
+              200: '#FFC2A8',
+              300: '#FF9C77',
+              400: '#FF7A50',
+              500: '#FF5A36', // primary
+              600: '#E63F1A',
+              700: '#BD2C0E',
+              800: '#8E210B',
+              900: '#5F1505',
+            },
+            // Warm cream — page background and quiet surfaces
+            cream: {
+              50:  '#FFFBF6',
+              100: '#FFF4E8',
+              200: '#FFE7D1',
+              300: '#F3D6BC',
+              400: '#DCBE9F',
+              500: '#B89A7C',
+              600: '#8C735A',
+              700: '#5E4B39',
+            },
+            // Warm brown ink — body text, replaces stone
+            ink: {
+              50:  '#FAF5F1',
+              100: '#EFE2D6',
+              200: '#D9BFAC',
+              300: '#B89784',
+              400: '#8F7060',
+              500: '#6B5142',
+              600: '#4B3829',
+              700: '#36281B',
+              800: '#241A11',
+              900: '#150E08',
+            },
+            // Accent buttercup (sunshine yellow — seeds of the poppy)
+            buttercup: {
+              50:  '#FFFBEA',
+              100: '#FFF3C4',
+              200: '#FCE588',
+              300: '#FADB5F',
+              400: '#F7C948',
+              500: '#F0B429',
+              600: '#DE911D',
+              700: '#CB6E17',
+            },
+            // Accent leaf (poppy stem green)
+            leaf: {
+              50:  '#EFFCEF',
+              100: '#D2F5D5',
+              200: '#A8E9B0',
+              300: '#7DDB89',
+              400: '#5BC76A',
+              500: '#3FB04F',
+              600: '#2E8C3D',
+              700: '#236B2F',
+            },
+            // Accent petal (soft pink — companion bloom)
+            petal: {
+              50:  '#FFF0F5',
+              100: '#FFD9E6',
+              200: '#FFB1CB',
+              300: '#FF85AC',
+              400: '#FB628F',
+              500: '#EC4778',
+              600: '#C4305F',
+              700: '#962347',
+            },
+            // Accent sky (cool counterpoint)
+            sky2: {
+              50:  '#EBF6FB',
+              100: '#CCE7F4',
+              200: '#9CCFE9',
+              300: '#6DB6DC',
+              400: '#469CCB',
+              500: '#2882B7',
+              600: '#1E6594',
+              700: '#164D72',
+            },
+            // Accent plum (lavender — custom tags)
+            plum: {
+              50:  '#F4EEFB',
+              100: '#E1D2F4',
+              200: '#C5A8E8',
+              300: '#A881D8',
+              400: '#8D60C5',
+              500: '#7344AB',
+              600: '#583389',
+              700: '#3F2566',
+            },
+          },
+          boxShadow: {
+            'poppy':    '0 12px 32px -12px rgba(255, 90, 54, 0.45)',
+            'card':     '0 4px 16px -6px rgba(94, 21, 5, 0.10)',
+            'card-hi':  '0 18px 36px -16px rgba(94, 21, 5, 0.20)',
+            'pop':      '0 8px 24px -8px rgba(94, 21, 5, 0.18)',
+          },
+          borderRadius: {
+            'xl2': '1.125rem',
+            '4xl': '2rem',
+            '5xl': '2.5rem',
+          },
+        }
+      }
+    };
+  </script>
 
   <style>
-    html, body, #root { height: 100%; margin: 0; padding: 0; background: #f5f5f4; }
-    body { font-family: 'Inter', -apple-system, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
-    .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
-    .grain { background-image: radial-gradient(rgba(0,0,0,0.025) 1px, transparent 1px); background-size: 3px 3px; }
-    .item-card { transition: transform 0.4s cubic-bezier(.2,.7,.2,1), box-shadow 0.4s; }
-    .item-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -20px rgba(0,0,0,0.15); }
-    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-up { animation: fade-up 0.5s cubic-bezier(.2,.7,.2,1) both; }
+    html, body, #root { height: 100%; margin: 0; padding: 0; background: #FFFBF6; }
+    body { font-family: 'Nunito', -apple-system, system-ui, sans-serif; color: #241A11; -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+    .font-display { font-family: 'Fraunces', Georgia, serif; }
+
+    /* Subtle warm wash backdrop — replaces the grain texture */
+    .poppy-wash {
+      background-image:
+        radial-gradient(circle at 90% -10%, rgba(255, 90, 54, 0.10), transparent 40%),
+        radial-gradient(circle at -10% 110%, rgba(247, 201, 72, 0.10), transparent 45%);
+    }
+
+    .item-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; }
+    .item-card:hover { transform: translateY(-3px); box-shadow: 0 18px 36px -16px rgba(94, 21, 5, 0.25); }
+
+    @keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fade-up .45s cubic-bezier(.2,.7,.2,1) both; }
+
+    @keyframes bloom { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
+    .bloom { animation: bloom .55s cubic-bezier(.34, 1.56, .64, 1) both; }
+
     /* Safe area insets for notched phones */
     header, footer, main { padding-left: max(env(safe-area-inset-left), 0px); padding-right: max(env(safe-area-inset-right), 0px); }
     header { padding-top: env(safe-area-inset-top); }
     footer { padding-bottom: env(safe-area-inset-bottom); }
+
+    /* Custom scrollbar — peek of poppy */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 90, 54, 0.25); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 90, 54, 0.45); }
   </style>
 </head>
 <body>
   <div id="root">
-    <div style="height:100vh;display:flex;align-items:center;justify-content:center;color:#78716c;letter-spacing:.3em;text-transform:uppercase;font-size:.75rem;">
-      Opening the wardrobe…
+    <div style="height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:#FFFBF6;">
+      <div style="width:56px;height:56px;border-radius:50%;background:#FF5A36;display:flex;align-items:center;justify-content:center;animation:bloom .6s cubic-bezier(.34,1.56,.64,1) both;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFBF6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 6.5-7 11-7 11z" fill="#FFFBF6" stroke="#FF5A36"/>
+        </svg>
+      </div>
+      <div style="font-family:'Nunito',sans-serif;color:#8F7060;font-weight:600;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem;">Poppy is blooming…</div>
     </div>
   </div>
 
