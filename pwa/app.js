@@ -43,6 +43,7 @@ const I = {
   folder:   (p) => <Icon {...p} d="M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />,
   bookmark: (p) => <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
   grip:     (p) => <Icon {...p} d={<><circle cx="9" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="18" r="1.2"/></>} />,
+  camera:   (p) => <Icon {...p} d={<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></>} />,
 };
 
 const toTitle = s => s ? s.replace(/\b\w/g, c => c.toUpperCase()) : s;
@@ -759,6 +760,7 @@ function ClosetApp() {
         <OutfitsView
           outfits={outfits} items={items} images={images}
           onSave={saveOutfits}
+          onPutImage={putImage} onDeleteImage={deleteImage}
           onNewOutfit={() => { setEditingOutfit(null); setView("builder"); }}
           onEditOutfit={(o) => { setEditingOutfit(o); setView("builder"); }}
         />
@@ -769,11 +771,9 @@ function ClosetApp() {
           outfit={editingOutfit}
           onSaveOutfit={(o) => {
             if (editingOutfit) {
-              // Edit: replace existing by id
               const next = outfits.map(x => x.id === o.id ? { ...o, updatedAt: Date.now() } : x);
               saveOutfits(next);
             } else {
-              // Create: prepend a new one
               const next = [{ ...o, id: `o_${Date.now()}`, createdAt: Date.now() }, ...outfits];
               saveOutfits(next);
             }
@@ -1977,8 +1977,12 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 }
 
 // --- OUTFITS VIEW ----------------------------------------------------------
-function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit }) {
-  const handleDelete = (id) => { if (confirm("Delete this outfit?")) onSave(outfits.filter(o => o.id !== id)); };
+function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit, onPutImage, onDeleteImage }) {
+  const handleDelete = (id) => {
+    if (!confirm("Delete this outfit?")) return;
+    onDeleteImage(`selfie_${id}`);
+    onSave(outfits.filter(o => o.id !== id));
+  };
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
@@ -2014,6 +2018,8 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
               images={images}
               onDelete={() => handleDelete(o.id)}
               onEdit={onEditOutfit ? () => onEditOutfit(o) : undefined}
+              onPutImage={onPutImage}
+              onDeleteImage={onDeleteImage}
               delay={i * 80}
             />
           ))}
@@ -2024,8 +2030,63 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   );
 }
 
-function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
+function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
+  useBodyScrollLock();
+  const inputRef = useRef(null);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-stone-50 max-w-sm w-full p-6 sm:p-8 rounded-sm shadow-2xl fade-up">
+        <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-1">Outfit selfie</p>
+        <h3 className="font-serif text-2xl mb-5">{toTitle(outfitName)}</h3>
+        {selfieUrl ? (
+          <div className="mb-5">
+            <div className="relative inline-block w-full">
+              <img src={selfieUrl} alt="Outfit selfie" className="w-full max-h-64 object-contain rounded-sm bg-stone-100" />
+            </div>
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={() => inputRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-stone-300 text-stone-700 text-[11px] tracking-[0.2em] uppercase rounded-sm active:scale-95"
+              >
+                <I.camera size={13} /> Replace
+              </button>
+              <button
+                onClick={onRemove}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-300 text-rose-600 text-[11px] tracking-[0.2em] uppercase rounded-sm active:scale-95"
+              >
+                <I.trash size={13} /> Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="w-full border-2 border-dashed border-stone-300 active:border-stone-900 transition-colors rounded-sm py-8 flex flex-col items-center gap-3 text-stone-500 mb-5"
+          >
+            <I.camera size={22} />
+            <span className="text-[11px] tracking-[0.25em] uppercase">Choose a photo</span>
+          </button>
+        )}
+        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+      </div>
+    </div>
+  );
+}
+
+function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDeleteImage, delay = 0 }) {
   const pieces = outfit.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
+  const selfieKey = `selfie_${outfit.id}`;
+  const selfieUrl = images[selfieKey];
+  const [showSelfieModal, setShowSelfieModal] = useState(false);
+
+  const handleSelfieFile = async (file) => {
+    if (!file) return;
+    const blob = await resizeImageToBlob(file, 1200, 0.88);
+    if (blob) { onPutImage(selfieKey, blob); setShowSelfieModal(false); }
+  };
+
   return (
     <div className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 border-b border-stone-200 flex items-start justify-between gap-3">
@@ -2034,6 +2095,9 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
           {outfit.note && <p className="text-sm italic text-stone-500 mt-1">"{outfit.note}"</p>}
         </div>
         <div className="flex gap-3 shrink-0">
+          <button onClick={() => setShowSelfieModal(true)} className="text-stone-400 p-2 -m-2 active:text-stone-900" aria-label="Outfit selfie">
+            <I.camera size={14} />
+          </button>
           {onEdit && (
             <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit outfit">
               <I.pencil size={14} />
@@ -2044,7 +2108,12 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
           </button>
         </div>
       </div>
-      <div className="p-4 bg-gradient-to-br from-stone-100 to-stone-200 grid grid-cols-3 gap-2 min-h-[200px]">
+      {selfieUrl && (
+        <div className="px-4 pt-4 bg-gradient-to-br from-stone-100 to-stone-200 flex justify-center">
+          <img src={selfieUrl} alt="Outfit selfie" className="max-h-56 object-contain rounded-sm" />
+        </div>
+      )}
+      <div className={`p-4 bg-gradient-to-br from-stone-100 to-stone-200 grid grid-cols-3 gap-2 min-h-[200px]`}>
         {pieces.map(p => (
           <div key={p.id} className="bg-stone-50 rounded-sm overflow-hidden flex items-center justify-center aspect-square">
             <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
@@ -2056,6 +2125,15 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
           <span key={p.id} className="text-[10px] tracking-[0.15em] uppercase text-stone-600 border border-stone-300 px-2 py-1 rounded-full">{toTitle(p.name)}</span>
         ))}
       </div>
+      {showSelfieModal && (
+        <SelfieModal
+          outfitName={outfit.name}
+          selfieUrl={selfieUrl}
+          onFile={handleSelfieFile}
+          onRemove={() => { onDeleteImage(selfieKey); setShowSelfieModal(false); }}
+          onClose={() => setShowSelfieModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -2201,7 +2279,6 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
   const [note, setNote] = useState(outfit ? outfit.note || "" : "");
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [scopeCollection, setScopeCollection] = useState(null); // null = entire wardrobe
-
   const toggleSelect = (id) => setSelected(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id]);
   const scopeObj = scopeCollection ? (collections || []).find(c => c.id === scopeCollection) : null;
   const scopedItems = scopeObj ? items.filter(i => scopeObj.itemIds.includes(i.id)) : items;
@@ -2337,6 +2414,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
               placeholder="a vibe, a memory…"
               className="w-full bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm italic py-1 mb-6"
             />
+
             <button
               onClick={handleSave}
               disabled={!canSave}
