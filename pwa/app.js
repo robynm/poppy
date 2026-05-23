@@ -45,6 +45,8 @@ const I = {
   grip:     (p) => <Icon {...p} d={<><circle cx="9" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="18" r="1.2"/></>} />,
 };
 
+const toTitle = s => s ? s.replace(/\b\w/g, c => c.toUpperCase()) : s;
+
 const CATEGORY_OPTIONS = ["top", "bottom", "dress", "outerwear", "shoes", "accessory"];
 const SEASON_OPTIONS = ["spring", "summer", "fall", "winter"];
 const OCCASION_OPTIONS = ["casual", "work", "weekend", "evening", "athletic", "loungewear", "formal"];
@@ -827,11 +829,11 @@ function BottomTab({ IconC, label, active, onClick, count }) {
 
 // --- CLOSET VIEW ----------------------------------------------------------
 function ClosetView({ items, images, customTags, brands, collections, activeCollection, onSetActiveCollection, onSaveItems, onPutImage, onDeleteImage, onSaveCustomTags, onSaveBrands, onSaveCollections }) {
-  const [activeCategory, setActiveCategory] = useState(null);
+  const [activeCategories, setActiveCategories] = useState([]);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
   const [activeCustom, setActiveCustom] = useState([]);
-  const [activeStatus, setActiveStatus] = useState("owned"); // null = "All", else a status string
+  const [activeStatuses, setActiveStatuses] = useState(["owned"]);
   const [activeBrands, setActiveBrands] = useState([]);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
@@ -846,15 +848,15 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
 
   const filtered = useMemo(() => items.filter(it => {
     if (activeCollectionObj && !activeCollectionObj.itemIds.includes(it.id)) return false;
-    if (activeStatus && (it.status || "owned") !== activeStatus) return false;
+    if (activeStatuses.length && !activeStatuses.includes(it.status || "owned")) return false;
     if (activeBrands.length && !activeBrands.includes(it.brand || "")) return false;
-    if (activeCategory && it.category !== activeCategory) return false;
+    if (activeCategories.length && !activeCategories.includes(it.category)) return false;
     if (activeSeasons.length && !activeSeasons.every(s => it.seasons?.includes(s))) return false;
     if (activeOccasions.length && !activeOccasions.every(o => it.occasions?.includes(o))) return false;
     if (activeCustom.length && !activeCustom.every(t => it.custom?.includes(t))) return false;
     if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [items, activeCollectionObj, activeStatus, activeBrands, activeCategory, activeSeasons, activeOccasions, activeCustom, search]);
+  }), [items, activeCollectionObj, activeStatuses, activeBrands, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
 
   const handleAddItem = async (file) => {
     if (!file) return;
@@ -929,12 +931,12 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
   }), [items]);
 
   const filterCount =
-    (activeCategory ? 1 : 0)
+    activeCategories.length
     + activeSeasons.length
     + activeOccasions.length
     + activeCustom.length
     + (activeCollection ? 1 : 0)
-    + (activeStatus !== "owned" ? 1 : 0)
+    + (activeStatuses.length === 1 && activeStatuses[0] === "owned" ? 0 : 1)
     + activeBrands.length;
 
   return (
@@ -990,21 +992,19 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
               <Chip tone="collection" active={activeCollection === null} onClick={() => setActiveCollection(null)}>Entire Wardrobe</Chip>
               {collections.map(c => (
                 <Chip key={c.id} tone="collection" active={activeCollection === c.id} onClick={() => setActiveCollection(activeCollection === c.id ? null : c.id)}>
-                  {c.name}
+                  {toTitle(c.name)}
                 </Chip>
               ))}
             </FilterRow>
           )}
           <FilterRow label="Status">
-            <Chip tone="status" active={activeStatus === null} onClick={() => setActiveStatus(null)}>All</Chip>
             {STATUS_OPTIONS.map(s => (
-              <Chip key={s} tone="status" active={activeStatus === s} onClick={() => setActiveStatus(s)}>{s}</Chip>
+              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
             ))}
           </FilterRow>
           <FilterRow label="Category">
-            <Chip tone="category" active={activeCategory === null} onClick={() => setActiveCategory(null)}>All</Chip>
             {CATEGORY_OPTIONS.map(c => (
-              <Chip key={c} tone="category" active={activeCategory === c} onClick={() => setActiveCategory(activeCategory === c ? null : c)}>{c}</Chip>
+              <Chip key={c} tone="category" active={activeCategories.includes(c)} onClick={() => toggle(activeCategories, setActiveCategories, c)}>{c}</Chip>
             ))}
           </FilterRow>
           <FilterRow label="Season">
@@ -1033,7 +1033,7 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
           )}
           {filterCount > 0 && (
             <button
-              onClick={() => { setActiveCategory(null); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatus("owned"); setActiveBrands([]); }}
+              onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); }}
               className="mt-2 text-[10px] tracking-[0.2em] uppercase text-stone-500 underline"
             >
               Clear all
@@ -1047,24 +1047,26 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {activeCollection && activeCollectionObj && (
             <RemovableChip tone="collection" onRemove={() => setActiveCollection(null)}>
-              <I.folder size={11} /> {activeCollectionObj.name}
+              <I.folder size={11} /> {toTitle(activeCollectionObj.name)}
             </RemovableChip>
           )}
-          {activeStatus !== "owned" && (
-            <RemovableChip tone="status" onRemove={() => setActiveStatus("owned")}>
-              {activeStatus || "All statuses"}
-            </RemovableChip>
+          {!(activeStatuses.length === 1 && activeStatuses[0] === "owned") && (
+            activeStatuses.length === 0
+              ? <RemovableChip tone="status" onRemove={() => setActiveStatuses(["owned"])}>All statuses</RemovableChip>
+              : activeStatuses.map(s => (
+                  <RemovableChip key={`st-${s}`} tone="status" onRemove={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</RemovableChip>
+                ))
           )}
           {activeBrands.map(b => (
             <RemovableChip key={`b-${b}`} tone="brand" onRemove={() => toggle(activeBrands, setActiveBrands, b)}>
               {b}
             </RemovableChip>
           ))}
-          {activeCategory && (
-            <RemovableChip tone="category" onRemove={() => setActiveCategory(null)}>
-              {activeCategory}
+          {activeCategories.map(c => (
+            <RemovableChip key={`cat-${c}`} tone="category" onRemove={() => toggle(activeCategories, setActiveCategories, c)}>
+              {c}
             </RemovableChip>
-          )}
+          ))}
           {activeSeasons.map(s => (
             <RemovableChip key={`s-${s}`} tone="season" onRemove={() => toggle(activeSeasons, setActiveSeasons, s)}>
               {s}
@@ -1185,7 +1187,7 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
         )}
       </div>
       <div className="p-2 sm:p-3">
-        <p className="font-serif text-sm sm:text-base leading-tight truncate">{item.name}</p>
+        <p className="font-serif text-sm sm:text-base leading-tight truncate">{toTitle(item.name)}</p>
         <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-0.5">{item.category}</p>
       </div>
     </div>
@@ -1214,7 +1216,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
               : <I.shirt size={48} className="text-stone-400" />
             }
           </div>
-          <h3 className="font-serif text-3xl mt-5 text-center">{item.name}</h3>
+          <h3 className="font-serif text-3xl mt-5 text-center">{toTitle(item.name)}</h3>
           <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mt-1">{item.category}</p>
         </div>
 
@@ -1276,7 +1278,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
               <div className="flex flex-wrap gap-2">
                 {inCollections.map(c => (
                   <span key={c.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-slate-800 text-slate-50 border-slate-800">
-                    <I.folder size={11} /> {c.name}
+                    <I.folder size={11} /> {toTitle(c.name)}
                   </span>
                 ))}
               </div>
@@ -1481,7 +1483,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${inIt ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300"}`}
                 >
                   <I.folder size={11} />
-                  {c.name}
+                  {toTitle(c.name)}
                 </button>
               );
             })}
@@ -1625,7 +1627,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                     <div key={c.id} className="flex items-center gap-3 p-3 bg-stone-100 rounded-sm">
                       <I.folder size={16} className="text-stone-600 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-serif text-lg leading-tight truncate">{c.name}</p>
+                        <p className="font-serif text-lg leading-tight truncate">{toTitle(c.name)}</p>
                         <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500">{c.itemIds.length} {c.itemIds.length === 1 ? "piece" : "pieces"}</p>
                         {c.description && <p className="text-xs italic text-stone-500 mt-1 truncate">"{c.description}"</p>}
                       </div>
@@ -1686,7 +1688,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                               </div>
                             )}
                           </div>
-                          <p className="text-[10px] font-serif text-stone-700 truncate px-1 py-1">{it.name}</p>
+                          <p className="text-[10px] font-serif text-stone-700 truncate px-1 py-1">{toTitle(it.name)}</p>
                         </button>
                       );
                     })}
@@ -1771,10 +1773,10 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
     <div className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 border-b border-stone-200 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-serif text-xl sm:text-2xl truncate">{outfit.name}</h3>
+          <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(outfit.name)}</h3>
           {outfit.note && <p className="text-sm italic text-stone-500 mt-1">"{outfit.note}"</p>}
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-3 shrink-0">
           {onEdit && (
             <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit outfit">
               <I.pencil size={14} />
@@ -1794,7 +1796,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
       </div>
       <div className="p-3 sm:p-4 flex flex-wrap gap-2">
         {pieces.map(p => (
-          <span key={p.id} className="text-[10px] tracking-[0.15em] uppercase text-stone-600 border border-stone-300 px-2 py-1 rounded-full">{p.name}</span>
+          <span key={p.id} className="text-[10px] tracking-[0.15em] uppercase text-stone-600 border border-stone-300 px-2 py-1 rounded-full">{toTitle(p.name)}</span>
         ))}
       </div>
     </div>
@@ -1875,7 +1877,7 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
 }
 
 function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, delay = 0 }) {
-  const pieces = collection.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
+  const pieces = items.filter(i => collection.itemIds.includes(i.id));
   // Show up to 9 in a 3×3 grid; truncate only when there are 10+
   const TRUNCATE_AT = 10;
   const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
@@ -1886,7 +1888,7 @@ function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, d
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <I.folder size={16} className="text-stone-600 shrink-0" />
-            <h3 className="font-serif text-xl sm:text-2xl truncate">{collection.name}</h3>
+            <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(collection.name)}</h3>
           </div>
           <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-1">
             {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
@@ -1895,7 +1897,7 @@ function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, d
             <p className="text-sm italic text-stone-500 mt-1">"{collection.description}"</p>
           )}
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-3 shrink-0">
           <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit collection">
             <I.pencil size={14} />
           </button>
@@ -2053,7 +2055,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                     )}
                   </div>
                   <div className="p-2">
-                    <p className="font-serif text-sm truncate">{it.name}</p>
+                    <p className="font-serif text-sm truncate">{toTitle(it.name)}</p>
                     <p className="text-[9px] tracking-[0.2em] uppercase text-stone-500">{it.category}</p>
                   </div>
                 </div>
