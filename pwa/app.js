@@ -7,6 +7,14 @@
 
 const { useState, useEffect, useMemo, useRef } = React;
 
+function useBodyScrollLock() {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+}
+
 // --- Inline SVG icons (replaces lucide-react) -------------------------------
 const Icon = ({ d, size = 16, stroke = 2, fill = "none", className = "", ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
@@ -36,6 +44,8 @@ const I = {
   bookmark: (p) => <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
   grip:     (p) => <Icon {...p} d={<><circle cx="9" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="18" r="1.2"/></>} />,
 };
+
+const toTitle = s => s ? s.replace(/\b\w/g, c => c.toUpperCase()) : s;
 
 const CATEGORY_OPTIONS = ["top", "bottom", "dress", "outerwear", "shoes", "accessory"];
 const SEASON_OPTIONS = ["spring", "summer", "fall", "winter"];
@@ -724,50 +734,48 @@ function ClosetApp() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
-        {view === "closet" && (
-          <ClosetView
-            items={items} images={images} customTags={customTags} brands={brands} collections={collections}
-            activeCollection={activeCollection} onSetActiveCollection={setActiveCollection}
-            onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections}
-          />
-        )}
-        {view === "collections" && (
-          <CollectionsView
-            collections={collections} items={items} images={images}
-            onSave={saveCollections}
-            onViewCollection={(id) => { setActiveCollection(id); setView("closet"); }}
-          />
-        )}
-        {view === "outfits" && (
-          <OutfitsView
-            outfits={outfits} items={items} images={images}
-            onSave={saveOutfits}
-            onNewOutfit={() => { setEditingOutfit(null); setView("builder"); }}
-            onEditOutfit={(o) => { setEditingOutfit(o); setView("builder"); }}
-          />
-        )}
-        {view === "builder" && (
-          <BuilderView
-            items={items} images={images} collections={collections}
-            outfit={editingOutfit}
-            onSaveOutfit={(o) => {
-              if (editingOutfit) {
-                // Edit: replace existing by id
-                const next = outfits.map(x => x.id === o.id ? { ...o, updatedAt: Date.now() } : x);
-                saveOutfits(next);
-              } else {
-                // Create: prepend a new one
-                const next = [{ ...o, id: `o_${Date.now()}`, createdAt: Date.now() }, ...outfits];
-                saveOutfits(next);
-              }
-              setEditingOutfit(null);
-              setView("outfits");
-            }}
-            onCancel={() => { setEditingOutfit(null); setView("outfits"); }}
-          />
-        )}
-      </main>
+      {view === "closet" && (
+        <ClosetView
+          items={items} images={images} customTags={customTags} brands={brands} collections={collections} outfits={outfits}
+          activeCollection={activeCollection} onSetActiveCollection={setActiveCollection}
+          onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections} onSaveOutfits={saveOutfits}
+        />
+      )}
+      {view === "collections" && (
+        <CollectionsView
+          collections={collections} items={items} images={images}
+          onSave={saveCollections}
+          onViewCollection={(id) => { setActiveCollection(id); setView("closet"); }}
+        />
+      )}
+      {view === "outfits" && (
+        <OutfitsView
+          outfits={outfits} items={items} images={images}
+          onSave={saveOutfits}
+          onNewOutfit={() => { setEditingOutfit(null); setView("builder"); }}
+          onEditOutfit={(o) => { setEditingOutfit(o); setView("builder"); }}
+        />
+      )}
+      {view === "builder" && (
+        <BuilderView
+          items={items} images={images} collections={collections}
+          outfit={editingOutfit}
+          onSaveOutfit={(o) => {
+            if (editingOutfit) {
+              // Edit: replace existing by id
+              const next = outfits.map(x => x.id === o.id ? { ...o, updatedAt: Date.now() } : x);
+              saveOutfits(next);
+            } else {
+              // Create: prepend a new one
+              const next = [{ ...o, id: `o_${Date.now()}`, createdAt: Date.now() }, ...outfits];
+              saveOutfits(next);
+            }
+            setEditingOutfit(null);
+            setView("outfits");
+          }}
+          onCancel={() => { setEditingOutfit(null); setView("outfits"); }}
+        />
+      )}
 
       {/* BOTTOM NAV — mobile-first */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-stone-50/95 backdrop-blur border-t border-stone-300" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -820,35 +828,45 @@ function BottomTab({ IconC, label, active, onClick, count }) {
 }
 
 // --- CLOSET VIEW ----------------------------------------------------------
-function ClosetView({ items, images, customTags, brands, collections, activeCollection, onSetActiveCollection, onSaveItems, onPutImage, onDeleteImage, onSaveCustomTags, onSaveBrands, onSaveCollections }) {
-  const [activeCategory, setActiveCategory] = useState(null);
+function ClosetView({ items, images, customTags, brands, collections, outfits, activeCollection, onSetActiveCollection, onSaveItems, onPutImage, onDeleteImage, onSaveCustomTags, onSaveBrands, onSaveCollections, onSaveOutfits }) {
+  const [activeCategories, setActiveCategories] = useState([]);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
   const [activeCustom, setActiveCustom] = useState([]);
-  const [activeStatus, setActiveStatus] = useState("owned"); // null = "All", else a status string
+  const [activeStatuses, setActiveStatuses] = useState(["owned"]);
   const [activeBrands, setActiveBrands] = useState([]);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const [viewing, setViewing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkSheet, setBulkSheet] = useState(null); // "tags" | "collections" | "outfits"
   const setActiveCollection = onSetActiveCollection;
 
   const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+
+  const exitSelectMode = () => { setSelectMode(false); setSelectedIds(new Set()); setBulkSheet(null); };
+  const toggleItemSelect = (id) => setSelectedIds(prev => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next;
+  });
 
   const activeCollectionObj = activeCollection ? collections.find(c => c.id === activeCollection) : null;
 
   const filtered = useMemo(() => items.filter(it => {
     if (activeCollectionObj && !activeCollectionObj.itemIds.includes(it.id)) return false;
-    if (activeStatus && (it.status || "owned") !== activeStatus) return false;
+    if (activeStatuses.length && !activeStatuses.includes(it.status || "owned")) return false;
     if (activeBrands.length && !activeBrands.includes(it.brand || "")) return false;
-    if (activeCategory && it.category !== activeCategory) return false;
+    if (activeCategories.length && !activeCategories.includes(it.category)) return false;
     if (activeSeasons.length && !activeSeasons.every(s => it.seasons?.includes(s))) return false;
     if (activeOccasions.length && !activeOccasions.every(o => it.occasions?.includes(o))) return false;
     if (activeCustom.length && !activeCustom.every(t => it.custom?.includes(t))) return false;
     if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [items, activeCollectionObj, activeStatus, activeBrands, activeCategory, activeSeasons, activeOccasions, activeCustom, search]);
+  }), [items, activeCollectionObj, activeStatuses, activeBrands, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
+
+  const selectAll = () => setSelectedIds(new Set(filtered.map(i => i.id)));
 
   const handleAddItem = async (file) => {
     if (!file) return;
@@ -923,16 +941,18 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
   }), [items]);
 
   const filterCount =
-    (activeCategory ? 1 : 0)
+    activeCategories.length
     + activeSeasons.length
     + activeOccasions.length
     + activeCustom.length
     + (activeCollection ? 1 : 0)
-    + (activeStatus !== "owned" ? 1 : 0)
+    + (activeStatuses.length === 1 && activeStatuses[0] === "owned" ? 0 : 1)
     + activeBrands.length;
 
   return (
-    <div className="fade-up">
+    <>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+      <div className="fade-up">
       <div className="mb-6 sm:mb-10">
         <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Personal Inventory</p>
         <h2 className="font-serif text-4xl sm:text-6xl leading-none">Everything you own,<br/><em className="text-stone-600">at a glance.</em></h2>
@@ -945,14 +965,33 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         <p className="text-sm italic text-stone-500 mb-4">"{activeCollectionObj.description}"</p>
       )}
 
-      {/* Add button — on its own row */}
+      {/* Add button / select mode bar */}
       <div className="mb-3">
-        <button
-          onClick={() => setAdding(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
-        >
-          <I.plus size={14} /> Add Item
-        </button>
+        {!selectMode ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAdding(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+            >
+              <I.plus size={14} /> Add Item
+            </button>
+            {items.length > 0 && (
+              <button
+                onClick={() => setSelectMode(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-300 bg-stone-50 text-stone-700 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+              >
+                Select
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 py-1">
+            <span className="text-sm text-stone-700">{selectedIds.size} selected</span>
+            <button onClick={selectAll} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">All</button>
+            <button onClick={() => setSelectedIds(new Set())} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">None</button>
+            <button onClick={exitSelectMode} className="ml-auto text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">Done</button>
+          </div>
+        )}
       </div>
 
       {/* Search + filter toggle */}
@@ -982,21 +1021,19 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
               <Chip tone="collection" active={activeCollection === null} onClick={() => setActiveCollection(null)}>Entire Wardrobe</Chip>
               {collections.map(c => (
                 <Chip key={c.id} tone="collection" active={activeCollection === c.id} onClick={() => setActiveCollection(activeCollection === c.id ? null : c.id)}>
-                  {c.name}
+                  {toTitle(c.name)}
                 </Chip>
               ))}
             </FilterRow>
           )}
           <FilterRow label="Status">
-            <Chip tone="status" active={activeStatus === null} onClick={() => setActiveStatus(null)}>All</Chip>
             {STATUS_OPTIONS.map(s => (
-              <Chip key={s} tone="status" active={activeStatus === s} onClick={() => setActiveStatus(s)}>{s}</Chip>
+              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
             ))}
           </FilterRow>
           <FilterRow label="Category">
-            <Chip tone="category" active={activeCategory === null} onClick={() => setActiveCategory(null)}>All</Chip>
             {CATEGORY_OPTIONS.map(c => (
-              <Chip key={c} tone="category" active={activeCategory === c} onClick={() => setActiveCategory(activeCategory === c ? null : c)}>{c}</Chip>
+              <Chip key={c} tone="category" active={activeCategories.includes(c)} onClick={() => toggle(activeCategories, setActiveCategories, c)}>{c}</Chip>
             ))}
           </FilterRow>
           <FilterRow label="Season">
@@ -1025,7 +1062,7 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
           )}
           {filterCount > 0 && (
             <button
-              onClick={() => { setActiveCategory(null); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatus("owned"); setActiveBrands([]); }}
+              onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); }}
               className="mt-2 text-[10px] tracking-[0.2em] uppercase text-stone-500 underline"
             >
               Clear all
@@ -1039,24 +1076,26 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {activeCollection && activeCollectionObj && (
             <RemovableChip tone="collection" onRemove={() => setActiveCollection(null)}>
-              <I.folder size={11} /> {activeCollectionObj.name}
+              <I.folder size={11} /> {toTitle(activeCollectionObj.name)}
             </RemovableChip>
           )}
-          {activeStatus !== "owned" && (
-            <RemovableChip tone="status" onRemove={() => setActiveStatus("owned")}>
-              {activeStatus || "All statuses"}
-            </RemovableChip>
+          {!(activeStatuses.length === 1 && activeStatuses[0] === "owned") && (
+            activeStatuses.length === 0
+              ? <RemovableChip tone="status" onRemove={() => setActiveStatuses(["owned"])}>All statuses</RemovableChip>
+              : activeStatuses.map(s => (
+                  <RemovableChip key={`st-${s}`} tone="status" onRemove={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</RemovableChip>
+                ))
           )}
           {activeBrands.map(b => (
             <RemovableChip key={`b-${b}`} tone="brand" onRemove={() => toggle(activeBrands, setActiveBrands, b)}>
               {b}
             </RemovableChip>
           ))}
-          {activeCategory && (
-            <RemovableChip tone="category" onRemove={() => setActiveCategory(null)}>
-              {activeCategory}
+          {activeCategories.map(c => (
+            <RemovableChip key={`cat-${c}`} tone="category" onRemove={() => toggle(activeCategories, setActiveCategories, c)}>
+              {c}
             </RemovableChip>
-          )}
+          ))}
           {activeSeasons.map(s => (
             <RemovableChip key={`s-${s}`} tone="season" onRemove={() => toggle(activeSeasons, setActiveSeasons, s)}>
               {s}
@@ -1096,16 +1135,20 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
               key={item.id}
               item={item}
               image={images[item.id]}
-              onClick={() => setViewing(item.id)}
+              onClick={selectMode ? () => toggleItemSelect(item.id) : () => setViewing(item.id)}
+              isSelected={selectedIds.has(item.id)}
               delay={i * 40}
               cardRef={(el) => register(i, el)}
-              reorderHandle={onHandlePointerDown(i)}
-              isDragging={dragIndex === i}
-              isDropTarget={dragIndex !== null && hoverIndex === i && dragIndex !== i}
+              reorderHandle={selectMode ? null : onHandlePointerDown(i)}
+              isDragging={!selectMode && dragIndex === i}
+              isDropTarget={!selectMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
             />
           ))}
         </div>
       )}
+
+      </div>
+      </main>
 
       {viewing && !editing && (
         <ViewDrawer
@@ -1134,7 +1177,34 @@ function ClosetView({ items, images, customTags, brands, collections, activeColl
         />
       )}
       {adding && <AddItemModal onClose={() => setAdding(false)} onFile={handleAddItem} />}
-    </div>
+
+      {selectMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-stone-50/95 backdrop-blur border-t border-stone-300 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+            <span className="text-sm text-stone-700 mr-auto">{selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""}</span>
+            <button onClick={() => setBulkSheet("tags")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Tags</button>
+            <button onClick={() => setBulkSheet("collections")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Collections</button>
+            <button onClick={() => setBulkSheet("outfits")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Outfits</button>
+          </div>
+        </div>
+      )}
+
+      {bulkSheet && (
+        <BulkSheet
+          type={bulkSheet}
+          selectedIds={selectedIds}
+          items={items}
+          customTags={customTags}
+          collections={collections}
+          outfits={outfits}
+          onSaveItems={onSaveItems}
+          onSaveCustomTags={onSaveCustomTags}
+          onSaveCollections={onSaveCollections}
+          onSaveOutfits={onSaveOutfits}
+          onClose={() => setBulkSheet(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -1147,12 +1217,12 @@ function FilterRow({ label, children }) {
   );
 }
 
-function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef }) {
+function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef, isSelected }) {
   return (
     <div
       ref={cardRef}
       onClick={onClick}
-      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-30 border-stone-900" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : "border-stone-200"}`}
+      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-30 border-stone-900" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : isSelected ? "border-stone-900 ring-2 ring-stone-900/20" : "border-stone-200"}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden relative">
@@ -1172,9 +1242,14 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
             <I.grip size={14} />
           </button>
         )}
+        {isSelected && (
+          <div className="absolute top-1.5 right-1.5 bg-stone-900 text-stone-50 rounded-full p-0.5">
+            <I.check size={12} />
+          </div>
+        )}
       </div>
       <div className="p-2 sm:p-3">
-        <p className="font-serif text-sm sm:text-base leading-tight truncate">{item.name}</p>
+        <p className="font-serif text-sm sm:text-base leading-tight truncate">{toTitle(item.name)}</p>
         <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-0.5">{item.category}</p>
       </div>
     </div>
@@ -1183,11 +1258,12 @@ function ItemCard({ item, image, onClick, delay = 0, reorderHandle, isDragging, 
 
 // --- VIEW DRAWER (read-only details) --------------------------------------
 function ViewDrawer({ item, image, collections, onClose, onEdit }) {
+  useBodyScrollLock();
   if (!item) return null;
   const inCollections = (collections || []).filter(c => c.itemIds.includes(item.id));
 
   return (
-    <div className="fixed inset-0 z-40 flex sm:justify-end">
+    <div className="fixed inset-0 z-50 flex sm:justify-end">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative w-full sm:max-w-md bg-stone-50 h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -1202,7 +1278,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
               : <I.shirt size={48} className="text-stone-400" />
             }
           </div>
-          <h3 className="font-serif text-3xl mt-5 text-center">{item.name}</h3>
+          <h3 className="font-serif text-3xl mt-5 text-center">{toTitle(item.name)}</h3>
           <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mt-1">{item.category}</p>
         </div>
 
@@ -1264,7 +1340,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
               <div className="flex flex-wrap gap-2">
                 {inCollections.map(c => (
                   <span key={c.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-slate-800 text-slate-50 border-slate-800">
-                    <I.folder size={11} /> {c.name}
+                    <I.folder size={11} /> {toTitle(c.name)}
                   </span>
                 ))}
               </div>
@@ -1293,6 +1369,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
 // --- EDIT DRAWER ----------------------------------------------------------
 function EditDrawer({ item, image, customTags, brands, collections, onCustomTagsChange, onBrandsChange, onCollectionsChange, onReplaceImage, onClose, onSave, onDelete }) {
+  useBodyScrollLock();
   const [draft, setDraft] = useState(item);
   const [newTag, setNewTag] = useState("");
   const [newBrand, setNewBrand] = useState("");
@@ -1347,7 +1424,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex sm:justify-end">
+    <div className="fixed inset-0 z-50 flex sm:justify-end">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative w-full sm:max-w-md bg-stone-50 h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -1468,7 +1545,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${inIt ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300"}`}
                 >
                   <I.folder size={11} />
-                  {c.name}
+                  {toTitle(c.name)}
                 </button>
               );
             })}
@@ -1495,9 +1572,10 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
 }
 
 function AddItemModal({ onClose, onFile }) {
+  useBodyScrollLock();
   const inputRef = useRef();
   return (
-    <div className="fixed inset-0 z-40 flex items-start sm:items-center justify-center p-4 sm:p-6 pt-16 sm:pt-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-stone-50 max-w-md w-full p-6 sm:p-8 rounded-sm shadow-2xl fade-up">
         <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
@@ -1523,8 +1601,174 @@ function AddItemModal({ onClose, onFile }) {
   );
 }
 
+// --- BULK ACTION SHEET ----------------------------------------------------
+function BulkSheet({ type, selectedIds, items, customTags, collections, outfits, onSaveItems, onSaveCustomTags, onSaveCollections, onSaveOutfits, onClose }) {
+  useBodyScrollLock();
+  const count = selectedIds.size;
+
+  // Tags: which to add
+  const [addSeasons, setAddSeasons] = useState([]);
+  const [addOccasions, setAddOccasions] = useState([]);
+  const [addCustom, setAddCustom] = useState([]);
+  const [newTag, setNewTag] = useState("");
+
+  const toggleTag = (list, setList, v) => setList(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
+
+  const addNewTag = () => {
+    const t = newTag.trim().toLowerCase();
+    if (!t) return;
+    if (!customTags.includes(t)) onSaveCustomTags([...customTags, t]);
+    if (!addCustom.includes(t)) setAddCustom(prev => [...prev, t]);
+    setNewTag("");
+  };
+
+  // Collections / Outfits: track desired state per id ("all" | "some" | "none")
+  const [collState, setCollState] = useState(() => {
+    const ids = [...selectedIds];
+    const m = {};
+    (collections || []).forEach(c => {
+      const allIn = ids.every(id => c.itemIds.includes(id));
+      m[c.id] = allIn ? "all" : ids.some(id => c.itemIds.includes(id)) ? "some" : "none";
+    });
+    return m;
+  });
+  const [outfitState, setOutfitState] = useState(() => {
+    const ids = [...selectedIds];
+    const m = {};
+    (outfits || []).forEach(o => {
+      const allIn = ids.every(id => o.itemIds.includes(id));
+      m[o.id] = allIn ? "all" : ids.some(id => o.itemIds.includes(id)) ? "some" : "none";
+    });
+    return m;
+  });
+
+  const toggleColl = (id) => setCollState(prev => ({ ...prev, [id]: prev[id] === "all" ? "none" : "all" }));
+  const toggleOutfit = (id) => setOutfitState(prev => ({ ...prev, [id]: prev[id] === "all" ? "none" : "all" }));
+
+  const apply = () => {
+    const arr = [...selectedIds];
+    if (type === "tags") {
+      onSaveItems(items.map(it => {
+        if (!selectedIds.has(it.id)) return it;
+        return {
+          ...it,
+          seasons: [...new Set([...(it.seasons || []), ...addSeasons])],
+          occasions: [...new Set([...(it.occasions || []), ...addOccasions])],
+          custom: [...new Set([...(it.custom || []), ...addCustom])],
+        };
+      }));
+    } else if (type === "collections") {
+      onSaveCollections((collections || []).map(c => {
+        const d = collState[c.id];
+        if (d === "all") return { ...c, itemIds: [...new Set([...c.itemIds, ...arr])] };
+        if (d === "none") return { ...c, itemIds: c.itemIds.filter(id => !selectedIds.has(id)) };
+        return c;
+      }));
+    } else if (type === "outfits") {
+      onSaveOutfits((outfits || []).map(o => {
+        const d = outfitState[o.id];
+        if (d === "all") return { ...o, itemIds: [...new Set([...o.itemIds, ...arr])] };
+        if (d === "none") return { ...o, itemIds: o.itemIds.filter(id => !selectedIds.has(id)) };
+        return o;
+      }));
+    }
+    onClose();
+  };
+
+  const titles = { tags: "Apply Tags", collections: "Collections", outfits: "Outfits" };
+
+  return (
+    <div className="fixed inset-0 z-50 flex sm:justify-end">
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full sm:max-w-md bg-stone-50 shadow-2xl fade-up flex flex-col h-full">
+        <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50 shrink-0">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500">{count} item{count !== 1 ? "s" : ""} selected</p>
+            <h3 className="font-serif text-2xl">{titles[type]}</h3>
+          </div>
+          <button onClick={onClose} className="text-stone-500 p-2 -m-2"><I.x size={20} /></button>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6">
+          {type === "tags" && (
+            <>
+              <p className="text-sm text-stone-600">Selected tags will be added to all {count} items. Existing tags are preserved.</p>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Seasons</p>
+                <div className="flex flex-wrap gap-2">
+                  {SEASON_OPTIONS.map(s => <Chip key={s} tone="season" active={addSeasons.includes(s)} onClick={() => toggleTag(addSeasons, setAddSeasons, s)}>{s}</Chip>)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Occasions</p>
+                <div className="flex flex-wrap gap-2">
+                  {OCCASION_OPTIONS.map(o => <Chip key={o} tone="occasion" active={addOccasions.includes(o)} onClick={() => toggleTag(addOccasions, setAddOccasions, o)}>{o}</Chip>)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Custom Tags</p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {customTags.length === 0 && <span className="text-xs text-stone-400 italic">none yet — add one below</span>}
+                  {customTags.map(t => <Chip key={t} tone="custom" active={addCustom.includes(t)} onClick={() => toggleTag(addCustom, setAddCustom, t)}>{t}</Chip>)}
+                </div>
+                <div className="flex gap-2">
+                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNewTag()} placeholder="new tag…" className="flex-1 bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm py-1" />
+                  <button onClick={addNewTag} className="px-3 py-1 bg-stone-900 text-stone-50 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Add</button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {type === "collections" && (
+            (collections || []).length === 0
+              ? <p className="text-sm text-stone-500 italic">No collections yet.</p>
+              : <div className="space-y-2">
+                  {(collections || []).map(c => {
+                    const st = collState[c.id] || "none";
+                    return (
+                      <button key={c.id} onClick={() => toggleColl(c.id)} className={`w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left ${st === "all" ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}>
+                        <I.folder size={16} className="shrink-0" />
+                        <span className="flex-1 font-serif text-lg truncate">{toTitle(c.name)}</span>
+                        {st === "some" && <span className="text-[9px] tracking-[0.2em] uppercase opacity-50">partial</span>}
+                        {st === "all" && <I.check size={16} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+          )}
+
+          {type === "outfits" && (
+            (outfits || []).length === 0
+              ? <p className="text-sm text-stone-500 italic">No outfits yet.</p>
+              : <div className="space-y-2">
+                  {(outfits || []).map(o => {
+                    const st = outfitState[o.id] || "none";
+                    return (
+                      <button key={o.id} onClick={() => toggleOutfit(o.id)} className={`w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left ${st === "all" ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}>
+                        <I.layers size={16} className="shrink-0" />
+                        <span className="flex-1 font-serif text-lg truncate">{toTitle(o.name)}</span>
+                        {st === "some" && <span className="text-[9px] tracking-[0.2em] uppercase opacity-50">partial</span>}
+                        {st === "all" && <I.check size={16} className="shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+          )}
+        </div>
+
+        <div className="p-4 sm:p-6 border-t border-stone-200 bg-stone-50 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}>
+          <button onClick={apply} className="w-full flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95">
+            <I.check size={14} /> Apply to {count} item{count !== 1 ? "s" : ""}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- MANAGE COLLECTIONS ---------------------------------------------------
 function ManageCollectionsModal({ collections, items, images, onSave, onClose, initialEditingId }) {
+  useBodyScrollLock();
   // If we opened straight into an edit/new flow, remember that — Cancel should close instead of returning to the list
   const directEdit = !!initialEditingId;
 
@@ -1610,7 +1854,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                     <div key={c.id} className="flex items-center gap-3 p-3 bg-stone-100 rounded-sm">
                       <I.folder size={16} className="text-stone-600 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-serif text-lg leading-tight truncate">{c.name}</p>
+                        <p className="font-serif text-lg leading-tight truncate">{toTitle(c.name)}</p>
                         <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500">{c.itemIds.length} {c.itemIds.length === 1 ? "piece" : "pieces"}</p>
                         {c.description && <p className="text-xs italic text-stone-500 mt-1 truncate">"{c.description}"</p>}
                       </div>
@@ -1671,7 +1915,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                               </div>
                             )}
                           </div>
-                          <p className="text-[10px] font-serif text-stone-700 truncate px-1 py-1">{it.name}</p>
+                          <p className="text-[10px] font-serif text-stone-700 truncate px-1 py-1">{toTitle(it.name)}</p>
                         </button>
                       );
                     })}
@@ -1707,6 +1951,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   const handleDelete = (id) => { if (confirm("Delete this outfit?")) onSave(outfits.filter(o => o.id !== id)); };
 
   return (
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
     <div className="fade-up">
       <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
         <div>
@@ -1745,6 +1990,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
         </div>
       )}
     </div>
+    </main>
   );
 }
 
@@ -1754,10 +2000,10 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
     <div className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 border-b border-stone-200 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-serif text-xl sm:text-2xl truncate">{outfit.name}</h3>
+          <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(outfit.name)}</h3>
           {outfit.note && <p className="text-sm italic text-stone-500 mt-1">"{outfit.note}"</p>}
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-3 shrink-0">
           {onEdit && (
             <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit outfit">
               <I.pencil size={14} />
@@ -1777,7 +2023,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, delay = 0 }) {
       </div>
       <div className="p-3 sm:p-4 flex flex-wrap gap-2">
         {pieces.map(p => (
-          <span key={p.id} className="text-[10px] tracking-[0.15em] uppercase text-stone-600 border border-stone-300 px-2 py-1 rounded-full">{p.name}</span>
+          <span key={p.id} className="text-[10px] tracking-[0.15em] uppercase text-stone-600 border border-stone-300 px-2 py-1 rounded-full">{toTitle(p.name)}</span>
         ))}
       </div>
     </div>
@@ -1797,7 +2043,9 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
   };
 
   return (
-    <div className="fade-up">
+    <>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+      <div className="fade-up">
       <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Curated Sets</p>
@@ -1838,6 +2086,9 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
         </div>
       )}
 
+      </div>
+      </main>
+
       {showManager && (
         <ManageCollectionsModal
           collections={collections}
@@ -1848,12 +2099,12 @@ function CollectionsView({ collections, items, images, onSave, onViewCollection 
           onClose={() => { setShowManager(false); setEditingId(null); }}
         />
       )}
-    </div>
+    </>
   );
 }
 
 function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, delay = 0 }) {
-  const pieces = collection.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
+  const pieces = items.filter(i => collection.itemIds.includes(i.id));
   // Show up to 9 in a 3×3 grid; truncate only when there are 10+
   const TRUNCATE_AT = 10;
   const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
@@ -1864,7 +2115,7 @@ function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, d
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <I.folder size={16} className="text-stone-600 shrink-0" />
-            <h3 className="font-serif text-xl sm:text-2xl truncate">{collection.name}</h3>
+            <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(collection.name)}</h3>
           </div>
           <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-1">
             {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
@@ -1873,7 +2124,7 @@ function CollectionCard({ collection, items, images, onOpen, onEdit, onDelete, d
             <p className="text-sm italic text-stone-500 mt-1">"{collection.description}"</p>
           )}
         </div>
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-3 shrink-0">
           <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit collection">
             <I.pencil size={14} />
           </button>
@@ -1937,6 +2188,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
   };
 
   return (
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
     <div className="fade-up">
       <div className="mb-6 sm:mb-10 flex items-start justify-between gap-4">
         <div>
@@ -2030,7 +2282,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                     )}
                   </div>
                   <div className="p-2">
-                    <p className="font-serif text-sm truncate">{it.name}</p>
+                    <p className="font-serif text-sm truncate">{toTitle(it.name)}</p>
                     <p className="text-[9px] tracking-[0.2em] uppercase text-stone-500">{it.category}</p>
                   </div>
                 </div>
@@ -2066,11 +2318,13 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         </aside>
       </div>
     </div>
+    </main>
   );
 }
 
 // --- Backup Modal ---------------------------------------------------------
 function BackupModal({ items, images, outfits, customTags, brands, collections, onClose, onImport }) {
+  useBodyScrollLock();
   const fileRef = useRef();
   const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'success', message}
   const [pending, setPending] = useState(null); // parsed valid backup awaiting strategy choice
@@ -2136,7 +2390,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
   })();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 pt-16 sm:pt-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-stone-50 max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-sm shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
         <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
