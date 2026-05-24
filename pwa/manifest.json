@@ -1,7 +1,7 @@
 {
   "name": "Poppy",
   "short_name": "Poppy",
-  "description": "Your closet, blooming. Tag the pieces you own and compose looks worth keeping.",
+  "description": "Wardrobe curation. Tag the pieces you own and compose looks worth keeping.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
