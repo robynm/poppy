@@ -1,6 +1,6 @@
-# My Wardrobe
+# Poppy
 
-A private wardrobe catalogue and outfit builder, packaged as an installable Progressive Web App. Built to run on Android (and iOS, and any modern browser), with all data stored locally on the device.
+Your closet, blooming. A private wardrobe catalogue and outfit builder, packaged as an installable Progressive Web App. Built to run on Android (and iOS, and any modern browser), with all data stored locally on the device.
 
 ```
 poppy/
@@ -85,7 +85,7 @@ Then visit <http://localhost:8000>. Chrome treats `localhost` as secure, so the 
 When a new version is deployed, the phone's service worker detects the changed cache version on next launch and fetches fresh files. If it doesn't pick up automatically:
 
 - **Easiest:** Uninstall the app from your home screen, then re-install from the URL. Data survives — it's in IndexedDB and localStorage, which are not cleared by a PWA uninstall.
-- **Alternative:** Settings → Apps → My Wardrobe → Storage → Clear cache.
+- **Alternative:** Settings → Apps → Poppy → Storage → Clear cache.
 
 ## What lives where
 

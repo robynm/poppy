@@ -1,4 +1,4 @@
-/* The Wardrobe — PWA build
+/* Poppy — PWA build
    Vanilla in-browser React (via Babel standalone). No bundler.
    Persistence: metadata in localStorage, images as Blobs in IndexedDB.
    The `images` map passed through React props is {itemId: objectURL} — tiny pointers
@@ -44,7 +44,25 @@ const I = {
   bookmark: (p) => <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
   grip:     (p) => <Icon {...p} d={<><circle cx="9" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="18" r="1.2"/></>} />,
   camera:   (p) => <Icon {...p} d={<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></>} />,
+  flower:   (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="12" r="3"/><path d="M12 2a3.5 3.5 0 0 0-3 5.3A3.5 3.5 0 0 0 7.3 9 3.5 3.5 0 0 0 5 12c0 1.13.54 2.13 1.37 2.77A3.5 3.5 0 0 0 6 17a3.5 3.5 0 0 0 5.3 3 3.5 3.5 0 0 0 1.7 1.7A3.5 3.5 0 0 0 18 17a3.5 3.5 0 0 0-.37-2.23A3.5 3.5 0 0 0 19 12a3.5 3.5 0 0 0-2.3-3.3A3.5 3.5 0 0 0 17 7a3.5 3.5 0 0 0-5-5z"/></>} />,
+  sun:      (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></>} />,
+  heart:    (p) => <Icon {...p} d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />,
 };
+
+// The Poppy brand mark — a stylized blossom built from three soft petals
+function PoppyMark({ size = 24, color = "#FF5A36", className = "" }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 32 32" className={className} aria-hidden="true">
+      {/* outer petals */}
+      <ellipse cx="16" cy="9.5" rx="6.5" ry="7.5" fill={color} opacity="0.95" />
+      <ellipse cx="9.5" cy="18" rx="7" ry="6.2" fill={color} opacity="0.85" transform="rotate(-22 9.5 18)" />
+      <ellipse cx="22.5" cy="18" rx="7" ry="6.2" fill={color} opacity="0.85" transform="rotate(22 22.5 18)" />
+      {/* center disc */}
+      <circle cx="16" cy="15.5" r="3.4" fill="#FFFBF6" />
+      <circle cx="16" cy="15.5" r="1.7" fill={color} />
+    </svg>
+  );
+}
 
 const toTitle = s => s ? s.replace(/\b\w/g, c => c.toUpperCase()) : s;
 
@@ -326,7 +344,7 @@ async function exportBackup({ items, outfits, customTags, brands, collections })
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `wardrobe-backup-${stamp}.json`;
+  a.download = `poppy-backup-${stamp}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -419,21 +437,23 @@ function mergeBackup(current, incoming) {
 }
 
 // --- UI primitives ---------------------------------------------------------
+// Color tones — each pairs a vibrant "active" with a soft pastel "inactive".
+// Six distinct hues plus the brand poppy red-orange, so categories read at a glance.
 function Chip({ children, active, onClick, tone = "default" }) {
   const tones = {
-    default: active ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300",
-    category: active ? "bg-amber-900 text-amber-50 border-amber-900" : "bg-transparent text-amber-900 border-amber-300",
-    season:   active ? "bg-emerald-900 text-emerald-50 border-emerald-900" : "bg-transparent text-emerald-900 border-emerald-300",
-    occasion: active ? "bg-rose-900 text-rose-50 border-rose-900" : "bg-transparent text-rose-900 border-rose-300",
-    custom:   active ? "bg-indigo-900 text-indigo-50 border-indigo-900" : "bg-transparent text-indigo-900 border-indigo-300",
-    collection: active ? "bg-slate-800 text-slate-50 border-slate-800" : "bg-transparent text-slate-700 border-slate-300",
-    status:   active ? "bg-teal-800 text-teal-50 border-teal-800" : "bg-transparent text-teal-800 border-teal-300",
-    brand:    active ? "bg-fuchsia-900 text-fuchsia-50 border-fuchsia-900" : "bg-transparent text-fuchsia-900 border-fuchsia-300",
+    default:    active ? "bg-poppy-500 text-white border-poppy-500 shadow-pop"     : "bg-poppy-50 text-poppy-700 border-poppy-100",
+    category:   active ? "bg-amber-500 text-white border-amber-500 shadow-pop"     : "bg-amber-50 text-amber-800 border-amber-100",
+    season:     active ? "bg-leaf-500 text-white border-leaf-500 shadow-pop"       : "bg-leaf-50 text-leaf-700 border-leaf-100",
+    occasion:   active ? "bg-petal-500 text-white border-petal-500 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
+    custom:     active ? "bg-plum-500 text-white border-plum-500 shadow-pop"       : "bg-plum-50 text-plum-700 border-plum-100",
+    collection: active ? "bg-sky2-500 text-white border-sky2-500 shadow-pop"       : "bg-sky2-50 text-sky2-700 border-sky2-100",
+    status:     active ? "bg-buttercup-500 text-white border-buttercup-500 shadow-pop" : "bg-buttercup-50 text-buttercup-700 border-buttercup-100",
+    brand:      active ? "bg-petal-600 text-white border-petal-600 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
   };
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors active:scale-95 ${tones[tone]}`}
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all active:scale-95 ${tones[tone]}`}
     >
       <span>{children}</span>
     </button>
@@ -443,21 +463,21 @@ function Chip({ children, active, onClick, tone = "default" }) {
 // A pill showing an active filter with an inline × to remove it.
 function RemovableChip({ children, tone = "default", onRemove }) {
   const tones = {
-    default:    "bg-stone-900 text-stone-50 border-stone-900",
-    category:   "bg-amber-900 text-amber-50 border-amber-900",
-    season:     "bg-emerald-900 text-emerald-50 border-emerald-900",
-    occasion:   "bg-rose-900 text-rose-50 border-rose-900",
-    custom:     "bg-indigo-900 text-indigo-50 border-indigo-900",
-    collection: "bg-slate-800 text-slate-50 border-slate-800",
-    status:     "bg-teal-800 text-teal-50 border-teal-800",
-    brand:      "bg-fuchsia-900 text-fuchsia-50 border-fuchsia-900",
+    default:    "bg-poppy-500 text-white border-poppy-500",
+    category:   "bg-amber-500 text-white border-amber-500",
+    season:     "bg-leaf-500 text-white border-leaf-500",
+    occasion:   "bg-petal-500 text-white border-petal-500",
+    custom:     "bg-plum-500 text-white border-plum-500",
+    collection: "bg-sky2-500 text-white border-sky2-500",
+    status:     "bg-buttercup-500 text-white border-buttercup-500",
+    brand:      "bg-petal-600 text-white border-petal-600",
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-[11px] uppercase tracking-[0.14em] border rounded-full ${tones[tone]}`}>
+    <span className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full shadow-pop ${tones[tone]}`}>
       <span className="inline-flex items-center gap-1.5">{children}</span>
       <button
         onClick={onRemove}
-        className="inline-flex items-center justify-center w-4 h-4 rounded-full opacity-70 hover:opacity-100 active:scale-90"
+        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/25 hover:bg-white/40 active:scale-90 transition-colors"
         aria-label="Remove filter"
       >
         <I.x size={10} />
@@ -468,10 +488,13 @@ function RemovableChip({ children, tone = "default", onRemove }) {
 
 function SectionLabel({ children, count }) {
   return (
-    <div className="flex items-baseline gap-3 mb-4">
-      <h2 className="font-serif text-lg italic text-stone-700">{children}</h2>
-      {count !== undefined && <span className="text-[11px] tracking-widest uppercase text-stone-400">{count}</span>}
-      <div className="flex-1 h-px bg-stone-300"></div>
+    <div className="flex items-center gap-3 mb-4">
+      <span className="w-2 h-2 rounded-full bg-poppy-500"></span>
+      <h2 className="font-display font-bold text-xl text-ink-800">{children}</h2>
+      {count !== undefined && (
+        <span className="text-[11px] font-bold tracking-widest uppercase text-poppy-600 bg-poppy-50 px-2 py-0.5 rounded-full">{count}</span>
+      )}
+      <div className="flex-1 h-px bg-cream-200"></div>
     </div>
   );
 }
@@ -707,26 +730,34 @@ function ClosetApp() {
 
   if (!loaded) {
     return (
-      <div className="min-h-screen bg-stone-100 flex items-center justify-center">
-        <div className="text-stone-500 text-xs tracking-[0.3em] uppercase">Opening the wardrobe…</div>
+      <div className="min-h-screen bg-cream-50 flex flex-col items-center justify-center gap-3">
+        <div className="w-14 h-14 rounded-full bg-poppy-500 flex items-center justify-center bloom shadow-poppy">
+          <PoppyMark size={28} color="#FFFBF6" />
+        </div>
+        <div className="text-ink-500 text-xs font-bold tracking-[0.2em] uppercase">Poppy is blooming…</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 text-stone-900 pb-24">
+    <div className="min-h-screen bg-cream-50 text-ink-900 pb-24 poppy-wash">
       {/* HEADER */}
-      <header className="border-b border-stone-300 bg-stone-50/80 z-30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-baseline gap-3">
-            <h1 className="font-serif text-2xl sm:text-3xl tracking-tight">My Wardrobe</h1>
-            <span className="text-[10px] tracking-[0.3em] uppercase text-stone-500 hidden sm:inline">A private catalogue</span>
+      <header className="bg-white/95 backdrop-blur border-b border-cream-100 z-30 sticky top-0 shadow-card">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-poppy-500 flex items-center justify-center shadow-poppy">
+              <PoppyMark size={22} color="#FFFBF6" />
+            </div>
+            <div>
+              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-ink-900 leading-none">Poppy</h1>
+              <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-poppy-600 hidden sm:inline">Your closet, blooming</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {canInstall && (
               <button
                 onClick={promptInstall}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 text-stone-50 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
               >
                 <I.install size={12} /> Install
               </button>
@@ -734,10 +765,10 @@ function ClosetApp() {
             <button
               onClick={() => setShowBackup(true)}
               aria-label="Backup and restore"
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
             >
               <I.archive size={12} />
-              <span className="hidden sm:inline">Backup</span>
+              <span className="hidden sm:inline">Save</span>
             </button>
           </div>
         </div>
@@ -788,12 +819,12 @@ function ClosetApp() {
         />
       )}
 
-      {/* BOTTOM NAV — mobile-first */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-stone-50/95 backdrop-blur border-t border-stone-300" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="max-w-6xl mx-auto grid grid-cols-3">
-          <BottomTab IconC={I.shirt}  label="Closet"      active={view === "closet"}      onClick={() => setView("closet")} />
-          <BottomTab IconC={I.layers} label="Outfits"     active={view === "outfits"}     onClick={() => setView("outfits")} />
-          <BottomTab IconC={I.folder} label="Collections" active={view === "collections"} onClick={() => setView("collections")} />
+      {/* BOTTOM NAV — mobile-first, Poppy-style: chunky, colorful, with a soft pill on the active tab */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="max-w-6xl mx-auto grid grid-cols-3 px-3 pt-2 pb-1">
+          <BottomTab IconC={I.shirt}  label="Closet"      tone="poppy"  active={view === "closet"}      onClick={() => setView("closet")} />
+          <BottomTab IconC={I.layers} label="Looks"       tone="petal"  active={view === "outfits"}     onClick={() => setView("outfits")} />
+          <BottomTab IconC={I.folder} label="Sets"        tone="sky2"   active={view === "collections"} onClick={() => setView("collections")} />
         </div>
       </nav>
 
@@ -820,20 +851,26 @@ function ClosetApp() {
   );
 }
 
-function BottomTab({ IconC, label, active, onClick, count }) {
+function BottomTab({ IconC, label, active, onClick, count, tone = "poppy" }) {
+  // Each tab has its own accent color, so the bar reads as a colorful row
+  const toneMap = {
+    poppy: { bg: "bg-poppy-50",  text: "text-poppy-600",  pill: "bg-poppy-500" },
+    petal: { bg: "bg-petal-50",  text: "text-petal-600",  pill: "bg-petal-500" },
+    sky2:  { bg: "bg-sky2-50",   text: "text-sky2-600",   pill: "bg-sky2-500" },
+  };
+  const t = toneMap[tone] || toneMap.poppy;
   return (
     <button
       onClick={onClick}
-      className={`relative flex flex-col items-center gap-1 py-3 transition-colors active:bg-stone-200 ${active ? "text-stone-900" : "text-stone-500"}`}
+      className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl transition-all ${active ? t.bg : "bg-transparent"} active:scale-95`}
     >
-      <div className="relative">
-        <IconC size={20} />
+      <div className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${active ? `${t.pill} text-white shadow-pop` : "text-ink-400"}`}>
+        <IconC size={20} stroke={active ? 2.4 : 2} />
         {count > 0 && (
-          <span className="absolute -top-1.5 -right-2 bg-stone-900 text-stone-50 text-[9px] rounded-full px-1.5 py-0.5 leading-none">{count}</span>
+          <span className="absolute -top-1 -right-1 bg-poppy-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 leading-none border-2 border-white">{count}</span>
         )}
       </div>
-      <span className="text-[9px] tracking-[0.2em] uppercase">{label}</span>
-      {active && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-stone-900"></span>}
+      <span className={`text-[10px] font-bold tracking-[0.1em] uppercase ${active ? t.text : "text-ink-400"}`}>{label}</span>
     </button>
   );
 }
@@ -966,52 +1003,58 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 
   return (
     <>
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="fade-up">
       <div className="mb-6 sm:mb-10">
-        <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Personal Inventory</p>
-        <h2 className="font-serif text-4xl sm:text-6xl leading-none">Everything you own,<br/><em className="text-stone-600">at a glance.</em></h2>
-        <p className="mt-3 sm:mt-4 text-stone-600 text-sm max-w-xl">
-          {counts.total} pieces · {counts.tops} tops · {counts.bottoms} bottoms
+        {/* <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
+          <I.flower size={12} className="text-poppy-500" />
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Your Closet</p>
+        </div> */}
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Your closet,</h2>
+        <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
+        <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">all in one place.</em></h3>
+        {!selectMode &&           <button
+            onClick={() => setAdding(true)}
+            style={{flexShrink: 0}}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
+          >
+            <I.plus size={16} /> Add a Piece
+          </button>}
+        </div>
+        <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl">
+          <span className="font-bold text-ink-800">{counts.total}</span> pieces · <span className="font-bold text-ink-800">{counts.tops}</span> tops · <span className="font-bold text-ink-800">{counts.bottoms}</span> bottoms
         </p>
       </div>
 
       {activeCollectionObj && activeCollectionObj.description && (
-        <p className="text-sm italic text-stone-500 mb-4">"{activeCollectionObj.description}"</p>
+        <p className="text-sm italic text-ink-500 mb-4">"{activeCollectionObj.description}"</p>
       )}
 
       {/* Add button / select mode bar */}
       <div className="mb-3">
-        {selectMode ? (
-          <div className="flex items-center gap-4 py-1">
-            <span className="text-sm text-stone-700">{selectedIds.size} selected</span>
-            <button onClick={selectAll} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">All</button>
-            <button onClick={exitSelectMode} className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900">None</button>
+        {selectMode  && (
+          <div className="flex items-center gap-3 py-1 bg-poppy-50 px-4 py-2.5 rounded-full">
+            <span className="text-sm font-bold text-poppy-700">{selectedIds.size} selected</span>
+            <button onClick={selectAll} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">All</button>
+            <button onClick={exitSelectMode} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">None</button>
           </div>
-        ) : (
-          <button
-            onClick={() => setAdding(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
-          >
-            <I.plus size={14} /> Add Item
-          </button>
-        )}
+        ) }
       </div>
 
       {/* Search + filter toggle */}
       <div className="mb-4 flex gap-2">
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-stone-50 border border-stone-200 rounded-sm min-w-0">
-          <I.search size={14} className="text-stone-500 shrink-0" />
+        {/* <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-cream-100 rounded-full min-w-0 shadow-card">
+          <I.search size={15} className="text-poppy-500 shrink-0" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="search…"
-            className="flex-1 bg-transparent outline-none text-sm placeholder-stone-400 min-w-0"
+            placeholder="search your closet…"
+            className="flex-1 bg-transparent outline-none text-sm placeholder-ink-400 min-w-0 font-medium"
           />
-        </div>
+        </div> */}
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`relative px-3 py-2 border rounded-sm text-[10px] tracking-[0.2em] uppercase active:scale-95 shrink-0 ${filterCount > 0 ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}
+          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
         >
           Filters{filterCount > 0 && ` · ${filterCount}`}
         </button>
@@ -1019,10 +1062,10 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 
       {/* Collapsible filters */}
       {showFilters && (
-        <div className="mb-6 p-4 bg-stone-50 border border-stone-200 rounded-sm fade-up">
+        <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
           {collections.length > 0 && (
             <FilterRow label="Collection">
-              <Chip tone="collection" active={activeCollection === null} onClick={() => setActiveCollection(null)}>Entire Wardrobe</Chip>
+              <Chip tone="collection" active={activeCollection === null} onClick={() => setActiveCollection(null)}>Entire Closet</Chip>
               {collections.map(c => (
                 <Chip key={c.id} tone="collection" active={activeCollection === c.id} onClick={() => setActiveCollection(activeCollection === c.id ? null : c.id)}>
                   {toTitle(c.name)}
@@ -1067,7 +1110,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           {filterCount > 0 && (
             <button
               onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); }}
-              className="mt-2 text-[10px] tracking-[0.2em] uppercase text-stone-500 underline"
+              className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
             >
               Clear all
             </button>
@@ -1117,20 +1160,22 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           ))}
           <button
             onClick={() => { setActiveCategory(null); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatus("owned"); setActiveBrands([]); }}
-            className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline active:text-stone-900 ml-1"
+            className="text-[10px] tracking-[0.2em] uppercase text-ink-500 underline active:text-poppy-600 ml-1"
           >
             Clear all
           </button>
         </div>
       )}
 
-      <SectionLabel count={filtered.length}>
-        {activeCollectionObj ? activeCollectionObj.name : "The Collection"}
-      </SectionLabel>
+      <div className="flex-1 h-px bg-cream-200 mb-3"></div>
+
       {filtered.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="font-serif italic text-stone-500 text-xl">Nothing matches.</p>
-          <p className="text-xs tracking-widest uppercase text-stone-400 mt-2">Try clearing a filter</p>
+        <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
+            <I.search size={26} className="text-poppy-500" />
+          </div>
+          <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
@@ -1166,15 +1211,15 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               ghostRef.current = el;
               if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
             }}
-            className="pointer-events-none fixed left-0 top-0 z-50 bg-stone-50 border border-stone-200 rounded-sm overflow-hidden"
-            style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}
+            className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-poppy-300 rounded-3xl overflow-hidden"
+            style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(255, 90, 54, 0.35)' }}
           >
-            <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden">
-              {image ? <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" /> : <I.shirt size={32} className="text-stone-400" />}
+            <div className="aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center overflow-hidden">
+              {image ? <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" /> : <I.shirt size={32} className="text-poppy-300" />}
             </div>
-            <div className="p-2 sm:p-3">
-              <p className="font-serif text-sm sm:text-base leading-tight truncate">{toTitle(item.name)}</p>
-              <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-0.5">{item.category}</p>
+            <div className="p-3">
+              <p className="font-display font-semibold text-sm sm:text-base leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
+              <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{item.category}</p>
             </div>
           </div>
         );
@@ -1209,12 +1254,12 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       {adding && <AddItemModal onClose={() => setAdding(false)} onFile={handleAddItem} />}
 
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-stone-50/95 backdrop-blur border-t border-stone-300 shadow-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
-            <span className="text-sm text-stone-700 mr-auto">{selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""}</span>
-            <button onClick={() => setBulkSheet("tags")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Tags</button>
-            <button onClick={() => setBulkSheet("collections")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Collections</button>
-            <button onClick={() => setBulkSheet("outfits")} className="px-3 py-2 border border-stone-300 bg-stone-50 text-stone-700 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Outfits</button>
+            <span className="text-sm font-bold text-poppy-700 mr-auto">{selectedIds.size} selected</span>
+            <button onClick={() => setBulkSheet("tags")} className="px-3.5 py-2 bg-plum-50 text-plum-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-plum-100">Tags</button>
+            <button onClick={() => setBulkSheet("collections")} className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100">Sets</button>
+            <button onClick={() => setBulkSheet("outfits")} className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100">Looks</button>
           </div>
         </div>
       )}
@@ -1241,7 +1286,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 function FilterRow({ label, children }) {
   return (
     <div className="py-2">
-      <p className="text-[10px] tracking-[0.3em] uppercase text-stone-400 mb-2">{label}</p>
+      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">{label}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -1252,21 +1297,21 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
     <div
       ref={cardRef}
       onClick={onClick}
-      className={`item-card cursor-pointer fade-up bg-stone-50 border rounded-sm overflow-hidden active:scale-[0.98] relative transition-all ${isDragging ? "opacity-0" : isDropTarget ? "border-stone-900 ring-2 ring-stone-900/30" : isSelected ? "border-stone-900 ring-2 ring-stone-900/20" : "border-stone-200"}`}
+      className={`item-card cursor-pointer fade-up bg-white border-2 rounded-3xl overflow-hidden active:scale-[0.98] relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
       style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
-      <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center overflow-hidden relative">
+      <div className="aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center overflow-hidden relative">
         {image ? (
           <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" />
         ) : (
-          <I.shirt size={32} className="text-stone-400" />
+          <I.shirt size={32} className="text-poppy-300" />
         )}
         {reorderHandle && (
           <button
             onPointerDown={reorderHandle}
             onClick={(e) => { e.stopPropagation(); }}
             aria-label="Drag to reorder"
-            className="absolute top-1 left-1 p-1.5 bg-stone-50/90 backdrop-blur rounded-full text-stone-600 cursor-grab active:cursor-grabbing"
+            className="absolute top-1.5 left-1.5 p-1.5 bg-white/95 backdrop-blur rounded-full text-ink-600 cursor-grab active:cursor-grabbing shadow-card"
             style={{ touchAction: 'none' }}
           >
             <I.grip size={14} />
@@ -1276,15 +1321,15 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
           <button
             onClick={(e) => { e.stopPropagation(); onSelectToggle(); }}
             aria-label={isSelected ? "Deselect item" : "Select item"}
-            className={`absolute top-1.5 right-1.5 rounded-full p-0.5 transition-colors ${isSelected ? "bg-stone-900 text-stone-50" : "bg-stone-50/80 backdrop-blur text-stone-300 border border-stone-300"}`}
+            className={`absolute top-1.5 right-1.5 rounded-full w-6 h-6 flex items-center justify-center transition-colors shadow-card ${isSelected ? "bg-poppy-500 text-white" : "bg-white/95 backdrop-blur text-ink-300 border border-cream-200"}`}
           >
             <I.check size={12} />
           </button>
         )}
       </div>
-      <div className="p-2 sm:p-3">
-        <p className="font-serif text-sm sm:text-base leading-tight truncate">{toTitle(item.name)}</p>
-        <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-0.5">{item.category}</p>
+      <div className="p-3">
+        <p className="font-display font-semibold text-sm sm:text-base leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
+        <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{item.category}</p>
       </div>
     </div>
   );
@@ -1298,29 +1343,29 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
   return (
     <div className="fixed inset-0 z-50 flex sm:justify-end">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full sm:max-w-md bg-stone-50 h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500">Details</p>
-          <button onClick={onClose} className="text-stone-500 p-2 -m-2" aria-label="Close"><I.x size={20} /></button>
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Details</p>
+          <button onClick={onClose} className="text-ink-500 p-2 -m-2" aria-label="Close"><I.x size={20} /></button>
         </div>
 
         <div className="px-4 sm:px-6 pt-6 pb-4 flex flex-col items-center">
-          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 rounded-sm overflow-hidden flex items-center justify-center">
+          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 rounded-2xl overflow-hidden flex items-center justify-center">
             {image
               ? <img src={image} alt={item.name} className="w-full h-full object-contain p-4" />
-              : <I.shirt size={48} className="text-stone-400" />
+              : <I.shirt size={48} className="text-ink-400" />
             }
           </div>
-          <h3 className="font-serif text-3xl mt-5 text-center">{toTitle(item.name)}</h3>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mt-1">{item.category}</p>
+          <h3 className="font-display text-3xl mt-5 text-center">{toTitle(item.name)}</h3>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mt-1">{item.category}</p>
         </div>
 
         <div className="px-4 sm:px-6 pb-6 space-y-5">
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Status</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-teal-800 text-teal-50 border-teal-800">
+              <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop">
                 {item.status || "owned"}
               </span>
             </div>
@@ -1328,19 +1373,19 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
           {item.brand && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Brand</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Brand</p>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-fuchsia-900 text-fuchsia-50 border-fuchsia-900">{item.brand}</span>
+                <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-600 text-white border-petal-600 shadow-pop">{item.brand}</span>
               </div>
             </div>
           )}
 
           {(item.seasons && item.seasons.length > 0) && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Seasons</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
               <div className="flex flex-wrap gap-2">
                 {item.seasons.map(s => (
-                  <span key={s} className="inline-flex items-center px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-emerald-900 text-emerald-50 border-emerald-900">{s}</span>
+                  <span key={s} className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-leaf-500 text-white border-leaf-500 shadow-pop">{s}</span>
                 ))}
               </div>
             </div>
@@ -1348,10 +1393,10 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
           {(item.occasions && item.occasions.length > 0) && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Occasions</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasions</p>
               <div className="flex flex-wrap gap-2">
                 {item.occasions.map(o => (
-                  <span key={o} className="inline-flex items-center px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-rose-900 text-rose-50 border-rose-900">{o}</span>
+                  <span key={o} className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-500 text-white border-petal-500 shadow-pop">{o}</span>
                 ))}
               </div>
             </div>
@@ -1359,10 +1404,10 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
           {(item.custom && item.custom.length > 0) && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Tags</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Tags</p>
               <div className="flex flex-wrap gap-2">
                 {item.custom.map(t => (
-                  <span key={t} className="inline-flex items-center px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-indigo-900 text-indigo-50 border-indigo-900">{t}</span>
+                  <span key={t} className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-plum-500 text-white border-plum-500 shadow-pop">{t}</span>
                 ))}
               </div>
             </div>
@@ -1370,10 +1415,10 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
           {inCollections.length > 0 && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">In Collections</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">In Collections</p>
               <div className="flex flex-wrap gap-2">
                 {inCollections.map(c => (
-                  <span key={c.id} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full bg-slate-800 text-slate-50 border-slate-800">
+                  <span key={c.id} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-sky2-500 text-white border-sky2-500 shadow-pop">
                     <I.folder size={11} /> {toTitle(c.name)}
                   </span>
                 ))}
@@ -1386,14 +1431,14 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
             (!item.occasions || item.occasions.length === 0) &&
             (!item.custom || item.custom.length === 0) &&
             inCollections.length === 0) && (
-            <p className="text-sm italic text-stone-500 text-center">No tags or collections yet — tap Edit to add some.</p>
+            <p className="text-sm italic text-ink-500 text-center">No tags or collections yet — tap Edit to add some.</p>
           )}
 
           <button
             onClick={onEdit}
-            className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+            className="w-full mt-2 flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
           >
-            <I.pencil size={14} /> Edit
+            <I.pencil size={14} /> Edit Piece
           </button>
         </div>
       </div>
@@ -1459,19 +1504,19 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
 
   return (
     <div className="fixed inset-0 z-50 flex sm:justify-end">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full sm:max-w-md bg-stone-50 h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500">Editing</p>
-          <button onClick={onClose} className="text-stone-500 p-2 -m-2"><I.x size={20} /></button>
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Editing</p>
+          <button onClick={onClose} className="text-ink-500 p-2 -m-2"><I.x size={20} /></button>
         </div>
 
         <div className="p-4 sm:p-6">
           <div className="flex flex-col items-center">
-            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 rounded-sm overflow-hidden mb-3 flex items-center justify-center">
+            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
               {image && <img src={image} alt={draft.name} className="w-full h-full object-contain p-4" />}
               {replacing && (
-                <div className="absolute inset-0 bg-stone-50/80 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-stone-600">
+                <div className="absolute inset-0 bg-white/85 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-ink-600">
                   Updating photo…
                 </div>
               )}
@@ -1479,7 +1524,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
             <button
               onClick={() => imageInputRef.current?.click()}
               disabled={replacing}
-              className="w-full max-w-xs mb-6 flex items-center justify-center gap-2 py-2 border border-stone-300 text-stone-700 text-[10px] tracking-[0.25em] uppercase rounded-sm active:scale-95 disabled:opacity-40"
+              className="w-full max-w-xs mb-6 flex items-center justify-center gap-2 py-2.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[10px] font-bold tracking-[0.2em] uppercase rounded-full active:scale-95 disabled:opacity-40"
             >
               <I.upload size={12} /> Replace Photo
             </button>
@@ -1492,31 +1537,31 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
             className="hidden"
           />
 
-          <label className="block text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-1">Name</label>
+          <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Name</label>
           <input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            className="w-full bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none font-serif text-xl py-1 mb-6"
+            className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display text-xl py-1 mb-6"
           />
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Category</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Category</p>
           <div className="flex flex-wrap gap-2 mb-6">
             {CATEGORY_OPTIONS.map(c => (
               <Chip key={c} tone="category" active={draft.category === c} onClick={() => setDraft({ ...draft, category: c })}>{c}</Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Status</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
           <div className="flex flex-wrap gap-2 mb-6">
             {STATUS_OPTIONS.map(s => (
               <Chip key={s} tone="status" active={(draft.status || "owned") === s} onClick={() => setDraft({ ...draft, status: s })}>{s}</Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Brand</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Brand</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {(brands || []).length === 0 && !draft.brand && (
-              <span className="text-xs text-stone-400 italic">no brands yet — type one below</span>
+              <span className="text-xs text-ink-400 italic">no brands yet — type one below</span>
             )}
             {(brands || []).map(b => (
               <Chip key={b} tone="brand" active={draft.brand === b} onClick={() => pickExistingBrand(b)}>{b}</Chip>
@@ -1528,31 +1573,31 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
               onChange={(e) => setNewBrand(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addBrand()}
               placeholder="new brand…"
-              className="flex-1 bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm py-1"
+              className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
             />
-            <button onClick={addBrand} className="px-3 py-1 bg-stone-900 text-stone-50 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Add</button>
+            <button onClick={addBrand} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Seasons</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
           <div className="flex flex-wrap gap-2 mb-6">
             {SEASON_OPTIONS.map(s => (
               <Chip key={s} tone="season" active={(draft.seasons || []).includes(s)} onClick={() => toggle("seasons", s)}>{s}</Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Occasions</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasions</p>
           <div className="flex flex-wrap gap-2 mb-6">
             {OCCASION_OPTIONS.map(o => (
               <Chip key={o} tone="occasion" active={(draft.occasions || []).includes(o)} onClick={() => toggle("occasions", o)}>{o}</Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Custom Tags</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Custom Tags</p>
           <div className="flex flex-wrap gap-2 mb-3">
             {customTags.map(t => (
               <Chip key={t} tone="custom" active={(draft.custom || []).includes(t)} onClick={() => toggle("custom", t)}>{t}</Chip>
             ))}
-            {customTags.length === 0 && <span className="text-xs text-stone-400 italic">none yet — add one below</span>}
+            {customTags.length === 0 && <span className="text-xs text-ink-400 italic">none yet — add one below</span>}
           </div>
           <div className="flex gap-2 mb-8">
             <input
@@ -1560,15 +1605,15 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
               onChange={(e) => setNewTag(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCustom()}
               placeholder="new tag…"
-              className="flex-1 bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm py-1"
+              className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
             />
-            <button onClick={addCustom} className="px-3 py-1 bg-stone-900 text-stone-50 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Add</button>
+            <button onClick={addCustom} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Collections</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Collections</p>
           <div className="flex flex-wrap gap-2 mb-8">
             {(collections || []).length === 0 && (
-              <span className="text-xs text-stone-400 italic">no collections yet — create one from the Closet</span>
+              <span className="text-xs text-ink-400 italic">no collections yet — create one from the Closet</span>
             )}
             {(collections || []).map(c => {
               const inIt = c.itemIds.includes(item.id);
@@ -1576,7 +1621,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
                 <button
                   key={c.id}
                   onClick={() => toggleCollection(c.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${inIt ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300"}`}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${inIt ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
                 >
                   <I.folder size={11} />
                   {toTitle(c.name)}
@@ -1585,16 +1630,17 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
             })}
           </div>
 
-          <div className="flex gap-3 pt-6 border-t border-stone-200">
+          <div className="flex gap-3 pt-6 border-t-2 border-cream-100">
             <button
               onClick={() => onSave(draft)}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
             >
               <I.check size={14} /> Save
             </button>
             <button
               onClick={() => { if (confirm(`Remove "${draft.name}"?`)) onDelete(); }}
-              className="px-4 py-3 border border-stone-300 text-stone-600 rounded-sm active:scale-95"
+              className="px-5 py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-600 rounded-full active:scale-95"
+              aria-label="Delete piece"
             >
               <I.trash size={14} />
             </button>
@@ -1610,18 +1656,23 @@ function AddItemModal({ onClose, onFile }) {
   const inputRef = useRef();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-stone-50 max-w-md w-full p-6 sm:p-8 rounded-sm shadow-2xl fade-up">
-        <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">New Piece</p>
-        <h3 className="font-serif text-2xl sm:text-3xl mb-4 sm:mb-6">Add to the wardrobe</h3>
-        <p className="text-sm text-stone-600 mb-6">Pick from your gallery or snap a new photo. We'll resize it to save space.</p>
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-white max-w-md w-full p-6 sm:p-8 rounded-2xl shadow-2xl fade-up">
+        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
+          <I.plus size={12} className="text-poppy-500" />
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">New Piece</p>
+        </div>
+        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-3 sm:mb-4 text-ink-900">Add to your closet</h3>
+        <p className="text-sm text-ink-600 mb-6">Pick from your gallery or snap a new photo. We'll resize it to save space.</p>
         <button
           onClick={() => inputRef.current?.click()}
-          className="w-full border-2 border-dashed border-stone-300 active:border-stone-900 transition-colors rounded-sm py-8 sm:py-10 flex flex-col items-center gap-3 text-stone-600"
+          className="w-full border-2 border-dashed border-poppy-200 bg-poppy-50/50 active:border-poppy-500 active:bg-poppy-50 transition-colors rounded-3xl py-8 sm:py-10 flex flex-col items-center gap-3 text-poppy-600"
         >
-          <I.upload size={24} />
-          <span className="text-[11px] tracking-[0.25em] uppercase">Choose a photo</span>
+          <div className="w-12 h-12 rounded-full bg-poppy-100 flex items-center justify-center">
+            <I.upload size={22} />
+          </div>
+          <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Choose a photo</span>
         </button>
         <input
           ref={inputRef}
@@ -1713,41 +1764,41 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
 
   return (
     <div className="fixed inset-0 z-50 flex sm:justify-end">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full sm:max-w-md bg-stone-50 shadow-2xl fade-up flex flex-col h-full">
-        <div className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50 shrink-0">
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative w-full sm:max-w-md bg-white shadow-2xl fade-up flex flex-col h-full">
+        <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white shrink-0">
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500">{count} item{count !== 1 ? "s" : ""} selected</p>
-            <h3 className="font-serif text-2xl">{titles[type]}</h3>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">{count} item{count !== 1 ? "s" : ""} selected</p>
+            <h3 className="font-display text-2xl">{titles[type]}</h3>
           </div>
-          <button onClick={onClose} className="text-stone-500 p-2 -m-2"><I.x size={20} /></button>
+          <button onClick={onClose} className="text-ink-500 p-2 -m-2"><I.x size={20} /></button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6">
           {type === "tags" && (
             <>
-              <p className="text-sm text-stone-600">Selected tags will be added to all {count} items. Existing tags are preserved.</p>
+              <p className="text-sm text-ink-600">Selected tags will be added to all {count} items. Existing tags are preserved.</p>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Seasons</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
                 <div className="flex flex-wrap gap-2">
                   {SEASON_OPTIONS.map(s => <Chip key={s} tone="season" active={addSeasons.includes(s)} onClick={() => toggleTag(addSeasons, setAddSeasons, s)}>{s}</Chip>)}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Occasions</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasions</p>
                 <div className="flex flex-wrap gap-2">
                   {OCCASION_OPTIONS.map(o => <Chip key={o} tone="occasion" active={addOccasions.includes(o)} onClick={() => toggleTag(addOccasions, setAddOccasions, o)}>{o}</Chip>)}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Custom Tags</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Custom Tags</p>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {customTags.length === 0 && <span className="text-xs text-stone-400 italic">none yet — add one below</span>}
+                  {customTags.length === 0 && <span className="text-xs text-ink-400 italic">none yet — add one below</span>}
                   {customTags.map(t => <Chip key={t} tone="custom" active={addCustom.includes(t)} onClick={() => toggleTag(addCustom, setAddCustom, t)}>{t}</Chip>)}
                 </div>
                 <div className="flex gap-2">
-                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNewTag()} placeholder="new tag…" className="flex-1 bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm py-1" />
-                  <button onClick={addNewTag} className="px-3 py-1 bg-stone-900 text-stone-50 text-[10px] tracking-[0.2em] uppercase rounded-sm active:scale-95">Add</button>
+                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNewTag()} placeholder="new tag…" className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1" />
+                  <button onClick={addNewTag} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
                 </div>
               </div>
             </>
@@ -1755,15 +1806,15 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
 
           {type === "collections" && (
             (collections || []).length === 0
-              ? <p className="text-sm text-stone-500 italic">No collections yet.</p>
+              ? <p className="text-sm text-ink-500 italic">No collections yet.</p>
               : <div className="space-y-2">
                   {(collections || []).map(c => {
                     const st = collState[c.id] || "none";
                     return (
-                      <button key={c.id} onClick={() => toggleColl(c.id)} className={`w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left ${st === "all" ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}>
+                      <button key={c.id} onClick={() => toggleColl(c.id)} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-sky2-200"}`}>
                         <I.folder size={16} className="shrink-0" />
-                        <span className="flex-1 font-serif text-lg truncate">{toTitle(c.name)}</span>
-                        {st === "some" && <span className="text-[9px] tracking-[0.2em] uppercase opacity-50">partial</span>}
+                        <span className="flex-1 font-display font-bold text-lg truncate">{toTitle(c.name)}</span>
+                        {st === "some" && <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">partial</span>}
                         {st === "all" && <I.check size={16} className="shrink-0" />}
                       </button>
                     );
@@ -1773,15 +1824,15 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
 
           {type === "outfits" && (
             (outfits || []).length === 0
-              ? <p className="text-sm text-stone-500 italic">No outfits yet.</p>
+              ? <p className="text-sm text-ink-500 italic">No outfits yet.</p>
               : <div className="space-y-2">
                   {(outfits || []).map(o => {
                     const st = outfitState[o.id] || "none";
                     return (
-                      <button key={o.id} onClick={() => toggleOutfit(o.id)} className={`w-full flex items-center gap-3 p-3 rounded-sm border transition-colors text-left ${st === "all" ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-stone-50 border-stone-200 text-stone-700"}`}>
+                      <button key={o.id} onClick={() => toggleOutfit(o.id)} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-petal-200"}`}>
                         <I.layers size={16} className="shrink-0" />
-                        <span className="flex-1 font-serif text-lg truncate">{toTitle(o.name)}</span>
-                        {st === "some" && <span className="text-[9px] tracking-[0.2em] uppercase opacity-50">partial</span>}
+                        <span className="flex-1 font-display font-bold text-lg truncate">{toTitle(o.name)}</span>
+                        {st === "some" && <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">partial</span>}
                         {st === "all" && <I.check size={16} className="shrink-0" />}
                       </button>
                     );
@@ -1790,8 +1841,8 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
           )}
         </div>
 
-        <div className="p-4 sm:p-6 border-t border-stone-200 bg-stone-50 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}>
-          <button onClick={apply} className="w-full flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95">
+        <div className="p-4 sm:p-6 border-t border-cream-100 bg-white shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}>
+          <button onClick={apply} className="w-full flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy">
             <I.check size={14} /> Apply to {count} item{count !== 1 ? "s" : ""}
           </button>
         </div>
@@ -1843,7 +1894,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
     setDraft({ name: "", description: "", itemIds: [] });
   };
   const deleteCollection = (id) => {
-    if (!confirm("Delete this collection? The items themselves stay in your wardrobe.")) return;
+    if (!confirm("Delete this collection? The items themselves stay in your closet.")) return;
     onSave(collections.filter(c => c.id !== id));
     if (editingId === id) cancelEdit();
   };
@@ -1858,51 +1909,53 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div
-        className="relative bg-stone-50 w-full sm:max-w-2xl sm:max-h-[85vh] sm:rounded-sm flex flex-col shadow-2xl fade-up overflow-hidden"
+        className="relative bg-white w-full sm:max-w-2xl sm:max-h-[85vh] sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
         style={{ height: '100dvh', maxHeight: '100dvh' }}
       >
         <div
-          className="p-4 sm:p-6 border-b border-stone-200 flex items-center justify-between bg-stone-50 shrink-0"
+          className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white shrink-0"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
         >
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500">Collections</p>
-            <h3 className="font-serif text-2xl sm:text-3xl">{isEditing ? (editingId === "new" ? "New Collection" : "Edit Collection") : "Your Collections"}</h3>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Collections</p>
+            <h3 className="font-display text-2xl sm:text-3xl">{isEditing ? (editingId === "new" ? "New Collection" : "Edit Collection") : "Your Collections"}</h3>
           </div>
-          <button onClick={onClose} className="text-stone-500 p-2"><I.x size={18} /></button>
+          <button onClick={onClose} className="text-ink-500 p-2"><I.x size={18} /></button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
           {!isEditing && (
             <div className="space-y-3">
-              <p className="text-sm text-stone-600">Group items into themed sets — a packing list for a trip, a capsule wardrobe, a season's rotation. Items can live in multiple collections.</p>
+              <p className="text-sm text-ink-600">Group items into themed sets — a packing list for a trip, a capsule, a season's rotation. Pieces can live in multiple sets.</p>
               {collections.length === 0 ? (
-                <div className="py-10 text-center border border-dashed border-stone-300 rounded-sm">
-                  <p className="font-serif italic text-stone-500 text-lg mb-2">No collections yet.</p>
+                <div className="py-10 text-center border-2 border-dashed border-cream-200 rounded-3xl bg-cream-50/50">
+                  <p className="font-display italic text-ink-500 text-lg mb-2">No collections yet.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {collections.map(c => (
-                    <div key={c.id} className="flex items-center gap-3 p-3 bg-stone-100 rounded-sm">
-                      <I.folder size={16} className="text-stone-600 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-serif text-lg leading-tight truncate">{toTitle(c.name)}</p>
-                        <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500">{c.itemIds.length} {c.itemIds.length === 1 ? "piece" : "pieces"}</p>
-                        {c.description && <p className="text-xs italic text-stone-500 mt-1 truncate">"{c.description}"</p>}
+                    <div key={c.id} className="flex items-center gap-3 p-3.5 bg-cream-50 border-2 border-cream-100 rounded-2xl">
+                      <div className="w-9 h-9 rounded-full bg-sky2-100 flex items-center justify-center shrink-0">
+                        <I.folder size={15} className="text-sky2-600" />
                       </div>
-                      <button onClick={() => startEdit(c)} className="p-2 text-stone-600 active:text-stone-900" aria-label="Edit"><I.pencil size={14} /></button>
-                      <button onClick={() => deleteCollection(c.id)} className="p-2 text-stone-500 active:text-rose-700" aria-label="Delete"><I.trash size={14} /></button>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-display font-bold text-lg leading-tight truncate text-ink-900">{toTitle(c.name)}</p>
+                        <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-600">{c.itemIds.length} {c.itemIds.length === 1 ? "piece" : "pieces"}</p>
+                        {c.description && <p className="text-xs italic text-ink-500 mt-1 truncate">"{c.description}"</p>}
+                      </div>
+                      <button onClick={() => startEdit(c)} className="w-8 h-8 flex items-center justify-center rounded-full text-ink-600 active:bg-poppy-100 active:text-poppy-600 transition-colors" aria-label="Edit"><I.pencil size={14} /></button>
+                      <button onClick={() => deleteCollection(c.id)} className="w-8 h-8 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-100 active:text-petal-600 transition-colors" aria-label="Delete"><I.trash size={14} /></button>
                     </div>
                   ))}
                 </div>
               )}
               <button
                 onClick={startNew}
-                className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+                className="w-full mt-2 flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
               >
-                <I.plus size={14} /> New Collection
+                <I.plus size={16} /> New Set
               </button>
             </div>
           )}
@@ -1910,27 +1963,27 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
           {isEditing && (
             <div className="space-y-5">
               <div>
-                <label className="block text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-1">Name</label>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Name</label>
                 <input
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                   placeholder="e.g. Italy Packing List"
-                  className="w-full bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none font-serif text-xl py-1"
+                  className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display text-xl py-1"
                 />
               </div>
               <div>
-                <label className="block text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-1">Description (optional)</label>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Description (optional)</label>
                 <input
                   value={draft.description}
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                   placeholder="A short note about this set"
-                  className="w-full bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm italic py-1"
+                  className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
                 />
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Pieces ({draft.itemIds.length})</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Pieces ({draft.itemIds.length})</p>
                 {items.length === 0 ? (
-                  <p className="text-sm text-stone-500 italic">No items in your wardrobe yet.</p>
+                  <p className="text-sm text-ink-500 italic">No items in your closet yet.</p>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {items.map(it => {
@@ -1939,17 +1992,17 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                         <button
                           key={it.id}
                           onClick={() => toggleItem(it.id)}
-                          className={`relative rounded-sm overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-stone-900" : "border-stone-200 bg-stone-50"}`}
+                          className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                         >
-                          <div className="aspect-square bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center">
+                          <div className="aspect-square bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center">
                             {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-2" />}
                             {active && (
-                              <div className="absolute top-1.5 right-1.5 bg-stone-900 text-stone-50 rounded-full p-1">
+                              <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
                                 <I.check size={10} />
                               </div>
                             )}
                           </div>
-                          <p className="text-[10px] font-serif text-stone-700 truncate px-1 py-1">{toTitle(it.name)}</p>
+                          <p className="text-[10px] font-bold font-display text-ink-800 truncate px-1.5 py-1">{toTitle(it.name)}</p>
                         </button>
                       );
                     })}
@@ -1962,16 +2015,16 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 
         {isEditing && (
           <div
-            className="p-4 sm:p-6 border-t border-stone-200 bg-stone-50 flex gap-2 shrink-0"
+            className="p-4 sm:p-6 border-t-2 border-cream-100 bg-white flex gap-2 shrink-0"
             style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
           >
-            <button onClick={cancelEdit} className="flex-1 py-3 border border-stone-300 text-stone-700 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95">Cancel</button>
+            <button onClick={cancelEdit} className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95">Cancel</button>
             <button
               onClick={saveDraft}
               disabled={!draft.name.trim()}
-              className="flex-[2] flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95 disabled:opacity-40"
+              className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-40 shadow-pop"
             >
-              <I.check size={14} /> {editingId === "new" ? "Create" : "Save"}
+              <I.check size={14} /> {editingId === "new" ? "Create Set" : "Save Set"}
             </button>
           </div>
         )}
@@ -1996,26 +2049,30 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   }, [scrollToId]);
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
     <div className="fade-up">
-      <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Compositions</p>
-          <h2 className="font-serif text-4xl sm:text-6xl leading-none">Outfits<br/><em className="text-stone-600">you've saved.</em></h2>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Looks</h2>
+        <div className="flex items-end justify-between gap-4">
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-petal-600">worth keeping.</em></h3>
+          <button
+            onClick={onNewOutfit}
+            style={{flexShrink: 0}}
+            className="flex items-center gap-2 px-5 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+          >
+            <I.plus size={16} /> New Look
+          </button>
         </div>
-        <button
-          onClick={onNewOutfit}
-          className="flex items-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95 shrink-0"
-        >
-          <I.plus size={14} /> New
-        </button>
       </div>
 
       {outfits.length === 0 ? (
-        <div className="py-16 text-center border border-dashed border-stone-300 rounded-sm">
-          <p className="font-serif italic text-stone-500 text-2xl mb-2">No outfits yet.</p>
-          <p className="text-xs tracking-widest uppercase text-stone-400 mb-6">Compose one in the Builder</p>
-          <button onClick={onNewOutfit} className="inline-flex items-center gap-2 px-5 py-2 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm">
+        <div className="py-16 text-center border-2 border-dashed border-petal-200 bg-petal-50/40 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
+            <I.layers size={28} className="text-petal-500" />
+          </div>
+          <p className="font-display font-bold text-2xl mb-2 text-ink-900">No looks yet.</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mb-6">Compose your first one</p>
+          <button onClick={onNewOutfit} className="inline-flex items-center gap-2 px-5 py-2.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
             Open Builder <I.chevron size={14} />
           </button>
         </div>
@@ -2047,26 +2104,29 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
   const inputRef = useRef(null);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-stone-50 max-w-sm w-full p-6 sm:p-8 rounded-sm shadow-2xl fade-up">
-        <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-1">Outfit selfie</p>
-        <h3 className="font-serif text-2xl mb-5">{toTitle(outfitName)}</h3>
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white max-w-sm w-full p-6 sm:p-8 rounded-3xl shadow-2xl fade-up">
+        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-buttercup-50 rounded-full mb-3">
+          <I.camera size={12} className="text-buttercup-600" />
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700">Look selfie</p>
+        </div>
+        <h3 className="font-display font-bold text-2xl mb-5 text-ink-900">{toTitle(outfitName)}</h3>
         {selfieUrl ? (
           <div className="mb-5">
             <div className="relative inline-block w-full">
-              <img src={selfieUrl} alt="Outfit selfie" className="w-full max-h-64 object-contain rounded-sm bg-stone-100" />
+              <img src={selfieUrl} alt="Outfit selfie" className="w-full max-h-64 object-contain rounded-2xl bg-cream-50" />
             </div>
             <div className="flex gap-3 mt-3">
               <button
                 onClick={() => inputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-stone-300 text-stone-700 text-[11px] tracking-[0.2em] uppercase rounded-sm active:scale-95"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
               >
                 <I.camera size={13} /> Replace
               </button>
               <button
                 onClick={onRemove}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 border border-stone-300 text-rose-600 text-[11px] tracking-[0.2em] uppercase rounded-sm active:scale-95"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-petal-50 border-2 border-petal-100 text-petal-600 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
               >
                 <I.trash size={13} /> Remove
               </button>
@@ -2075,10 +2135,12 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
         ) : (
           <button
             onClick={() => inputRef.current?.click()}
-            className="w-full border-2 border-dashed border-stone-300 active:border-stone-900 transition-colors rounded-sm py-8 flex flex-col items-center gap-3 text-stone-500 mb-5"
+            className="w-full border-2 border-dashed border-buttercup-200 bg-buttercup-50/40 active:border-buttercup-500 active:bg-buttercup-50 transition-colors rounded-3xl py-8 flex flex-col items-center gap-3 text-buttercup-700 mb-5"
           >
-            <I.camera size={22} />
-            <span className="text-[11px] tracking-[0.25em] uppercase">Choose a photo</span>
+            <div className="w-12 h-12 rounded-full bg-buttercup-100 flex items-center justify-center">
+              <I.camera size={22} />
+            </div>
+            <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Choose a photo</span>
           </button>
         )}
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
@@ -2100,41 +2162,46 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
   };
 
   return (
-    <div id={id} className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5 border-b border-stone-200 flex items-start justify-between gap-3">
+    <div id={id} className="fade-up bg-white border-2 border-petal-50 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
+      <div className="p-4 sm:p-5 border-b-2 border-petal-50 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(outfit.name)}</h3>
-          {outfit.note && <p className="text-sm italic text-stone-500 mt-1">"{outfit.note}"</p>}
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-full bg-petal-100 flex items-center justify-center shrink-0">
+              <I.layers size={14} className="text-petal-600" />
+            </div>
+            <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(outfit.name)}</h3>
+          </div>
+          {outfit.note && <p className="text-sm italic text-ink-500 mt-1 pl-10">"{outfit.note}"</p>}
         </div>
-        <div className="flex gap-3 shrink-0">
-          <button onClick={() => setShowSelfieModal(true)} className="text-stone-400 p-2 -m-2 active:text-stone-900" aria-label="Outfit selfie">
-            <I.camera size={14} />
+        <div className="flex gap-1 shrink-0">
+          <button onClick={() => setShowSelfieModal(true)} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
+            <I.camera size={15} />
           </button>
           {onEdit && (
-            <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit outfit">
-              <I.pencil size={14} />
+            <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors" aria-label="Edit outfit">
+              <I.pencil size={15} />
             </button>
           )}
-          <button onClick={onDelete} className="text-stone-400 p-2 -m-2 active:text-rose-700" aria-label="Delete outfit">
-            <I.trash size={14} />
+          <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete outfit">
+            <I.trash size={15} />
           </button>
         </div>
       </div>
-      <div className="p-4 bg-gradient-to-br from-stone-100 to-stone-200 grid grid-cols-3 gap-2 min-h-[200px]">
+      <div className="p-4 bg-petal-50 grid grid-cols-3 gap-2 min-h-[200px]">
         {selfieUrl && (
-          <div className="row-span-2 overflow-hidden rounded-sm relative">
+          <div className="row-span-2 overflow-hidden rounded-2xl relative bg-white">
             <img src={selfieUrl} alt="Outfit selfie" className="absolute inset-0 w-full h-full object-contain" />
           </div>
         )}
         {pieces.map(p => (
-          <div key={p.id} className="bg-stone-50 rounded-sm overflow-hidden flex items-center justify-center aspect-square">
+          <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
             <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
           </div>
         ))}
       </div>
-      <div className="p-3 sm:p-4 flex flex-wrap gap-2">
+      <div className="p-3 sm:p-4 flex flex-wrap gap-1.5">
         {pieces.map(p => (
-          <span key={p.id} className="text-[10px] tracking-[0.15em] uppercase text-stone-600 border border-stone-300 px-2 py-1 rounded-full">{toTitle(p.name)}</span>
+          <span key={p.id} className="text-[10px] font-bold tracking-[0.1em] uppercase text-ink-700 bg-cream-50 px-2.5 py-1 rounded-full">{toTitle(p.name)}</span>
         ))}
       </div>
       {showSelfieModal && (
@@ -2158,34 +2225,38 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
   const startNew = () => { setEditingId("new"); setShowManager(true); };
   const startEdit = (id) => { setEditingId(id); setShowManager(true); };
   const handleDelete = (id) => {
-    if (!confirm("Delete this collection? The items themselves stay in your wardrobe.")) return;
+    if (!confirm("Delete this collection? The items themselves stay in your closet.")) return;
     onSave(collections.filter(c => c.id !== id));
   };
 
   return (
     <>
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="fade-up">
-      <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">Curated Sets</p>
-          <h2 className="font-serif text-4xl sm:text-6xl leading-none">Collections<br/><em className="text-stone-600">you've grouped.</em></h2>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Bundles</h2>
+        <div className="flex items-end justify-between gap-4">
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-sky2-600">you've gathered.</em></h3>
+          <button
+            onClick={startNew}
+            style={{flexShrink: 0}}
+            className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+          >
+            <I.plus size={16} /> New Set
+          </button>
         </div>
-        <button
-          onClick={startNew}
-          className="flex items-center gap-2 px-4 py-2.5 bg-stone-900 text-stone-50 text-[10px] sm:text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95 shrink-0"
-        >
-          <I.plus size={14} /> New
-        </button>
       </div>
 
       {collections.length === 0 ? (
-        <div className="py-16 text-center border border-dashed border-stone-300 rounded-sm">
-          <p className="font-serif italic text-stone-500 text-2xl mb-2">No collections yet.</p>
-          <p className="text-xs tracking-widest uppercase text-stone-400 mb-6">
-            Group items into themed sets — a packing list, a capsule, a season
+        <div className="py-16 text-center border-2 border-dashed border-sky2-200 bg-sky2-50/40 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
+            <I.folder size={28} className="text-sky2-500" />
+          </div>
+          <p className="font-display font-bold text-2xl mb-2 text-ink-900">No sets yet.</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mb-6 px-4">
+            Group pieces — a packing list, a capsule, a season
           </p>
-          <button onClick={startNew} className="inline-flex items-center gap-2 px-5 py-2 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm">
+          <button onClick={startNew} className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
             Create your first <I.chevron size={14} />
           </button>
         </div>
@@ -2235,50 +2306,52 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
   const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
   const remaining = pieces.length - preview.length;
   return (
-    <div className="fade-up bg-stone-50 border border-stone-200 rounded-sm overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5 border-b border-stone-200 flex items-start justify-between gap-3">
+    <div className="fade-up bg-white border-2 border-sky2-50 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
+      <div className="p-4 sm:p-5 border-b-2 border-sky2-50 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <I.folder size={16} className="text-stone-600 shrink-0" />
-            <h3 className="font-serif text-xl sm:text-2xl truncate">{toTitle(collection.name)}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center shrink-0">
+              <I.folder size={14} className="text-sky2-600" />
+            </div>
+            <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(collection.name)}</h3>
           </div>
-          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500 mt-1">
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1 pl-10">
             {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
           </p>
           {collection.description && (
-            <p className="text-sm italic text-stone-500 mt-1">"{collection.description}"</p>
+            <p className="text-sm italic text-ink-500 mt-1 pl-10">"{collection.description}"</p>
           )}
         </div>
-        <div className="flex gap-3 shrink-0">
-          <button onClick={onEdit} className="text-stone-500 p-2 -m-2 active:text-stone-900" aria-label="Edit collection">
-            <I.pencil size={14} />
+        <div className="flex gap-1 shrink-0">
+          <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
+            <I.pencil size={15} />
           </button>
-          <button onClick={onDelete} className="text-stone-400 p-2 -m-2 active:text-rose-700" aria-label="Delete collection">
-            <I.trash size={14} />
+          <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
+            <I.trash size={15} />
           </button>
         </div>
       </div>
       {preview.length === 0 ? (
-        <div className="p-4 bg-gradient-to-br from-stone-100 to-stone-200 min-h-[120px] flex items-center justify-center">
-          <p className="font-serif italic text-stone-500 text-sm">no pieces yet</p>
+        <div className="p-4 bg-sky2-50 min-h-[120px] flex items-center justify-center">
+          <p className="font-display italic text-ink-500 text-sm">no pieces yet</p>
         </div>
       ) : (
-        <div className="p-4 bg-gradient-to-br from-stone-100 to-stone-200 grid grid-cols-3 gap-2 min-h-[200px]">
+        <div className="p-4 bg-sky2-50 grid grid-cols-3 gap-2 min-h-[200px]">
           {preview.map(p => (
-            <div key={p.id} className="bg-stone-50 rounded-sm overflow-hidden flex items-center justify-center aspect-square">
+            <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
               <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
             </div>
           ))}
           {remaining > 0 && (
-            <div className="bg-stone-50/60 rounded-sm flex items-center justify-center aspect-square">
-              <p className="font-serif italic text-stone-500 text-sm">+{remaining} more</p>
+            <div className="bg-white/80 rounded-2xl flex items-center justify-center aspect-square border-2 border-dashed border-sky2-200">
+              <p className="font-display font-bold italic text-sky2-600 text-sm">+{remaining} more</p>
             </div>
           )}
         </div>
       )}
       {collectionOutfits.length > 0 && (
-        <div className="px-4 py-3 border-t border-stone-200">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-2">Outfits</p>
+        <div className="px-4 py-3 border-t-2 border-sky2-50">
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2">Looks in this set</p>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
             {collectionOutfits.map(o => {
               const opieces = o.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
@@ -2286,28 +2359,28 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
                 <button
                   key={o.id}
                   onClick={() => onOpenOutfit?.(o.id)}
-                  className="shrink-0 w-28 border border-stone-200 px-1 text-left active:scale-95 transition-transform"
+                  className="shrink-0 w-28 border-2 border-cream-100 rounded-2xl p-1.5 text-left active:scale-95 active:border-petal-200 transition-all bg-white"
                 >
-                  <div className="grid grid-cols-3 gap-0.5 rounded-sm overflow-hidden mb-1">
+                  <div className="grid grid-cols-3 gap-0.5 rounded-xl overflow-hidden mb-1 bg-cream-50">
                     {opieces.slice(0, 3).map(p => (
-                      <div key={p.id} className="bg-stone-50 aspect-square flex items-center justify-center overflow-hidden">
+                      <div key={p.id} className="bg-cream-50 aspect-square flex items-center justify-center overflow-hidden">
                         <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-0.5" />
                       </div>
                     ))}
                   </div>
-                  <p className="text-[10px] tracking-[0.1em] uppercase text-stone-600 truncate">{toTitle(o.name)}</p>
+                  <p className="text-[10px] font-bold tracking-[0.05em] uppercase text-ink-700 truncate">{toTitle(o.name)}</p>
                 </button>
               );
             })}
           </div>
         </div>
       )}
-      <div className="p-3 sm:p-4 border-t border-stone-200">
+      <div className="p-3 sm:p-4 border-t-2 border-sky2-50">
         <button
           onClick={onOpen}
-          className="w-full flex items-center justify-center gap-2 py-2 border border-stone-300 text-stone-700 text-[10px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-sky2-50 text-sky2-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100 transition-colors"
         >
-          View in Closet <I.chevron size={12} />
+          Open in Closet <I.chevron size={12} />
         </button>
       </div>
     </div>
@@ -2338,39 +2411,42 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
   };
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 grain">
+    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
     <div className="fade-up">
-      <div className="mb-3 sm:mb-5 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] tracking-[0.4em] uppercase text-stone-500 mb-2">The Studio</p>
-          <h2 className="font-serif text-4xl sm:text-6xl leading-none">
-            {isEdit ? <>Edit<br/><em className="text-stone-600">the look.</em></> : <>Compose<br/><em className="text-stone-600">an outfit.</em></>}
-          </h2>
-          <p className="mt-3 text-stone-600 text-sm max-w-xl">
-            {isEdit ? "Change pieces, rename, or update the note. Save when you're done." : "Tap pieces to add them. Name the look and save."}
-          </p>
+      <div className="mb-3 sm:mb-5">
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">
+          {isEdit ? "Refresh" : "Plant"}
+        </h2>
+        <div className="flex items-end justify-between gap-4">
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
+            <em className="text-buttercup-600">{isEdit ? "the look." : "a new look."}</em>
+          </h3>
+          {isEdit && onCancel && (
+            <button
+              onClick={onCancel}
+              style={{flexShrink: 0}}
+              className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline active:text-poppy-600 pb-2"
+            >
+              Cancel
+            </button>
+          )}
         </div>
-        {isEdit && onCancel && (
-          <button
-            onClick={onCancel}
-            className="text-[10px] tracking-[0.25em] uppercase text-stone-500 underline active:text-stone-900 shrink-0 pt-2"
-          >
-            Cancel
-          </button>
-        )}
+        <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl">
+          {isEdit ? "Swap pieces, rename it, or update the note. Save when you're happy." : "Tap pieces to add them. Name the look and save it for later."}
+        </p>
       </div>
 
       {/* Preview at top on mobile (sticky) */}
-      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-stone-100/95 backdrop-blur border-b border-stone-300 mb-4">
+      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-cream-50/95 backdrop-blur border-b-2 border-cream-100 mb-4">
         <div className="flex items-center gap-3 overflow-x-auto py-2">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 shrink-0">{selected.length} {selected.length === 1 ? "piece" : "pieces"}</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 shrink-0">{selected.length} {selected.length === 1 ? "piece" : "pieces"}</p>
           {chosenItems.length === 0 ? (
-            <span className="text-xs italic text-stone-400 font-serif">nothing selected yet…</span>
+            <span className="text-xs italic text-ink-400 font-display">nothing selected yet…</span>
           ) : (
             chosenItems.map(p => (
-              <div key={p.id} className="bg-stone-50 border border-stone-200 rounded-sm shrink-0 w-14 h-14 flex items-center justify-center relative">
+              <div key={p.id} className="bg-white border-2 border-buttercup-100 rounded-2xl shrink-0 w-14 h-14 flex items-center justify-center relative shadow-card">
                 <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-1" />
-                <button onClick={() => toggleSelect(p.id)} className="absolute -top-1 -right-1 bg-stone-900 text-stone-50 rounded-full p-0.5">
+                <button onClick={() => toggleSelect(p.id)} className="absolute -top-1.5 -right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
                   <I.x size={10} />
                 </button>
               </div>
@@ -2379,26 +2455,26 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         </div>
       </div>
 
-      {/* Scope picker: entire wardrobe or a collection */}
+      {/* Scope picker: entire closet or a collection */}
       {(collections || []).length > 0 && (
         <div className="mb-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Choose from</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700 mb-2">Choose from</p>
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setScopeCollection(null)}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${scopeCollection === null ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300"}`}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${scopeCollection === null ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
             >
-              Entire Wardrobe
+              Entire Closet
             </button>
             {collections.map(c => (
               <button
                 key={c.id}
                 onClick={() => setScopeCollection(c.id)}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${scopeCollection === c.id ? "bg-stone-900 text-stone-50 border-stone-900" : "bg-transparent text-stone-700 border-stone-300"}`}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${scopeCollection === c.id ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
               >
                 <I.folder size={11} />
                 {c.name}
-                <span className="opacity-60">·{c.itemIds.length}</span>
+                <span className="opacity-70">·{c.itemIds.length}</span>
               </button>
             ))}
           </div>
@@ -2420,20 +2496,20 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                 <div
                   key={it.id}
                   onClick={() => toggleSelect(it.id)}
-                  className={`item-card cursor-pointer fade-up rounded-sm overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-stone-900" : "border-stone-200 bg-stone-50"}`}
+                  className={`item-card cursor-pointer fade-up rounded-3xl overflow-hidden border-2 transition-all active:scale-[0.97] shadow-card ${active ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100 bg-white"}`}
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
-                  <div className="aspect-[3/4] bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center relative">
+                  <div className="aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center relative">
                     <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-2 sm:p-3" />
                     {active && (
-                      <div className="absolute top-2 right-2 bg-stone-900 text-stone-50 rounded-full p-1.5">
-                        <I.check size={12} />
+                      <div className="absolute top-2 right-2 bg-poppy-500 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-pop">
+                        <I.check size={13} />
                       </div>
                     )}
                   </div>
-                  <div className="p-2">
-                    <p className="font-serif text-sm truncate">{toTitle(it.name)}</p>
-                    <p className="text-[9px] tracking-[0.2em] uppercase text-stone-500">{it.category}</p>
+                  <div className="p-3">
+                    <p className="font-display font-semibold text-sm truncate text-ink-900">{toTitle(it.name)}</p>
+                    <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{it.category}</p>
                   </div>
                 </div>
               );
@@ -2442,28 +2518,28 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         </div>
 
         <aside className="lg:sticky lg:top-24 self-start">
-          <div className="bg-stone-50 border border-stone-200 rounded-sm p-4 sm:p-5">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-3">Name your look</p>
+          <div className="bg-white border-2 border-cream-100 rounded-3xl p-4 sm:p-5 shadow-card">
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 mb-3">Name your look</p>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Saturday in town"
-              className="w-full bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none font-serif text-lg py-1 mb-4"
+              className="w-full bg-transparent border-b-2 border-cream-200 focus:border-poppy-500 outline-none font-display font-bold text-lg py-1 mb-4"
             />
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-1">Note (optional)</label>
+            <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 mb-1">Note (optional)</label>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="a vibe, a memory…"
-              className="w-full bg-transparent border-b border-stone-300 focus:border-stone-900 outline-none text-sm italic py-1 mb-6"
+              className="w-full bg-transparent border-b-2 border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1 mb-6"
             />
 
             <button
               onClick={handleSave}
               disabled={!canSave}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase disabled:opacity-40 rounded-sm active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-buttercup-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"
             >
-              <I.check size={14} /> {isEdit ? "Save Changes" : "Save Outfit"}
+              <I.check size={14} /> {isEdit ? "Save Changes" : "Save Look"}
             </button>
           </div>
         </aside>
@@ -2525,7 +2601,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
     const current = { items, outfits, customTags, brands: brands || [], collections: collections || [] };
     const next = strategy === 'replace' ? pending.data : mergeBackup(current, pending.data);
     onImport(next, strategy);
-    setStatus({ kind: 'success', message: strategy === 'replace' ? "Wardrobe replaced with the backup." : "Backup merged into your wardrobe." });
+    setStatus({ kind: 'success', message: strategy === 'replace' ? "Closet replaced with the backup." : "Backup merged into your closet." });
     setPending(null);
   };
 
@@ -2542,23 +2618,26 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-stone-50 max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-sm shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-stone-500 p-2"><I.x size={18} /></button>
-        <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Backup & Restore</p>
-        <h3 className="font-serif text-2xl sm:text-3xl mb-4">Save your wardrobe<br/><em className="text-stone-600">to a file.</em></h3>
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-white max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-2xl shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
+        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-leaf-50 rounded-full mb-3">
+          <I.archive size={12} className="text-leaf-600" />
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700">Save & Restore</p>
+        </div>
+        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-4 text-ink-900">Keep your closet<br/><em className="text-leaf-600">safe and sound.</em></h3>
 
-        <div className="mb-6 p-3 bg-stone-100 border border-stone-200 rounded-sm text-xs text-stone-600 leading-relaxed">
-          {items.length} pieces · {outfits.length} outfits · {storageLine}
+        <div className="mb-6 p-3 bg-cream-50 border-2 border-cream-100 rounded-2xl text-xs text-ink-600 leading-relaxed">
+          <span className="font-bold text-ink-800">{items.length}</span> pieces · <span className="font-bold text-ink-800">{outfits.length}</span> outfits · {storageLine}
         </div>
 
         {/* EXPORT */}
         <div className="mb-8">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Export</p>
-          <p className="text-sm text-stone-600 mb-3">Download everything as a single JSON file. Keep it somewhere safe — Google Drive, email to yourself, anywhere.</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Export</p>
+          <p className="text-sm text-ink-600 mb-3">Download everything as a single JSON file. Keep it somewhere safe — Google Drive, email to yourself, anywhere.</p>
           <button
             onClick={handleExport}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
           >
             <I.download size={14} /> Export Backup
           </button>
@@ -2566,15 +2645,15 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
 
         {/* IMPORT */}
         <div className="mb-2">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-stone-500 mb-2">Import</p>
-          <p className="text-sm text-stone-600 mb-3">Restore from a backup file. You'll be asked whether to merge or replace.</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Import</p>
+          <p className="text-sm text-ink-600 mb-3">Restore from a backup file. You'll be asked whether to merge or replace.</p>
           {!pending && (
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full border-2 border-dashed border-stone-300 active:border-stone-900 transition-colors rounded-sm py-6 flex flex-col items-center gap-2 text-stone-600"
+              className="w-full border-2 border-dashed border-leaf-200 bg-leaf-50/50 active:border-leaf-500 active:bg-leaf-50 transition-colors rounded-3xl py-6 flex flex-col items-center gap-2 text-leaf-700"
             >
               <I.upload size={20} />
-              <span className="text-[11px] tracking-[0.25em] uppercase">Choose backup file</span>
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Choose backup file</span>
             </button>
           )}
           <input
@@ -2586,32 +2665,32 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
           />
 
           {pending && (
-            <div className="border border-stone-200 rounded-sm p-3 mb-3 bg-stone-50">
-              <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500 mb-1">From file</p>
-              <p className="font-serif text-base truncate">{pending.filename}</p>
+            <div className="border-2 border-cream-100 rounded-3xl p-4 mb-3 bg-white">
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-1">From file</p>
+              <p className="font-display font-bold text-base truncate text-ink-900">{pending.filename}</p>
               {pending.exportedAt && (
-                <p className="text-[10px] text-stone-500 mt-1">Exported {new Date(pending.exportedAt).toLocaleString()}</p>
+                <p className="text-[10px] text-ink-500 mt-1">Exported {new Date(pending.exportedAt).toLocaleString()}</p>
               )}
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-4 flex flex-col gap-2">
                 <button
                   onClick={() => applyStrategy('merge')}
-                  className="w-full py-3 bg-stone-900 text-stone-50 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+                  className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
                 >
                   Merge (keep current, add new)
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm("Replace your entire wardrobe with this backup? Your current items and outfits will be deleted.")) {
+                    if (confirm("Replace your entire closet with this backup? Your current items and outfits will be deleted.")) {
                       applyStrategy('replace');
                     }
                   }}
-                  className="w-full py-3 border border-stone-300 text-stone-700 text-[11px] tracking-[0.25em] uppercase rounded-sm active:scale-95"
+                  className="w-full py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
                 >
                   Replace everything
                 </button>
                 <button
                   onClick={() => { setPending(null); setStatus(null); }}
-                  className="text-[10px] tracking-[0.2em] uppercase text-stone-500 underline pt-1"
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline pt-1"
                 >
                   Cancel
                 </button>
@@ -2621,10 +2700,10 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
         </div>
 
         {status && (
-          <div className={`mt-3 p-3 rounded-sm border text-sm flex items-start gap-2 ${
-            status.kind === 'error'   ? "bg-rose-50 border-rose-200 text-rose-900" :
-            status.kind === 'success' ? "bg-emerald-50 border-emerald-200 text-emerald-900" :
-                                        "bg-stone-100 border-stone-200 text-stone-700"
+          <div className={`mt-3 p-3.5 rounded-2xl border-2 text-sm flex items-start gap-2 ${
+            status.kind === 'error'   ? "bg-petal-50 border-petal-200 text-petal-700" :
+            status.kind === 'success' ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
+                                        "bg-cream-50 border-cream-100 text-ink-700"
           }`}>
             <I.alert size={14} className="shrink-0 mt-0.5" />
             <span>{status.message}</span>
