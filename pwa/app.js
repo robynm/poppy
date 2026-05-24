@@ -2051,20 +2051,18 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
     <div className="fade-up">
-      <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-petal-50 rounded-full mb-3">
-            <I.heart size={12} className="text-petal-500" />
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-petal-700">Your Looks</p>
-          </div>
-          <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">Looks<br/><em className="text-petal-600">worth keeping.</em></h2>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Looks</h2>
+        <div className="flex items-end justify-between gap-4">
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-petal-600">worth keeping.</em></h3>
+          <button
+            onClick={onNewOutfit}
+            style={{flexShrink: 0}}
+            className="flex items-center gap-2 px-5 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+          >
+            <I.plus size={16} /> New Look
+          </button>
         </div>
-        <button
-          onClick={onNewOutfit}
-          className="flex items-center gap-2 px-5 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shrink-0 shadow-pop"
-        >
-          <I.plus size={14} /> New Look
-        </button>
       </div>
 
       {outfits.length === 0 ? (
@@ -2235,20 +2233,18 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
     <>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="fade-up">
-      <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky2-50 rounded-full mb-3">
-            <I.folder size={12} className="text-sky2-500" />
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700">Your Sets</p>
-          </div>
-          <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">Bundles<br/><em className="text-sky2-600">you've gathered.</em></h2>
+      <div className="mb-6 sm:mb-10">
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Bundles</h2>
+        <div className="flex items-end justify-between gap-4">
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-sky2-600">you've gathered.</em></h3>
+          <button
+            onClick={startNew}
+            style={{flexShrink: 0}}
+            className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+          >
+            <I.plus size={16} /> New Set
+          </button>
         </div>
-        <button
-          onClick={startNew}
-          className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shrink-0 shadow-pop"
-        >
-          <I.plus size={14} /> New Set
-        </button>
       </div>
 
       {collections.length === 0 ? (
@@ -2417,40 +2413,40 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
     <div className="fade-up">
-      <div className="mb-3 sm:mb-5 flex items-start justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-buttercup-50 rounded-full mb-3">
-            <I.sparkles size={12} className="text-buttercup-500" />
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700">{isEdit ? "Edit Look" : "Build a Look"}</p>
-          </div>
-          <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
-            {isEdit ? <>Refresh<br/><em className="text-buttercup-600">the look.</em></> : <>Plant<br/><em className="text-buttercup-600">a new look.</em></>}
-          </h2>
-          <p className="mt-3 text-ink-600 text-sm sm:text-base max-w-xl">
-            {isEdit ? "Swap pieces, rename it, or update the note. Save when you're happy." : "Tap pieces to add them. Name the look and save it for later."}
-          </p>
+      <div className="mb-3 sm:mb-5">
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">
+          {isEdit ? "Refresh" : "Plant"}
+        </h2>
+        <div className="flex items-end justify-between gap-4">
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
+            <em className="text-buttercup-600">{isEdit ? "the look." : "a new look."}</em>
+          </h3>
+          {isEdit && onCancel && (
+            <button
+              onClick={onCancel}
+              style={{flexShrink: 0}}
+              className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline active:text-poppy-600 pb-2"
+            >
+              Cancel
+            </button>
+          )}
         </div>
-        {isEdit && onCancel && (
-          <button
-            onClick={onCancel}
-            className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline active:text-poppy-600 shrink-0 pt-2"
-          >
-            Cancel
-          </button>
-        )}
+        <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl">
+          {isEdit ? "Swap pieces, rename it, or update the note. Save when you're happy." : "Tap pieces to add them. Name the look and save it for later."}
+        </p>
       </div>
 
       {/* Preview at top on mobile (sticky) */}
-      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-white/95 backdrop-blur border-b border-cream-200 mb-4">
+      <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-cream-50/95 backdrop-blur border-b-2 border-cream-100 mb-4">
         <div className="flex items-center gap-3 overflow-x-auto py-2">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 shrink-0">{selected.length} {selected.length === 1 ? "piece" : "pieces"}</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 shrink-0">{selected.length} {selected.length === 1 ? "piece" : "pieces"}</p>
           {chosenItems.length === 0 ? (
             <span className="text-xs italic text-ink-400 font-display">nothing selected yet…</span>
           ) : (
             chosenItems.map(p => (
-              <div key={p.id} className="bg-white border border-cream-100 rounded-2xl shrink-0 w-14 h-14 flex items-center justify-center relative">
+              <div key={p.id} className="bg-white border-2 border-buttercup-100 rounded-2xl shrink-0 w-14 h-14 flex items-center justify-center relative shadow-card">
                 <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-1" />
-                <button onClick={() => toggleSelect(p.id)} className="absolute -top-1 -right-1 bg-poppy-500 text-white rounded-full p-0.5">
+                <button onClick={() => toggleSelect(p.id)} className="absolute -top-1.5 -right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
                   <I.x size={10} />
                 </button>
               </div>
@@ -2462,11 +2458,11 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
       {/* Scope picker: entire closet or a collection */}
       {(collections || []).length > 0 && (
         <div className="mb-4">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Choose from</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700 mb-2">Choose from</p>
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setScopeCollection(null)}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${scopeCollection === null ? "bg-poppy-500 text-white border-poppy-500" : "bg-transparent text-ink-700 border-cream-200"}`}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${scopeCollection === null ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
             >
               Entire Closet
             </button>
@@ -2474,11 +2470,11 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
               <button
                 key={c.id}
                 onClick={() => setScopeCollection(c.id)}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] border rounded-full transition-colors ${scopeCollection === c.id ? "bg-poppy-500 text-white border-poppy-500" : "bg-transparent text-ink-700 border-cream-200"}`}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${scopeCollection === c.id ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
               >
                 <I.folder size={11} />
                 {c.name}
-                <span className="opacity-60">·{c.itemIds.length}</span>
+                <span className="opacity-70">·{c.itemIds.length}</span>
               </button>
             ))}
           </div>
@@ -2500,20 +2496,20 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                 <div
                   key={it.id}
                   onClick={() => toggleSelect(it.id)}
-                  className={`item-card cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500" : "border-cream-100 bg-white"}`}
+                  className={`item-card cursor-pointer fade-up rounded-3xl overflow-hidden border-2 transition-all active:scale-[0.97] shadow-card ${active ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100 bg-white"}`}
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
                   <div className="aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center relative">
                     <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-2 sm:p-3" />
                     {active && (
-                      <div className="absolute top-2 right-2 bg-poppy-500 text-white rounded-full p-1.5">
-                        <I.check size={12} />
+                      <div className="absolute top-2 right-2 bg-poppy-500 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-pop">
+                        <I.check size={13} />
                       </div>
                     )}
                   </div>
-                  <div className="p-2">
-                    <p className="font-display text-sm truncate">{toTitle(it.name)}</p>
-                    <p className="text-[9px] tracking-[0.2em] uppercase text-ink-500">{it.category}</p>
+                  <div className="p-3">
+                    <p className="font-display font-semibold text-sm truncate text-ink-900">{toTitle(it.name)}</p>
+                    <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{it.category}</p>
                   </div>
                 </div>
               );
