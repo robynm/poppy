@@ -447,7 +447,7 @@ function Chip({ children, active, onClick, tone = "default" }) {
     occasion:   active ? "bg-petal-500 text-white border-petal-500 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
     custom:     active ? "bg-plum-500 text-white border-plum-500 shadow-pop"       : "bg-plum-50 text-plum-700 border-plum-100",
     collection: active ? "bg-sky2-500 text-white border-sky2-500 shadow-pop"       : "bg-sky2-50 text-sky2-700 border-sky2-100",
-    status:     active ? "bg-buttercup-500 text-white border-buttercup-500 shadow-pop" : "bg-buttercup-50 text-buttercup-700 border-buttercup-100",
+    status:     active ? "bg-ink-500 text-white border-ink-500 shadow-pop" : "bg-ink-50 text-ink-700 border-ink-400",
     brand:      active ? "bg-petal-600 text-white border-petal-600 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
   };
   return (
@@ -734,7 +734,7 @@ function ClosetApp() {
         <div className="w-14 h-14 rounded-full bg-poppy-500 flex items-center justify-center bloom shadow-poppy">
           <PoppyMark size={28} color="#FFFBF6" />
         </div>
-        <div className="text-ink-500 text-xs font-bold tracking-[0.2em] uppercase">Poppy is blooming…</div>
+        <div className="text-ink-500 text-xs font-bold tracking-[0.2em] uppercase">Loading...</div>
       </div>
     );
   }
@@ -750,7 +750,7 @@ function ClosetApp() {
             </div>
             <div>
               <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-ink-900 leading-none">Poppy</h1>
-              <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-poppy-600 hidden sm:inline">Your closet, blooming</span>
+              <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-poppy-600 hidden sm:inline">Wardrobe curation</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -824,7 +824,7 @@ function ClosetApp() {
         <div className="max-w-6xl mx-auto grid grid-cols-3 px-3 pt-2 pb-1">
           <BottomTab IconC={I.shirt}  label="Closet"      tone="poppy"  active={view === "closet"}      onClick={() => setView("closet")} />
           <BottomTab IconC={I.layers} label="Looks"       tone="petal"  active={view === "outfits"}     onClick={() => setView("outfits")} />
-          <BottomTab IconC={I.folder} label="Sets"        tone="sky2"   active={view === "collections"} onClick={() => setView("collections")} />
+          <BottomTab IconC={I.folder} label="Collections" tone="sky2"   active={view === "collections"} onClick={() => setView("collections")} />
         </div>
       </nav>
 
@@ -1012,7 +1012,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
         </div> */}
         <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Your closet,</h2>
         <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
-        <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">all in one place.</em></h3>
+        <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">at a glance.</em></h3>
         {!selectMode &&           <button
             onClick={() => setAdding(true)}
             style={{flexShrink: 0}}
@@ -1063,6 +1063,11 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       {/* Collapsible filters */}
       {showFilters && (
         <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+          <FilterRow label="Status">
+            {STATUS_OPTIONS.map(s => (
+              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
+            ))}
+          </FilterRow>
           {collections.length > 0 && (
             <FilterRow label="Collection">
               <Chip tone="collection" active={activeCollection === null} onClick={() => setActiveCollection(null)}>Entire Closet</Chip>
@@ -1073,11 +1078,6 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               ))}
             </FilterRow>
           )}
-          <FilterRow label="Status">
-            {STATUS_OPTIONS.map(s => (
-              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
-            ))}
-          </FilterRow>
           <FilterRow label="Category">
             {CATEGORY_OPTIONS.map(c => (
               <Chip key={c} tone="category" active={activeCategories.includes(c)} onClick={() => toggle(activeCategories, setActiveCategories, c)}>{c}</Chip>
@@ -1258,8 +1258,8 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
             <span className="text-sm font-bold text-poppy-700 mr-auto">{selectedIds.size} selected</span>
             <button onClick={() => setBulkSheet("tags")} className="px-3.5 py-2 bg-plum-50 text-plum-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-plum-100">Tags</button>
-            <button onClick={() => setBulkSheet("collections")} className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100">Sets</button>
             <button onClick={() => setBulkSheet("outfits")} className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100">Looks</button>
+            <button onClick={() => setBulkSheet("collections")} className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100">Collections</button>
           </div>
         </div>
       )}
@@ -1300,7 +1300,7 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
       className={`item-card cursor-pointer fade-up bg-white border-2 rounded-3xl overflow-hidden active:scale-[0.98] relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
       style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
-      <div className="aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center overflow-hidden relative">
+      <div className="aspect-[3/4] flex items-center justify-center overflow-hidden relative">
         {image ? (
           <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" />
         ) : (
@@ -1327,7 +1327,7 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
           </button>
         )}
       </div>
-      <div className="p-3">
+      <div className="p-3 border-t-2 border-cream-100">
         <p className="font-display font-semibold text-sm sm:text-base leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
         <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{item.category}</p>
       </div>
@@ -1928,7 +1928,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
         <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
           {!isEditing && (
             <div className="space-y-3">
-              <p className="text-sm text-ink-600">Group items into themed sets — a packing list for a trip, a capsule, a season's rotation. Pieces can live in multiple sets.</p>
+              <p className="text-sm text-ink-600">Group items into themed collections — a packing list for a trip, a capsule, a season's rotation. Pieces can live in multiple collections.</p>
               {collections.length === 0 ? (
                 <div className="py-10 text-center border-2 border-dashed border-cream-200 rounded-3xl bg-cream-50/50">
                   <p className="font-display italic text-ink-500 text-lg mb-2">No collections yet.</p>
@@ -1955,7 +1955,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                 onClick={startNew}
                 className="w-full mt-2 flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
               >
-                <I.plus size={16} /> New Set
+                <I.plus size={16} /> New Collection
               </button>
             </div>
           )}
@@ -1976,7 +1976,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                 <input
                   value={draft.description}
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                  placeholder="A short note about this set"
+                  placeholder="A short note about this collection"
                   className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
                 />
               </div>
@@ -2024,7 +2024,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
               disabled={!draft.name.trim()}
               className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-40 shadow-pop"
             >
-              <I.check size={14} /> {editingId === "new" ? "Create Set" : "Save Set"}
+              <I.check size={14} /> {editingId === "new" ? "Create Collection" : "Save Collection"}
             </button>
           </div>
         )}
@@ -2162,7 +2162,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
   };
 
   return (
-    <div id={id} className="fade-up bg-white border-2 border-petal-50 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
+    <div id={id} className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 border-b-2 border-petal-50 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -2234,15 +2234,15 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="fade-up">
       <div className="mb-6 sm:mb-10">
-        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Bundles</h2>
+        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Collections</h2>
         <div className="flex items-end justify-between gap-4">
-          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-sky2-600">you've gathered.</em></h3>
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-sky2-600">you've curated.</em></h3>
           <button
             onClick={startNew}
             style={{flexShrink: 0}}
             className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
           >
-            <I.plus size={16} /> New Set
+            <I.plus size={16} /> New Collection
           </button>
         </div>
       </div>
@@ -2252,7 +2252,7 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
             <I.folder size={28} className="text-sky2-500" />
           </div>
-          <p className="font-display font-bold text-2xl mb-2 text-ink-900">No sets yet.</p>
+          <p className="font-display font-bold text-2xl mb-2 text-ink-900">No collections yet.</p>
           <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mb-6 px-4">
             Group pieces — a packing list, a capsule, a season
           </p>
@@ -2306,8 +2306,8 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
   const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
   const remaining = pieces.length - preview.length;
   return (
-    <div className="fade-up bg-white border-2 border-sky2-50 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5 border-b-2 border-sky2-50 flex items-start justify-between gap-3">
+    <div className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
+      <div className="p-4 sm:p-5 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center shrink-0">
@@ -2351,7 +2351,7 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
       )}
       {collectionOutfits.length > 0 && (
         <div className="px-4 py-3 border-t-2 border-sky2-50">
-          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2">Looks in this set</p>
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2">{collectionOutfits.length} Looks in this collection</p>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
             {collectionOutfits.map(o => {
               const opieces = o.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
@@ -2375,7 +2375,7 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
           </div>
         </div>
       )}
-      <div className="p-3 sm:p-4 border-t-2 border-sky2-50">
+      <div className="p-3 sm:p-4 border-t-2 border-cream-100">
         <button
           onClick={onOpen}
           className="w-full flex items-center justify-center gap-2 py-3 bg-sky2-50 text-sky2-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100 transition-colors"
