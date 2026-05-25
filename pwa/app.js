@@ -47,8 +47,8 @@ const I = {
   flower:   (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="12" r="3"/><path d="M12 2a3.5 3.5 0 0 0-3 5.3A3.5 3.5 0 0 0 7.3 9 3.5 3.5 0 0 0 5 12c0 1.13.54 2.13 1.37 2.77A3.5 3.5 0 0 0 6 17a3.5 3.5 0 0 0 5.3 3 3.5 3.5 0 0 0 1.7 1.7A3.5 3.5 0 0 0 18 17a3.5 3.5 0 0 0-.37-2.23A3.5 3.5 0 0 0 19 12a3.5 3.5 0 0 0-2.3-3.3A3.5 3.5 0 0 0 17 7a3.5 3.5 0 0 0-5-5z"/></>} />,
   sun:      (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></>} />,
   heart:    (p) => <Icon {...p} d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />,
-  sunglasses: (p) => <Icon {...p} d={<><circle cx="6" cy="14" r="4"/><circle cx="18" cy="14" r="4"/><path d="M10 14a2 2 0 0 0 4 0"/><path d="M2 10l2.5 4"/><path d="M22 10l-2.5 4"/></>} />,
-  suitcase:   (p) => <Icon {...p} d={<><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></>} />,
+  sunglasses: (p) => <Icon {...p} d={<><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></>} />,
+  suitcase:   (p) => <Icon {...p} d={<><path d="M8 16V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><rect x="4" y="6" width="16" height="10" rx="2"/></>} />,
 };
 
 // The Poppy brand mark — a stylized blossom built from three soft petals
@@ -2075,8 +2075,24 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 
 // --- OUTFITS VIEW ----------------------------------------------------------
 function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit, onPutImage, onDeleteImage, scrollToId, onScrolled, onSetHeaderAction }) {
-  const [selfieModal, setSelfieModal] = useState(null); // { outfitId, outfitName } or null
+  const [selfieModal, setSelfieModal] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeSeasons, setActiveSeasons] = useState([]);
+  const [activeOccasions, setActiveOccasions] = useState([]);
+  const [activeStatuses, setActiveStatuses] = useState([]);
   const newLookButtonRef = useRef(null);
+
+  const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+  const filterCount = activeSeasons.length + activeOccasions.length + activeStatuses.length;
+
+  const filteredOutfits = outfits.filter(o => {
+    const pieces = items.filter(i => o.itemIds.includes(i.id));
+    if (pieces.length === 0) return true;
+    if (activeSeasons.length && !activeSeasons.every(s => pieces.every(p => p.seasons?.includes(s)))) return false;
+    if (activeOccasions.length && !activeOccasions.every(oc => pieces.every(p => p.occasions?.includes(oc)))) return false;
+    if (activeStatuses.length && !pieces.every(p => activeStatuses.includes(p.status || "owned"))) return false;
+    return true;
+  });
 
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
@@ -2121,6 +2137,43 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
         </div>
       </div>
 
+      <div className="mb-4 flex gap-2">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+        >
+          Filters{filterCount > 0 && ` · ${filterCount}`}
+        </button>
+      </div>
+
+      {showFilters && (
+        <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+          <FilterRow label="Status">
+            {STATUS_OPTIONS.map(s => (
+              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
+            ))}
+          </FilterRow>
+          <FilterRow label="Season">
+            {SEASON_OPTIONS.map(s => (
+              <Chip key={s} tone="season" active={activeSeasons.includes(s)} onClick={() => toggle(activeSeasons, setActiveSeasons, s)}>{s}</Chip>
+            ))}
+          </FilterRow>
+          <FilterRow label="Occasion">
+            {OCCASION_OPTIONS.map(o => (
+              <Chip key={o} tone="occasion" active={activeOccasions.includes(o)} onClick={() => toggle(activeOccasions, setActiveOccasions, o)}>{o}</Chip>
+            ))}
+          </FilterRow>
+          {filterCount > 0 && (
+            <button
+              onClick={() => { setActiveSeasons([]); setActiveOccasions([]); setActiveStatuses([]); }}
+              className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
+
       {outfits.length === 0 ? (
         <div className="py-16 text-center border-2 border-dashed border-petal-200 bg-petal-50/40 rounded-3xl">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
@@ -2132,9 +2185,17 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
             Open Builder <I.chevron size={14} />
           </button>
         </div>
+      ) : filteredOutfits.length === 0 ? (
+        <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
+            <I.search size={26} className="text-poppy-500" />
+          </div>
+          <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          {outfits.map((o, i) => (
+          {filteredOutfits.map((o, i) => (
             <OutfitCard
               key={o.id}
               id={`outfit-${o.id}`}
@@ -2221,7 +2282,7 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
 }
 
 function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDeleteImage, onOpenSelfie, delay = 0, id }) {
-  const pieces = outfit.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
+  const pieces = items.filter(i => outfit.itemIds.includes(i.id));
   const selfieKey = `selfie_${outfit.id}`;
   const selfieUrl = images[selfieKey];
 
@@ -2274,8 +2335,24 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
 
 // --- COLLECTIONS VIEW -----------------------------------------------------
 function CollectionsView({ collections, items, images, outfits, onSave, onViewCollection, onOpenOutfit, onSetHeaderAction }) {
-  const [editingId, setEditingId] = useState(null); // collection id being edited, 'new', or null
-  const [showManager, setShowManager] = useState(false); // open manager modal directly to a target
+  const [editingId, setEditingId] = useState(null);
+  const [showManager, setShowManager] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeSeasons, setActiveSeasons] = useState([]);
+  const [activeOccasions, setActiveOccasions] = useState([]);
+  const [activeStatuses, setActiveStatuses] = useState([]);
+
+  const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+  const filterCount = activeSeasons.length + activeOccasions.length + activeStatuses.length;
+
+  const filteredCollections = collections.filter(c => {
+    const pieces = items.filter(i => c.itemIds.includes(i.id));
+    if (pieces.length === 0) return true;
+    if (activeSeasons.length && !activeSeasons.every(s => pieces.every(p => p.seasons?.includes(s)))) return false;
+    if (activeOccasions.length && !activeOccasions.every(oc => pieces.every(p => p.occasions?.includes(oc)))) return false;
+    if (activeStatuses.length && !pieces.every(p => activeStatuses.includes(p.status || "owned"))) return false;
+    return true;
+  });
 
   const startNew = () => { setEditingId("new"); setShowManager(true); };
   const addButtonRef = useRef(null);
@@ -2314,6 +2391,43 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
         </div>
       </div>
 
+      <div className="mb-4 flex gap-2">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+        >
+          Filters{filterCount > 0 && ` · ${filterCount}`}
+        </button>
+      </div>
+
+      {showFilters && (
+        <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+          <FilterRow label="Status">
+            {STATUS_OPTIONS.map(s => (
+              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
+            ))}
+          </FilterRow>
+          <FilterRow label="Season">
+            {SEASON_OPTIONS.map(s => (
+              <Chip key={s} tone="season" active={activeSeasons.includes(s)} onClick={() => toggle(activeSeasons, setActiveSeasons, s)}>{s}</Chip>
+            ))}
+          </FilterRow>
+          <FilterRow label="Occasion">
+            {OCCASION_OPTIONS.map(o => (
+              <Chip key={o} tone="occasion" active={activeOccasions.includes(o)} onClick={() => toggle(activeOccasions, setActiveOccasions, o)}>{o}</Chip>
+            ))}
+          </FilterRow>
+          {filterCount > 0 && (
+            <button
+              onClick={() => { setActiveSeasons([]); setActiveOccasions([]); setActiveStatuses([]); }}
+              className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
+
       {collections.length === 0 ? (
         <div className="py-16 text-center border-2 border-dashed border-sky2-200 bg-sky2-50/40 rounded-3xl">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
@@ -2327,9 +2441,17 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
             Create your first <I.chevron size={14} />
           </button>
         </div>
+      ) : filteredCollections.length === 0 ? (
+        <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
+            <I.search size={26} className="text-poppy-500" />
+          </div>
+          <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          {collections.map((c, i) => (
+          {filteredCollections.map((c, i) => (
             <CollectionCard
               key={c.id}
               collection={c}
@@ -2421,7 +2543,7 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
           <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2">{collectionOutfits.length} Looks in this collection</p>
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
             {collectionOutfits.map(o => {
-              const opieces = o.itemIds.map(id => items.find(i => i.id === id)).filter(Boolean);
+              const opieces = items.filter(i => o.itemIds.includes(i.id));
               return (
                 <button
                   key={o.id}
@@ -2603,20 +2725,20 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Name this look…"
-            className="w-full bg-transparent border-b-2 border-cream-200 focus:border-poppy-500 outline-none font-display font-bold text-lg py-1"
+            className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display font-bold text-lg py-1"
           />
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="a vibe, a memory… (optional)"
-            className="w-full bg-transparent border-b-2 border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
+            className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
           />
           <div className="flex gap-2 pt-1">
             <button onClick={onCancel} className="flex-1 py-3 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95">Cancel</button>
             <button
               onClick={handleSave}
               disabled={!canSave}
-              className="flex-[2] flex items-center justify-center gap-2 py-3 bg-buttercup-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"
+              className="flex-[2] flex items-center justify-center gap-2 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"
             >
               <I.check size={14} /> {isEdit ? "Save Changes" : "Save Look"}
             </button>
