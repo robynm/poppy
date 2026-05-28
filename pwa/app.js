@@ -785,7 +785,7 @@ function ClosetApp() {
       <header className="bg-white/95 backdrop-blur border-b border-cream-100 z-30 sticky top-0 shadow-card">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-poppy-500 flex items-center justify-center shadow-poppy overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-poppy-500 flex items-center justify-center shadow-poppy overflow-hidden">
               <PoppyMark />
             </div>
             <div>
