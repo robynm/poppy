@@ -977,9 +977,9 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     if (activeStatuses.length && !activeStatuses.includes(it.status || "owned")) return false;
     if (activeBrands.length && !activeBrands.includes(it.brand || "")) return false;
     if (activeCategories.length && !activeCategories.includes(it.category)) return false;
-    if (activeSeasons.length && !activeSeasons.every(s => it.seasons?.includes(s))) return false;
-    if (activeOccasions.length && !activeOccasions.every(o => it.occasions?.includes(o))) return false;
-    if (activeCustom.length && !activeCustom.every(t => it.custom?.includes(t))) return false;
+    if (activeSeasons.length && !activeSeasons.some(s => it.seasons?.includes(s))) return false;
+    if (activeOccasions.length && !activeOccasions.some(o => it.occasions?.includes(o))) return false;
+    if (activeCustom.length && !activeCustom.some(t => it.custom?.includes(t))) return false;
     if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   }), [items, activeCollectionObj, activeStatuses, activeBrands, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
@@ -1052,11 +1052,12 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 
   const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
 
-  const counts = useMemo(() => ({
-    total: items.length,
-    tops: items.filter(i => i.category === "top").length,
-    bottoms: items.filter(i => i.category === "bottom").length,
-  }), [items]);
+  const counts = useMemo(() => {
+    const src = filterCount > 0 ? filtered : items;
+    const byCat = {};
+    CATEGORY_OPTIONS.forEach(c => { byCat[c] = src.filter(i => i.category === c).length; });
+    return { total: src.length, byCat };
+  }, [items, filtered, filterCount]);
 
   const filterCount =
     activeCategories.length
@@ -1072,10 +1073,6 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       <div className="fade-up">
       <div className="mb-6 sm:mb-10">
-        {/* <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
-          <I.flower size={12} className="text-poppy-500" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Your Closet</p>
-        </div> */}
         <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Your closet,</h2>
         <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
         <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">at a glance.</em></h3>
@@ -1089,7 +1086,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           </button>}
         </div>
         <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl">
-          <span className="font-bold text-ink-800">{counts.total}</span> pieces · <span className="font-bold text-ink-800">{counts.tops}</span> tops · <span className="font-bold text-ink-800">{counts.bottoms}</span> bottoms
+          <span className="font-bold text-ink-800">{counts.total}</span> pieces{CATEGORY_OPTIONS.filter(c => counts.byCat[c] > 0).map(c => <span key={c}> · <span className="font-bold text-ink-800">{counts.byCat[c]}</span> {({top:"tops",bottom:"bottoms",dress:"dresses",outerwear:"outerwear",shoes:"shoes",accessory:"accessories"})[c] || c}</span>)}
         </p>
       </div>
 
@@ -1314,7 +1311,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           onCollectionsChange={onSaveCollections}
           onReplaceImage={(id, blob) => onPutImage(id, blob)}
           onClose={() => { setEditing(null); setViewing(null); }}
-          onSave={(u) => { handleUpdate(u); setEditing(null); }}
+          onSave={(u) => { handleUpdate(u); setEditing(null); setViewing(null); }}
           onDelete={() => { handleDelete(editing); setViewing(null); }}
         />
       )}
@@ -1323,7 +1320,13 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       {selectMode && selectedIds.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
-            <span className="text-sm font-bold text-poppy-700 mr-auto">{selectedIds.size} selected</span>
+            <div className="d-flex flex-column flex-grow">
+            <span className="text-sm font-bold text-poppy-700">{selectedIds.size} selected</span>
+              <div>
+                <button onClick={selectAll} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700 mr-2">All</button>
+                <button onClick={exitSelectMode} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">None</button>
+              </div>
+            </div>
             <button onClick={() => setBulkSheet("tags")} className="px-3.5 py-2 bg-plum-50 text-plum-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-plum-100">Tags</button>
             <button onClick={() => setBulkSheet("outfits")} className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100">Looks</button>
             <button onClick={() => setBulkSheet("collections")} className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100">Collections</button>
@@ -1759,6 +1762,7 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
   const count = selectedIds.size;
 
   // Tags: which to add
+  const [applyStatus, setApplyStatus] = useState(null); // null = don't change
   const [addSeasons, setAddSeasons] = useState([]);
   const [addOccasions, setAddOccasions] = useState([]);
   const [addCustom, setAddCustom] = useState([]);
@@ -1804,6 +1808,7 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
         if (!selectedIds.has(it.id)) return it;
         return {
           ...it,
+          ...(applyStatus ? { status: applyStatus } : {}),
           seasons: [...new Set([...(it.seasons || []), ...addSeasons])],
           occasions: [...new Set([...(it.occasions || []), ...addOccasions])],
           custom: [...new Set([...(it.custom || []), ...addCustom])],
@@ -1845,6 +1850,13 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
           {type === "tags" && (
             <>
               <p className="text-sm text-ink-600">Selected tags will be added to all {count} items. Existing tags are preserved.</p>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_OPTIONS.map(s => <Chip key={s} tone="status" active={applyStatus === s} onClick={() => setApplyStatus(prev => prev === s ? null : s)}>{s}</Chip>)}
+                </div>
+                {applyStatus && <p className="text-[10px] text-ink-400 mt-1.5">Status will be set to "{applyStatus}" on all selected items.</p>}
+              </div>
               <div>
                 <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
                 <div className="flex flex-wrap gap-2">
