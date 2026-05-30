@@ -473,7 +473,7 @@ function RemovableChip({ children, tone = "default", onRemove }) {
     occasion:   "bg-petal-500 text-white border-petal-500",
     custom:     "bg-plum-500 text-white border-plum-500",
     collection: "bg-sky2-500 text-white border-sky2-500",
-    status:     "bg-buttercup-500 text-white border-buttercup-500",
+    status:     "bg-ink-500 text-white border-ink-500",
     brand:      "bg-petal-600 text-white border-petal-600",
   };
   return (
@@ -1432,7 +1432,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop">
+              <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-ink-500 text-white border-ink-500 shadow-pop">
                 {item.status || "owned"}
               </span>
             </div>
