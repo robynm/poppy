@@ -49,7 +49,7 @@ const I = {
   heart:    (p) => <Icon {...p} d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />,
   sunglasses: (p) => <Icon {...p} d={<><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></>} />,
   suitcase:   (p) => <Icon {...p} d={<><path d="M8 16V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><rect x="4" y="6" width="16" height="10" rx="2"/></>} />,
-  share:    (p) => <Icon {...p} d={<><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></>} />,
+  share:    (p) => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />,
 };
 
 // The Poppy brand mark — embedded raster of the watercolor poppy from poppy-icon-cropped.png
@@ -2631,32 +2631,35 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
 
   return (
     <div id={id} className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5 border-b-2 border-petal-50 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-full bg-petal-100 flex items-center justify-center shrink-0">
+      <div className="p-4 sm:p-5 border-b-2 border-petal-50">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-full bg-petal-100 flex items-center justify-center mb-2">
               <I.sunglasses size={14} className="text-petal-600" />
             </div>
-            <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(outfit.name)}</h3>
           </div>
-          {outfit.note && <p className="text-sm italic text-ink-500 mt-1 pl-10">"{outfit.note}"</p>}
-        </div>
-        <div className="flex gap-1 shrink-0">
-          <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40" aria-label="Share outfit">
-            <I.share size={15} />
-          </button>
-          <button onClick={onOpenSelfie} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
-            <I.camera size={15} />
-          </button>
-          {onEdit && (
-            <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors" aria-label="Edit outfit">
-              <I.pencil size={15} />
+          <div className="flex gap-1 shrink-0">
+            <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40" aria-label="Share outfit">
+              <I.share size={15} />
             </button>
-          )}
-          <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete outfit">
-            <I.trash size={15} />
-          </button>
+            <button onClick={onOpenSelfie} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
+              <I.camera size={15} />
+            </button>
+            {onEdit && (
+              <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors" aria-label="Edit outfit">
+                <I.pencil size={15} />
+              </button>
+            )}
+            <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete outfit">
+              <I.trash size={15} />
+            </button>
+          </div>
         </div>
+        <div>
+          <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(outfit.name)}</h3>
+          {outfit.note && <p className="text-sm italic text-ink-500 mt-1">"{outfit.note}"</p>}
+        </div>
+        
       </div>
       <div className="p-4 bg-petal-50 grid grid-cols-3 gap-2 min-h-[200px]">
         {selfieUrl && (
@@ -2863,31 +2866,33 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
   };
   return (
     <div className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center shrink-0">
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center mb-2">
               <I.suitcase size={14} className="text-sky2-600" />
             </div>
-            <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(collection.name)}</h3>
           </div>
-          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1 pl-10">
+          <div className="flex gap-1 shrink-0">
+            <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
+              <I.share size={15} />
+            </button>
+            <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
+              <I.pencil size={15} />
+            </button>
+            <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
+              <I.trash size={15} />
+            </button>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(collection.name)}</h3>
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1">
             {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
           </p>
           {collection.description && (
-            <p className="text-sm italic text-ink-500 mt-1 pl-10">"{collection.description}"</p>
+            <p className="text-sm italic text-ink-500 mt-1">"{collection.description}"</p>
           )}
-        </div>
-        <div className="flex gap-1 shrink-0">
-          <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
-            <I.share size={15} />
-          </button>
-          <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
-            <I.pencil size={15} />
-          </button>
-          <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
-            <I.trash size={15} />
-          </button>
         </div>
       </div>
       {preview.length === 0 ? (
