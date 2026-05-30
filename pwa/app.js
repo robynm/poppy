@@ -49,6 +49,7 @@ const I = {
   heart:    (p) => <Icon {...p} d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />,
   sunglasses: (p) => <Icon {...p} d={<><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></>} />,
   suitcase:   (p) => <Icon {...p} d={<><path d="M8 16V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><rect x="4" y="6" width="16" height="10" rx="2"/></>} />,
+  share:    (p) => <Icon {...p} d={<><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></>} />,
 };
 
 // The Poppy brand mark — embedded raster of the watercolor poppy from poppy-icon-cropped.png
@@ -321,6 +322,293 @@ async function migrateLegacyImagesIfNeeded() {
   try { localStorage.removeItem(LEGACY_IMAGES_KEY); } catch {}
   lsSet(STORAGE_KEYS.imagesMigrated, true);
   return { migrated };
+}
+
+// --- Share as image -------------------------------------------------------
+// Renders an outfit or collection (title + grid of item photos + item names + Poppy mark)
+// to a single PNG, then hands it to the Web Share API. If the platform can't share
+// files, falls back to downloading the PNG so the user can share it manually.
+function _loadImage(src) {
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+function _roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+function _drawContain(ctx, img, x, y, w, h) {
+  if (!img || !img.naturalWidth) return;
+  const r = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * r;
+  const dh = img.naturalHeight * r;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+function _drawCover(ctx, img, x, y, w, h) {
+  if (!img || !img.naturalWidth) return;
+  const r = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * r;
+  const dh = img.naturalHeight * r;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  ctx.restore();
+}
+function _slug(s) {
+  return (s || 'share').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'share';
+}
+async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent, kindLabel, maxCols }) {
+  const W = 1080;
+  const PAD = 56;
+  const capCols = maxCols || 3;
+  // Pick a column count that keeps the grid roughly square so the export
+  // doesn't end up much taller than it is wide for large collections.
+  const n = items.length;
+  let cols;
+  if (n <= 1) cols = 1;
+  else if (n <= 4) cols = Math.min(2, capCols);
+  else if (n <= 9) cols = Math.min(3, capCols);
+  else cols = Math.min(capCols, Math.ceil(Math.sqrt(n)));
+  const gap = 20;
+  const innerW = W - PAD * 2;
+  const tileSize = Math.floor((innerW - gap * (cols - 1)) / cols);
+
+  // Preload images so we can measure layout precisely.
+  const pieceImgs = await Promise.all(items.map(it => _loadImage(images[it.id])));
+  const selfieImg = selfieUrl ? await _loadImage(selfieUrl) : null;
+  const markImg = await _loadImage(POPPY_MARK_SRC);
+
+  // We'll lay out into a virtual canvas. Compute total height first.
+  const ctxMeasure = document.createElement('canvas').getContext('2d');
+
+  // Caption metrics (item name shown under each tile image) — scale down with denser grids
+  const captionFontPx = cols >= 6 ? 13 : cols >= 5 ? 14 : cols >= 4 ? 16 : 18;
+  const captionFont = `700 ${captionFontPx}px Nunito, sans-serif`;
+  const captionLineH = Math.round(captionFontPx * 1.22);
+  const captionPadY = cols >= 5 ? 10 : 14;
+  const captionPadX = cols >= 5 ? 8 : 12;
+  const maxCaptionLines = 2;
+  ctxMeasure.font = captionFont;
+  const wrapToLines = (text, maxW, maxLines) => {
+    const words = text.split(/\s+/).filter(Boolean);
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const trial = cur ? cur + ' ' + w : w;
+      if (ctxMeasure.measureText(trial).width <= maxW) { cur = trial; }
+      else {
+        if (cur) lines.push(cur);
+        cur = w;
+        if (lines.length >= maxLines) break;
+      }
+    }
+    if (cur && lines.length < maxLines) lines.push(cur);
+    if (lines.length > maxLines) lines.length = maxLines;
+    // Truncate last line if we overflowed
+    if (lines.length === maxLines) {
+      let last = lines[maxLines - 1];
+      const wordsLeft = words.length - words.indexOf(last.split(' ').pop()) - 1;
+      if (wordsLeft > 0) {
+        while (ctxMeasure.measureText(last + '…').width > maxW && last.length > 1) last = last.slice(0, -1);
+        lines[maxLines - 1] = last + '…';
+      }
+    }
+    return lines.length ? lines : [''];
+  };
+  const captionInnerW = tileSize - captionPadX * 2;
+  const captionData = items.map(it => wrapToLines(toTitle(it.name || '').toUpperCase(), captionInnerW, maxCaptionLines));
+  const maxLines = Math.max(1, ...captionData.map(l => l.length));
+  const captionH = captionPadY * 2 + maxLines * captionLineH;
+  const tileTotalH = tileSize + captionH;
+
+  const rows = Math.ceil(items.length / cols);
+  const gridH = rows > 0 ? rows * tileTotalH + (rows - 1) * gap : 0;
+
+  // Header heights
+  const labelH = 36;
+  const titleH = 78;
+  const subtitleH = subtitle ? 56 : 0;
+  const headerTop = PAD;
+  const headerH = labelH + 8 + titleH + (subtitleH ? subtitleH + 6 : 0);
+
+  // Selfie
+  // Fit the selfie panel to the photo's aspect ratio (capped so very tall portraits don't dominate).
+  let selfieH = 0;
+  let selfiePanelW = innerW;
+  if (selfieImg && selfieImg.naturalWidth && selfieImg.naturalHeight) {
+    const maxH = 900;
+    const minH = 420;
+    const aspect = selfieImg.naturalWidth / selfieImg.naturalHeight; // w/h
+    if (aspect >= 1) {
+      // landscape — full width, height by aspect
+      selfieH = Math.max(minH, Math.min(maxH, Math.round(innerW / aspect)));
+      selfiePanelW = innerW;
+    } else {
+      // portrait — cap height, derive width
+      selfieH = maxH;
+      selfiePanelW = Math.min(innerW, Math.round(maxH * aspect));
+    }
+  } else if (selfieImg) {
+    selfieH = 720;
+  }
+  const afterHeader = headerTop + headerH + 32;
+  const gridTop = afterHeader + (selfieImg ? selfieH + 28 : 0);
+  const footerTop = gridTop + gridH + 64;
+  const footerH = 90;
+  const H = footerTop + footerH + PAD;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = Math.max(H, 1200);
+  const ctx = canvas.getContext('2d');
+
+  // Background — cream
+  ctx.fillStyle = '#FFFBF6';
+  ctx.fillRect(0, 0, W, canvas.height);
+
+  // Decorative wash
+  const wash1 = ctx.createRadialGradient(W * 0.95, -60, 0, W * 0.95, -60, 700);
+  wash1.addColorStop(0, 'rgba(255, 90, 54, 0.18)');
+  wash1.addColorStop(1, 'rgba(255, 90, 54, 0)');
+  ctx.fillStyle = wash1;
+  ctx.fillRect(0, 0, W, canvas.height);
+  const wash2 = ctx.createRadialGradient(-60, canvas.height + 60, 0, -60, canvas.height + 60, 800);
+  wash2.addColorStop(0, 'rgba(247, 201, 72, 0.18)');
+  wash2.addColorStop(1, 'rgba(247, 201, 72, 0)');
+  ctx.fillStyle = wash2;
+  ctx.fillRect(0, 0, W, canvas.height);
+
+  // Label
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = accent || '#EC4778';
+  ctx.font = '800 22px Nunito, sans-serif';
+  const label = (kindLabel || 'LOOK').toUpperCase();
+  ctx.fillText(label, PAD, headerTop + 24);
+
+  // Title
+  ctx.fillStyle = '#241A11';
+  ctx.font = '800 64px Fraunces, Georgia, serif';
+  ctx.fillText(toTitle(title || 'Untitled'), PAD, headerTop + labelH + 8 + 60);
+
+  // Subtitle (note / description)
+  if (subtitle) {
+    ctx.fillStyle = '#8F7060';
+    ctx.font = 'italic 600 26px Fraunces, Georgia, serif';
+    let s = `"${subtitle}"`;
+    // Truncate if too long
+    const maxW = innerW;
+    while (ctx.measureText(s).width > maxW && s.length > 10) s = s.slice(0, -2) + '…"';
+    ctx.fillText(s, PAD, headerTop + labelH + 8 + titleH + 36);
+  }
+
+  // Selfie
+  if (selfieImg) {
+    const sy = afterHeader;
+    const sx = PAD + Math.round((innerW - selfiePanelW) / 2);
+    _roundRect(ctx, sx, sy, selfiePanelW, selfieH, 36);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.save();
+    _roundRect(ctx, sx, sy, selfiePanelW, selfieH, 36);
+    ctx.clip();
+    _drawContain(ctx, selfieImg, sx, sy, selfiePanelW, selfieH);
+    ctx.restore();
+  }
+
+  // Items grid — each tile = image square + caption underneath, inside one rounded card
+  for (let i = 0; i < items.length; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = PAD + col * (tileSize + gap);
+    const ty = gridTop + row * (tileTotalH + gap);
+
+    // Card background
+    _roundRect(ctx, x, ty, tileSize, tileTotalH, 28);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.strokeStyle = '#FFE7D1';
+    ctx.lineWidth = 2;
+    _roundRect(ctx, x, ty, tileSize, tileTotalH, 28);
+    ctx.stroke();
+
+    // Image area — inset scales with tile size
+    const inset = cols >= 6 ? 10 : cols >= 5 ? 14 : cols >= 4 ? 18 : 22;
+    _drawContain(ctx, pieceImgs[i], x + inset, ty + inset, tileSize - inset * 2, tileSize - inset * 2);
+
+    // Divider line between image and caption
+    ctx.strokeStyle = '#FFE7D1';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 16, ty + tileSize);
+    ctx.lineTo(x + tileSize - 16, ty + tileSize);
+    ctx.stroke();
+
+    // Caption
+    ctx.font = captionFont;
+    ctx.fillStyle = '#36281B';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = captionData[i];
+    // Vertically center the lines block within the caption strip
+    const blockH = lines.length * captionLineH;
+    const startY = ty + tileSize + (captionH - blockH) / 2 + captionLineH / 2;
+    for (let li = 0; li < lines.length; li++) {
+      ctx.fillText(lines[li], x + tileSize / 2, startY + li * captionLineH);
+    }
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // Footer — Poppy mark + wordmark
+  const fy = footerTop;
+  const markSize = 68;
+  if (markImg) ctx.drawImage(markImg, PAD, fy, markSize, markSize);
+  ctx.fillStyle = '#FF5A36';
+  ctx.font = '800 36px Fraunces, Georgia, serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Poppy', PAD + markSize + 16, fy + markSize / 2 - 4);
+  ctx.fillStyle = '#8F7060';
+  ctx.font = '700 16px Nunito, sans-serif';
+  ctx.fillText('YOUR CLOSET, BLOOMING.', PAD + markSize + 16, fy + markSize / 2 + 22);
+  ctx.textBaseline = 'alphabetic';
+
+  // Convert to blob and share / download
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 0.95));
+  if (!blob) throw new Error('Could not render share image.');
+  const filename = `poppy-${(kindLabel || 'share').toLowerCase()}-${_slug(title)}.png`;
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: toTitle(title || 'Poppy'), text: `${kindLabel || 'Look'}: ${toTitle(title || '')}` });
+      return { ok: true, shared: true };
+    } catch (err) {
+      if (err && err.name === 'AbortError') return { ok: true, shared: false, aborted: true };
+      // fall through to download
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  return { ok: true, shared: false, downloaded: true };
 }
 
 // --- Backup / restore -----------------------------------------------------
@@ -2319,6 +2607,27 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
   const pieces = items.filter(i => outfit.itemIds.includes(i.id));
   const selfieKey = `selfie_${outfit.id}`;
   const selfieUrl = images[selfieKey];
+  const [sharing, setSharing] = useState(false);
+  const handleShare = async () => {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      await shareAsImage({
+        title: outfit.name,
+        subtitle: outfit.note,
+        items: pieces,
+        images,
+        selfieUrl,
+        accent: '#EC4778',
+        kindLabel: 'Look',
+      });
+    } catch (e) {
+      console.error('share failed', e);
+      alert("Sorry — couldn't create the share image.");
+    } finally {
+      setSharing(false);
+    }
+  };
 
   return (
     <div id={id} className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
@@ -2333,6 +2642,9 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
           {outfit.note && <p className="text-sm italic text-ink-500 mt-1 pl-10">"{outfit.note}"</p>}
         </div>
         <div className="flex gap-1 shrink-0">
+          <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40" aria-label="Share outfit">
+            <I.share size={15} />
+          </button>
           <button onClick={onOpenSelfie} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
             <I.camera size={15} />
           </button>
@@ -2528,6 +2840,27 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
   const TRUNCATE_AT = 10;
   const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
   const remaining = pieces.length - preview.length;
+  const [sharing, setSharing] = useState(false);
+  const handleShare = async () => {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      await shareAsImage({
+        title: collection.name,
+        subtitle: collection.description,
+        items: pieces,
+        images,
+        accent: '#2882B7',
+        kindLabel: 'Collection',
+        maxCols: 6,
+      });
+    } catch (e) {
+      console.error('share failed', e);
+      alert("Sorry — couldn't create the share image.");
+    } finally {
+      setSharing(false);
+    }
+  };
   return (
     <div className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 flex items-start justify-between gap-3">
@@ -2546,6 +2879,9 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
           )}
         </div>
         <div className="flex gap-1 shrink-0">
+          <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
+            <I.share size={15} />
+          </button>
           <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
             <I.pencil size={15} />
           </button>
