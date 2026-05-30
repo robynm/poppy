@@ -957,6 +957,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkSheet, setBulkSheet] = useState(null); // "tags" | "collections" | "outfits"
+  const [showAllCounts, setShowAllCounts] = useState(false);
   const setActiveCollection = onSetActiveCollection;
 
   const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
@@ -1086,7 +1087,17 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           </button>}
         </div>
         <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl">
-          <span className="font-bold text-ink-800">{counts.total}</span> pieces{CATEGORY_OPTIONS.filter(c => counts.byCat[c] > 0).map(c => <span key={c}> · <span className="font-bold text-ink-800">{counts.byCat[c]}</span> {({top:"tops",bottom:"bottoms",dress:"dresses",outerwear:"outerwear",shoes:"shoes",accessory:"accessories"})[c] || c}</span>)}
+          {(() => {
+            const labels = {top:"tops",bottom:"bottoms",dress:"dresses",outerwear:"outerwear",shoes:"shoes",accessory:"accessories"};
+            const visible = showAllCounts
+              ? CATEGORY_OPTIONS.filter(c => counts.byCat[c] > 0)
+              : ["top","bottom"];
+            return <>
+              <span className="font-bold text-ink-800">{counts.total}</span> pieces{visible.map(c => <span key={c}> · <span className="font-bold text-ink-800">{counts.byCat[c]}</span> {labels[c]}</span>)}
+              {!showAllCounts && <button onClick={() => setShowAllCounts(true)} className="ml-2 text-[10px] font-bold tracking-[0.15em] uppercase text-ink-400 underline active:text-ink-600">more</button>}
+              {showAllCounts && <button onClick={() => setShowAllCounts(false)} className="ml-2 text-[10px] font-bold tracking-[0.15em] uppercase text-ink-400 underline active:text-ink-600">less</button>}
+            </>;
+          })()}
         </p>
       </div>
 
@@ -1229,6 +1240,10 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
             Clear all
           </button>
         </div>
+      )}
+
+      {filterCount > 0 && (
+        <p className="text-xs text-ink-400 mb-3">Showing <span className="font-bold text-ink-600">{filtered.length}</span> of <span className="font-bold text-ink-600">{items.length}</span> pieces</p>
       )}
 
       <div className="flex-1 h-px bg-cream-200 mb-3"></div>
