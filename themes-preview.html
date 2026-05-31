@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Poppy — Seasonal Themes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,500;1,9..144,600;1,9..144,700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  /* =====================  THEME TOKENS  ===================== */
+  /* Default = Spring (current Poppy palette) */
+  :root {
+    --poppy-50:#FFF1EB;  --poppy-100:#FFE0D2; --poppy-200:#FFC2A8; --poppy-300:#FF9C77; --poppy-400:#FF7A50;
+    --poppy-500:#FF5A36; --poppy-600:#E63F1A; --poppy-700:#BD2C0E; --poppy-800:#8E210B; --poppy-900:#5F1505;
+    --cream-50:#FFFBF6;  --cream-100:#FFF4E8; --cream-200:#FFE7D1; --cream-300:#F3D6BC; --cream-400:#DCBE9F;
+    --cream-500:#B89A7C; --cream-600:#8C735A; --cream-700:#5E4B39;
+    --ink-50:#FAF5F1;    --ink-100:#EFE2D6;   --ink-200:#D9BFAC;   --ink-300:#B89784;   --ink-400:#8F7060;
+    --ink-500:#6B5142;   --ink-600:#4B3829;   --ink-700:#36281B;   --ink-800:#241A11;   --ink-900:#150E08;
+    --buttercup-50:#FFFBEA; --buttercup-100:#FFF3C4; --buttercup-200:#FCE588; --buttercup-300:#FADB5F;
+    --buttercup-400:#F7C948; --buttercup-500:#F0B429; --buttercup-600:#DE911D; --buttercup-700:#CB6E17;
+    --leaf-50:#EFFCEF;   --leaf-100:#D2F5D5;  --leaf-200:#A8E9B0;  --leaf-300:#7DDB89;
+    --leaf-400:#5BC76A;  --leaf-500:#3FB04F;  --leaf-600:#2E8C3D;  --leaf-700:#236B2F;
+    --petal-50:#FFF0F5;  --petal-100:#FFD9E6; --petal-200:#FFB1CB; --petal-300:#FF85AC;
+    --petal-400:#FB628F; --petal-500:#EC4778; --petal-600:#C4305F; --petal-700:#962347;
+    --sky2-50:#EBF6FB;   --sky2-100:#CCE7F4;  --sky2-200:#9CCFE9;  --sky2-300:#6DB6DC;
+    --sky2-400:#469CCB;  --sky2-500:#2882B7;  --sky2-600:#1E6594;  --sky2-700:#164D72;
+    --plum-50:#F4EEFB;   --plum-100:#E1D2F4;  --plum-200:#C5A8E8;  --plum-300:#A881D8;
+    --plum-400:#8D60C5;  --plum-500:#7344AB;  --plum-600:#583389;  --plum-700:#3F2566;
+
+    --shadow-poppy: 0 12px 32px -12px rgba(255, 90, 54, 0.45);
+    --shadow-card:  0 4px 16px -6px rgba(94, 21, 5, 0.10);
+    --shadow-pop:   0 8px 24px -8px rgba(94, 21, 5, 0.18);
+    --wash:
+      radial-gradient(circle at 90% -10%, rgba(255, 90, 54, 0.10), transparent 40%),
+      radial-gradient(circle at -10% 110%, rgba(247, 201, 72, 0.10), transparent 45%);
+  }
+
+  /* =====================  AUTUMN — same hues, muted  ===================== */
+  [data-theme="autumn"] {
+    --poppy-50:#FAEAE6;  --poppy-100:#F1CCC2; --poppy-200:#DF9D8B; --poppy-300:#CB7560; --poppy-400:#B95942;
+    --poppy-500:#A8412B; --poppy-600:#8A3020; --poppy-700:#6A2316; --poppy-800:#4B170E; --poppy-900:#2D0D07;
+    --cream-50:#FBF4E8;  --cream-100:#F5E6CC; --cream-200:#ECD4AC; --cream-300:#DCBC8D; --cream-400:#C19E70;
+    --cream-500:#A07F55; --cream-600:#7B6240; --cream-700:#57452D;
+    --ink-50:#F8F2EB;    --ink-100:#E8D8C7;   --ink-200:#CFB29A;   --ink-300:#B28A6E;   --ink-400:#946449;
+    --ink-500:#714831;   --ink-600:#4F311F;   --ink-700:#392414;   --ink-800:#25180D;   --ink-900:#150D07;
+    --buttercup-50:#FAF3E0; --buttercup-100:#F4E2B3; --buttercup-200:#E8C77A; --buttercup-300:#D7A949;
+    --buttercup-400:#C29234; --buttercup-500:#A87726; --buttercup-600:#8A5C19; --buttercup-700:#6C4612;
+    --leaf-50:#F1F3E5;   --leaf-100:#DEE3BC;  --leaf-200:#C2CC8C;  --leaf-300:#A2B25E;
+    --leaf-400:#859640;  --leaf-500:#6A7B30;  --leaf-600:#525F23;  --leaf-700:#3D4719;
+    --petal-50:#FAEFF1;  --petal-100:#F2D5DB; --petal-200:#E2AAB6; --petal-300:#CD8492;
+    --petal-400:#B66476; --petal-500:#9D4A5E; --petal-600:#823648; --petal-700:#642636;
+    --sky2-50:#ECEFF2;   --sky2-100:#CFD7DE;  --sky2-200:#A3B2BF;  --sky2-300:#788B9C;
+    --sky2-400:#54697C;  --sky2-500:#3D5263;  --sky2-600:#2E3F4D;  --sky2-700:#21303B;
+    --plum-50:#EFE9F1;   --plum-100:#D3C6D9;  --plum-200:#AC95B5;  --plum-300:#876793;
+    --plum-400:#694F76;  --plum-500:#50395B;  --plum-600:#3D2A47;  --plum-700:#2C1E34;
+
+    --shadow-poppy: 0 12px 32px -12px rgba(168, 65, 43, 0.42);
+    --shadow-card:  0 4px 16px -6px rgba(57, 36, 20, 0.10);
+    --shadow-pop:   0 8px 24px -8px rgba(57, 36, 20, 0.16);
+    --wash:
+      radial-gradient(circle at 90% -10%, rgba(168, 65, 43, 0.13), transparent 40%),
+      radial-gradient(circle at -10% 110%, rgba(168, 119, 38, 0.12), transparent 45%);
+  }
+
+  /* =====================  WINTER — cool & bright/clear  ===================== */
+  [data-theme="winter"] {
+    --poppy-50:#FFEBED;  --poppy-100:#FFCBD3; --poppy-200:#FF98A7; --poppy-300:#FF6175; --poppy-400:#F02F4A;
+    --poppy-500:#D71029; --poppy-600:#B0061D; --poppy-700:#870315; --poppy-800:#5E020F; --poppy-900:#38010A;
+    --cream-50:#F7FAFC;  --cream-100:#ECF1F7; --cream-200:#DAE2EC; --cream-300:#C2CCDA; --cream-400:#A1ACBE;
+    --cream-500:#7E8A9D; --cream-600:#5C6678; --cream-700:#404856;
+    --ink-50:#F2F5F8;    --ink-100:#DCE3EB;   --ink-200:#B5C2D0;   --ink-300:#8C9DAF;   --ink-400:#677A8E;
+    --ink-500:#4A5C70;   --ink-600:#344256;   --ink-700:#232E3F;   --ink-800:#161E2B;   --ink-900:#0A0F1A;
+    --buttercup-50:#FFF8DD; --buttercup-100:#FFEEA8; --buttercup-200:#FFE070; --buttercup-300:#FFD13F;
+    --buttercup-400:#FCC117; --buttercup-500:#E5A700; --buttercup-600:#B98300; --buttercup-700:#8C6300;
+    --leaf-50:#E5FBEC;   --leaf-100:#BDF3CF;  --leaf-200:#84E5AA;  --leaf-300:#4DD487;
+    --leaf-400:#21BF67;  --leaf-500:#00A14F;  --leaf-600:#007D3D;  --leaf-700:#005D2E;
+    --petal-50:#FFEBF4;  --petal-100:#FFC8E3; --petal-200:#FF93CB; --petal-300:#FF5DB2;
+    --petal-400:#F12A97; --petal-500:#D80D7F; --petal-600:#AD0763; --petal-700:#800448;
+    --sky2-50:#E5F2FF;   --sky2-100:#B7DCFF;  --sky2-200:#7CC0FF;  --sky2-300:#44A4FF;
+    --sky2-400:#0E89FA;  --sky2-500:#006AD1;  --sky2-600:#0052A4;  --sky2-700:#003C77;
+    --plum-50:#F0E8FF;   --plum-100:#D6C2FF;  --plum-200:#B391FF;  --plum-300:#905CFF;
+    --plum-400:#6F2EFE;  --plum-500:#5610E2;  --plum-600:#4308B5;  --plum-700:#320588;
+
+    --shadow-poppy: 0 12px 32px -12px rgba(215, 16, 41, 0.40);
+    --shadow-card:  0 4px 16px -6px rgba(20, 30, 43, 0.10);
+    --shadow-pop:   0 8px 24px -8px rgba(20, 30, 43, 0.18);
+    --wash:
+      radial-gradient(circle at 90% -10%, rgba(0, 106, 209, 0.12), transparent 40%),
+      radial-gradient(circle at -10% 110%, rgba(215, 16, 41, 0.10), transparent 45%);
+  }
+
+  /* =====================  SUMMER — cool & muted (sea glass)  ===================== */
+  [data-theme="summer"] {
+    --poppy-50:#FAEDEE;  --poppy-100:#F2D1D3; --poppy-200:#E1A4A8; --poppy-300:#CB777D; --poppy-400:#B45258;
+    --poppy-500:#993D43; --poppy-600:#7B2C32; --poppy-700:#5C1E24; --poppy-800:#3E1418; --poppy-900:#240B0E;
+    --cream-50:#F4F5F4;  --cream-100:#E5E7E6; --cream-200:#CDD0CE; --cream-300:#B0B4B1; --cream-400:#909591;
+    --cream-500:#6F7470; --cream-600:#4F5350; --cream-700:#363936;
+    --ink-50:#F4F4F2;    --ink-100:#DEDDD8;   --ink-200:#B5B3A9;   --ink-300:#8C887B;   --ink-400:#686457;
+    --ink-500:#4D4A3F;   --ink-600:#36342B;   --ink-700:#25241D;   --ink-800:#181712;   --ink-900:#0C0B08;
+    --buttercup-50:#FAF6E8; --buttercup-100:#F1E7C2; --buttercup-200:#DDCE8C; --buttercup-300:#C2B15E;
+    --buttercup-400:#A2933F; --buttercup-500:#82772C; --buttercup-600:#635A1F; --buttercup-700:#474016;
+    --leaf-50:#EEF5EF;   --leaf-100:#D3E3D2;  --leaf-200:#A8C9A8;  --leaf-300:#80AC83;
+    --leaf-400:#5F8D65;  --leaf-500:#486F4F;  --leaf-600:#36573B;  --leaf-700:#283F2B;
+    --petal-50:#F7EDEE;  --petal-100:#E9D0D3; --petal-200:#D2A4AA; --petal-300:#B97983;
+    --petal-400:#9D5862; --petal-500:#7F3F48; --petal-600:#5F2D33; --petal-700:#461F23;
+    --sky2-50:#ECF1F2;   --sky2-100:#CFD9DC;  --sky2-200:#A2B5BB;  --sky2-300:#769198;
+    --sky2-400:#527078;  --sky2-500:#39555D;  --sky2-600:#2A3F46;  --sky2-700:#1D2D32;
+    --plum-50:#EFEEF5;   --plum-100:#D5D2E2;  --plum-200:#AAA6C3;  --plum-300:#807BA3;
+    --plum-400:#5F5985;  --plum-500:#494369;  --plum-600:#36314F;  --plum-700:#272239;
+
+    --shadow-poppy: 0 12px 32px -12px rgba(153, 61, 67, 0.32);
+    --shadow-card:  0 4px 16px -6px rgba(37, 36, 29, 0.08);
+    --shadow-pop:   0 8px 24px -8px rgba(37, 36, 29, 0.14);
+    --wash:
+      radial-gradient(circle at 90% -10%, rgba(57, 85, 93, 0.12), transparent 40%),
+      radial-gradient(circle at -10% 110%, rgba(153, 61, 67, 0.11), transparent 45%);
+  }
+
+  /* =====================  PAGE LAYOUT  ===================== */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: 'Nunito', -apple-system, system-ui, sans-serif; background: #1A1410; color: #FFFBF6; }
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+
+  .page-title { max-width: 1400px; margin: 0 auto; padding: 56px 32px 24px; }
+  .page-title h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 800; font-size: clamp(36px, 5vw, 64px); letter-spacing: -0.01em; margin: 0 0 8px; }
+  .page-title h1 em { color: #FF9C77; }
+  .page-title p { color: #B89A7C; font-size: 16px; max-width: 60ch; margin: 0; }
+
+  .theme-grid { max-width: 1400px; margin: 0 auto; padding: 24px 32px 80px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px; }
+
+  /* =====================  THEMED CARD (uses CSS vars)  ===================== */
+  .theme-card {
+    background: var(--cream-50);
+    background-image: var(--wash);
+    color: var(--ink-800);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 24px 48px -16px rgba(0,0,0,0.4);
+    display: flex; flex-direction: column;
+  }
+  .theme-head { padding: 22px 24px 14px; }
+  .theme-head .label { font-size: 11px; font-weight: 800; letter-spacing: .25em; text-transform: uppercase; color: var(--poppy-600); }
+  .theme-head h2 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 32px; line-height: 1.1; margin: 4px 0 4px; color: var(--ink-900); }
+  .theme-head .desc { font-size: 13px; color: var(--ink-500); margin: 0; }
+
+  /* ----- swatches strip ----- */
+  .swatches { padding: 8px 24px 18px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+  .swatch-col { display: flex; flex-direction: column; gap: 4px; }
+  .swatch-col .name { font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-500); text-align: center; margin-bottom: 2px; }
+  .sw { height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06); }
+
+  /* ----- sample UI ----- */
+  .sample { padding: 6px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .mini-card { background: white; border: 2px solid var(--cream-100); border-radius: 20px; padding: 12px 14px; box-shadow: var(--shadow-card); }
+  .mini-card .title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .mini-card .dot { width: 28px; height: 28px; border-radius: 50%; background: var(--petal-100); display: flex; align-items: center; justify-content: center; }
+  .mini-card .dot svg { color: var(--petal-600); }
+  .mini-card h3 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 18px; margin: 0; color: var(--ink-900); }
+  .mini-card .note { font-style: italic; font-size: 12px; color: var(--ink-500); margin: 0 0 10px; padding-left: 36px; }
+  .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; background: var(--petal-50); border-radius: 12px; }
+  .mini-tile { aspect-ratio: 1; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px -2px rgba(0,0,0,0.08); }
+  .mini-tile span { font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-700); }
+  .mini-tile.t1 { background: var(--poppy-200); } .mini-tile.t1 span { color: var(--poppy-700); }
+  .mini-tile.t2 { background: var(--buttercup-200); } .mini-tile.t2 span { color: var(--buttercup-700); }
+  .mini-tile.t3 { background: var(--leaf-200); } .mini-tile.t3 span { color: var(--leaf-700); }
+  .mini-tile.t4 { background: var(--sky2-200); } .mini-tile.t4 span { color: var(--sky2-700); }
+  .mini-tile.t5 { background: var(--plum-200); } .mini-tile.t5 span { color: var(--plum-700); }
+  .mini-tile.t6 { background: var(--petal-200); } .mini-tile.t6 span { color: var(--petal-700); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 10px; }
+  .chip { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; }
+  .chip.a { background: var(--poppy-100); color: var(--poppy-700); }
+  .chip.b { background: var(--buttercup-100); color: var(--buttercup-700); }
+  .chip.c { background: var(--leaf-100); color: var(--leaf-700); }
+  .chip.d { background: var(--sky2-100); color: var(--sky2-700); }
+  .chip.e { background: var(--plum-100); color: var(--plum-700); }
+  .chip.f { background: var(--petal-100); color: var(--petal-700); }
+
+  .buttons { display: flex; gap: 8px; }
+  .btn { font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; padding: 10px 16px; border-radius: 999px; border: none; cursor: pointer; }
+  .btn.primary { background: var(--poppy-500); color: white; box-shadow: var(--shadow-poppy); }
+  .btn.secondary { background: var(--buttercup-100); color: var(--buttercup-700); }
+  .btn.tertiary { background: white; border: 2px solid var(--cream-200); color: var(--ink-700); }
+
+  .footer-mark { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+  .footer-mark .m { width: 24px; height: 24px; border-radius: 50%; background: var(--poppy-500); display: flex; align-items: center; justify-content: center; }
+  .footer-mark .m svg { color: var(--cream-50); }
+  .footer-mark .w { font-family: 'Fraunces', serif; font-weight: 800; font-size: 16px; color: var(--poppy-500); }
+
+  /* ----- code block ----- */
+  details { background: var(--ink-900); color: var(--cream-50); border-radius: 0; padding: 0; margin-top: auto; }
+  details > summary { cursor: pointer; padding: 14px 24px; font-size: 11px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--cream-200); list-style: none; user-select: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::after { content: " ↓"; }
+  details[open] > summary::after { content: " ↑"; }
+  pre { margin: 0; padding: 0 24px 20px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.5; color: var(--cream-100); white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
+
+  .copy-help { max-width: 1400px; margin: 0 auto; padding: 0 32px 60px; color: #B89A7C; font-size: 13px; }
+  .copy-help code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: #FFE0D2; }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>Poppy <em>in four seasons.</em></h1>
+  <p>The current palette (Spring) sits next to three alternates: Autumn keeps the same hues but mutes them; Winter cools and brightens; Summer cools and mutes. Open the panel under each card for a drop-in <code>tailwind.config</code> block.</p>
+</div>
+
+<div class="theme-grid">
+
+  <!-- ============== SPRING (current) ============== -->
+  <div class="theme-card">
+    <div class="theme-head">
+      <div class="label">Theme · 01</div>
+      <h2 class="font-display">Spring</h2>
+      <p class="desc">Warm and vivid — the current Poppy palette.</p>
+    </div>
+    <div class="swatches">
+      <div class="swatch-col"><div class="name">Pop</div>
+        <div class="sw" style="background:var(--poppy-100)"></div><div class="sw" style="background:var(--poppy-300)"></div><div class="sw" style="background:var(--poppy-500)"></div><div class="sw" style="background:var(--poppy-700)"></div></div>
+      <div class="swatch-col"><div class="name">Crm</div>
+        <div class="sw" style="background:var(--cream-100)"></div><div class="sw" style="background:var(--cream-300)"></div><div class="sw" style="background:var(--cream-500)"></div><div class="sw" style="background:var(--cream-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ink</div>
+        <div class="sw" style="background:var(--ink-100)"></div><div class="sw" style="background:var(--ink-300)"></div><div class="sw" style="background:var(--ink-500)"></div><div class="sw" style="background:var(--ink-700)"></div></div>
+      <div class="swatch-col"><div class="name">Btr</div>
+        <div class="sw" style="background:var(--buttercup-100)"></div><div class="sw" style="background:var(--buttercup-300)"></div><div class="sw" style="background:var(--buttercup-500)"></div><div class="sw" style="background:var(--buttercup-700)"></div></div>
+      <div class="swatch-col"><div class="name">Lf</div>
+        <div class="sw" style="background:var(--leaf-100)"></div><div class="sw" style="background:var(--leaf-300)"></div><div class="sw" style="background:var(--leaf-500)"></div><div class="sw" style="background:var(--leaf-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ptl</div>
+        <div class="sw" style="background:var(--petal-100)"></div><div class="sw" style="background:var(--petal-300)"></div><div class="sw" style="background:var(--petal-500)"></div><div class="sw" style="background:var(--petal-700)"></div></div>
+      <div class="swatch-col"><div class="name">Sky</div>
+        <div class="sw" style="background:var(--sky2-100)"></div><div class="sw" style="background:var(--sky2-300)"></div><div class="sw" style="background:var(--sky2-500)"></div><div class="sw" style="background:var(--sky2-700)"></div></div>
+      <div class="swatch-col"><div class="name">Plm</div>
+        <div class="sw" style="background:var(--plum-100)"></div><div class="sw" style="background:var(--plum-300)"></div><div class="sw" style="background:var(--plum-500)"></div><div class="sw" style="background:var(--plum-700)"></div></div>
+    </div>
+    <div class="sample">
+      <div class="mini-card">
+        <div class="title-row">
+          <span class="dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></svg></span>
+          <h3>Sunday Brunch</h3>
+        </div>
+        <p class="note">"easy, breezy, peach"</p>
+        <div class="mini-grid">
+          <div class="mini-tile t1"><span>Blazer</span></div>
+          <div class="mini-tile t2"><span>Pants</span></div>
+          <div class="mini-tile t6"><span>Cami</span></div>
+          <div class="mini-tile t3"><span>Heels</span></div>
+          <div class="mini-tile t4"><span>Bag</span></div>
+          <div class="mini-tile t5"><span>Rings</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip a">Owned</span><span class="chip b">Summer</span><span class="chip c">Casual</span>
+        <span class="chip d">Capsule</span><span class="chip e">Linen</span><span class="chip f">Bloom</span>
+      </div>
+      <div class="buttons">
+        <button class="btn primary">+ New Look</button>
+        <button class="btn secondary">Filters · 3</button>
+        <button class="btn tertiary">Clear</button>
+      </div>
+      <div class="footer-mark">
+        <span class="m"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></span>
+        <span class="w">Poppy</span>
+      </div>
+    </div>
+    <details>
+      <summary>Tailwind palette</summary>
+<pre>// This is the current palette already in index.html — included for reference.
+colors: {
+  poppy: { 50:'#FFF1EB',100:'#FFE0D2',200:'#FFC2A8',300:'#FF9C77',400:'#FF7A50',500:'#FF5A36',600:'#E63F1A',700:'#BD2C0E',800:'#8E210B',900:'#5F1505' },
+  cream: { 50:'#FFFBF6',100:'#FFF4E8',200:'#FFE7D1',300:'#F3D6BC',400:'#DCBE9F',500:'#B89A7C',600:'#8C735A',700:'#5E4B39' },
+  ink:   { 50:'#FAF5F1',100:'#EFE2D6',200:'#D9BFAC',300:'#B89784',400:'#8F7060',500:'#6B5142',600:'#4B3829',700:'#36281B',800:'#241A11',900:'#150E08' },
+  buttercup: { 50:'#FFFBEA',100:'#FFF3C4',200:'#FCE588',300:'#FADB5F',400:'#F7C948',500:'#F0B429',600:'#DE911D',700:'#CB6E17' },
+  leaf:  { 50:'#EFFCEF',100:'#D2F5D5',200:'#A8E9B0',300:'#7DDB89',400:'#5BC76A',500:'#3FB04F',600:'#2E8C3D',700:'#236B2F' },
+  petal: { 50:'#FFF0F5',100:'#FFD9E6',200:'#FFB1CB',300:'#FF85AC',400:'#FB628F',500:'#EC4778',600:'#C4305F',700:'#962347' },
+  sky2:  { 50:'#EBF6FB',100:'#CCE7F4',200:'#9CCFE9',300:'#6DB6DC',400:'#469CCB',500:'#2882B7',600:'#1E6594',700:'#164D72' },
+  plum:  { 50:'#F4EEFB',100:'#E1D2F4',200:'#C5A8E8',300:'#A881D8',400:'#8D60C5',500:'#7344AB',600:'#583389',700:'#3F2566' },
+},
+boxShadow: {
+  'poppy':   '0 12px 32px -12px rgba(255, 90, 54, 0.45)',
+  'card':    '0 4px 16px -6px rgba(94, 21, 5, 0.10)',
+  'card-hi': '0 18px 36px -16px rgba(94, 21, 5, 0.20)',
+  'pop':     '0 8px 24px -8px rgba(94, 21, 5, 0.18)',
+},
+// .poppy-wash:
+// radial-gradient(circle at 90% -10%, rgba(255,90,54,.10), transparent 40%),
+// radial-gradient(circle at -10% 110%, rgba(247,201,72,.10), transparent 45%);
+</pre>
+    </details>
+  </div>
+
+  <!-- ============== AUTUMN ============== -->
+  <div class="theme-card" data-theme="autumn">
+    <div class="theme-head">
+      <div class="label">Theme · 02</div>
+      <h2 class="font-display">Autumn</h2>
+      <p class="desc">Same hue family, dialed down — burnt sienna, mustard, olive, dusty rose.</p>
+    </div>
+    <div class="swatches">
+      <div class="swatch-col"><div class="name">Pop</div>
+        <div class="sw" style="background:var(--poppy-100)"></div><div class="sw" style="background:var(--poppy-300)"></div><div class="sw" style="background:var(--poppy-500)"></div><div class="sw" style="background:var(--poppy-700)"></div></div>
+      <div class="swatch-col"><div class="name">Crm</div>
+        <div class="sw" style="background:var(--cream-100)"></div><div class="sw" style="background:var(--cream-300)"></div><div class="sw" style="background:var(--cream-500)"></div><div class="sw" style="background:var(--cream-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ink</div>
+        <div class="sw" style="background:var(--ink-100)"></div><div class="sw" style="background:var(--ink-300)"></div><div class="sw" style="background:var(--ink-500)"></div><div class="sw" style="background:var(--ink-700)"></div></div>
+      <div class="swatch-col"><div class="name">Btr</div>
+        <div class="sw" style="background:var(--buttercup-100)"></div><div class="sw" style="background:var(--buttercup-300)"></div><div class="sw" style="background:var(--buttercup-500)"></div><div class="sw" style="background:var(--buttercup-700)"></div></div>
+      <div class="swatch-col"><div class="name">Lf</div>
+        <div class="sw" style="background:var(--leaf-100)"></div><div class="sw" style="background:var(--leaf-300)"></div><div class="sw" style="background:var(--leaf-500)"></div><div class="sw" style="background:var(--leaf-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ptl</div>
+        <div class="sw" style="background:var(--petal-100)"></div><div class="sw" style="background:var(--petal-300)"></div><div class="sw" style="background:var(--petal-500)"></div><div class="sw" style="background:var(--petal-700)"></div></div>
+      <div class="swatch-col"><div class="name">Sky</div>
+        <div class="sw" style="background:var(--sky2-100)"></div><div class="sw" style="background:var(--sky2-300)"></div><div class="sw" style="background:var(--sky2-500)"></div><div class="sw" style="background:var(--sky2-700)"></div></div>
+      <div class="swatch-col"><div class="name">Plm</div>
+        <div class="sw" style="background:var(--plum-100)"></div><div class="sw" style="background:var(--plum-300)"></div><div class="sw" style="background:var(--plum-500)"></div><div class="sw" style="background:var(--plum-700)"></div></div>
+    </div>
+    <div class="sample">
+      <div class="mini-card">
+        <div class="title-row">
+          <span class="dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></svg></span>
+          <h3>Apple Picking</h3>
+        </div>
+        <p class="note">"sweater weather, finally"</p>
+        <div class="mini-grid">
+          <div class="mini-tile t1"><span>Coat</span></div>
+          <div class="mini-tile t2"><span>Cords</span></div>
+          <div class="mini-tile t6"><span>Knit</span></div>
+          <div class="mini-tile t3"><span>Boots</span></div>
+          <div class="mini-tile t4"><span>Scarf</span></div>
+          <div class="mini-tile t5"><span>Tote</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip a">Owned</span><span class="chip b">Fall</span><span class="chip c">Weekend</span>
+        <span class="chip d">Layered</span><span class="chip e">Tweed</span><span class="chip f">Earthy</span>
+      </div>
+      <div class="buttons">
+        <button class="btn primary">+ New Look</button>
+        <button class="btn secondary">Filters · 3</button>
+        <button class="btn tertiary">Clear</button>
+      </div>
+      <div class="footer-mark">
+        <span class="m"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></span>
+        <span class="w">Poppy</span>
+      </div>
+    </div>
+    <details>
+      <summary>Tailwind palette</summary>
+<pre>colors: {
+  poppy: { 50:'#FAEAE6',100:'#F1CCC2',200:'#DF9D8B',300:'#CB7560',400:'#B95942',500:'#A8412B',600:'#8A3020',700:'#6A2316',800:'#4B170E',900:'#2D0D07' },
+  cream: { 50:'#FBF4E8',100:'#F5E6CC',200:'#ECD4AC',300:'#DCBC8D',400:'#C19E70',500:'#A07F55',600:'#7B6240',700:'#57452D' },
+  ink:   { 50:'#F8F2EB',100:'#E8D8C7',200:'#CFB29A',300:'#B28A6E',400:'#946449',500:'#714831',600:'#4F311F',700:'#392414',800:'#25180D',900:'#150D07' },
+  buttercup: { 50:'#FAF3E0',100:'#F4E2B3',200:'#E8C77A',300:'#D7A949',400:'#C29234',500:'#A87726',600:'#8A5C19',700:'#6C4612' },
+  leaf:  { 50:'#F1F3E5',100:'#DEE3BC',200:'#C2CC8C',300:'#A2B25E',400:'#859640',500:'#6A7B30',600:'#525F23',700:'#3D4719' },
+  petal: { 50:'#FAEFF1',100:'#F2D5DB',200:'#E2AAB6',300:'#CD8492',400:'#B66476',500:'#9D4A5E',600:'#823648',700:'#642636' },
+  sky2:  { 50:'#ECEFF2',100:'#CFD7DE',200:'#A3B2BF',300:'#788B9C',400:'#54697C',500:'#3D5263',600:'#2E3F4D',700:'#21303B' },
+  plum:  { 50:'#EFE9F1',100:'#D3C6D9',200:'#AC95B5',300:'#876793',400:'#694F76',500:'#50395B',600:'#3D2A47',700:'#2C1E34' },
+},
+boxShadow: {
+  'poppy':   '0 12px 32px -12px rgba(168, 65, 43, 0.42)',
+  'card':    '0 4px 16px -6px rgba(57, 36, 20, 0.10)',
+  'card-hi': '0 18px 36px -16px rgba(57, 36, 20, 0.20)',
+  'pop':     '0 8px 24px -8px rgba(57, 36, 20, 0.16)',
+},
+// .poppy-wash:
+// radial-gradient(circle at 90% -10%, rgba(168,65,43,.13), transparent 40%),
+// radial-gradient(circle at -10% 110%, rgba(168,119,38,.12), transparent 45%);
+</pre>
+    </details>
+  </div>
+
+  <!-- ============== WINTER ============== -->
+  <div class="theme-card" data-theme="winter">
+    <div class="theme-head">
+      <div class="label">Theme · 03</div>
+      <h2 class="font-display">Winter</h2>
+      <p class="desc">Cool, clear, jewel-toned — icy whites with vivid scarlet, fuchsia, emerald, royal.</p>
+    </div>
+    <div class="swatches">
+      <div class="swatch-col"><div class="name">Pop</div>
+        <div class="sw" style="background:var(--poppy-100)"></div><div class="sw" style="background:var(--poppy-300)"></div><div class="sw" style="background:var(--poppy-500)"></div><div class="sw" style="background:var(--poppy-700)"></div></div>
+      <div class="swatch-col"><div class="name">Crm</div>
+        <div class="sw" style="background:var(--cream-100)"></div><div class="sw" style="background:var(--cream-300)"></div><div class="sw" style="background:var(--cream-500)"></div><div class="sw" style="background:var(--cream-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ink</div>
+        <div class="sw" style="background:var(--ink-100)"></div><div class="sw" style="background:var(--ink-300)"></div><div class="sw" style="background:var(--ink-500)"></div><div class="sw" style="background:var(--ink-700)"></div></div>
+      <div class="swatch-col"><div class="name">Btr</div>
+        <div class="sw" style="background:var(--buttercup-100)"></div><div class="sw" style="background:var(--buttercup-300)"></div><div class="sw" style="background:var(--buttercup-500)"></div><div class="sw" style="background:var(--buttercup-700)"></div></div>
+      <div class="swatch-col"><div class="name">Lf</div>
+        <div class="sw" style="background:var(--leaf-100)"></div><div class="sw" style="background:var(--leaf-300)"></div><div class="sw" style="background:var(--leaf-500)"></div><div class="sw" style="background:var(--leaf-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ptl</div>
+        <div class="sw" style="background:var(--petal-100)"></div><div class="sw" style="background:var(--petal-300)"></div><div class="sw" style="background:var(--petal-500)"></div><div class="sw" style="background:var(--petal-700)"></div></div>
+      <div class="swatch-col"><div class="name">Sky</div>
+        <div class="sw" style="background:var(--sky2-100)"></div><div class="sw" style="background:var(--sky2-300)"></div><div class="sw" style="background:var(--sky2-500)"></div><div class="sw" style="background:var(--sky2-700)"></div></div>
+      <div class="swatch-col"><div class="name">Plm</div>
+        <div class="sw" style="background:var(--plum-100)"></div><div class="sw" style="background:var(--plum-300)"></div><div class="sw" style="background:var(--plum-500)"></div><div class="sw" style="background:var(--plum-700)"></div></div>
+    </div>
+    <div class="sample">
+      <div class="mini-card">
+        <div class="title-row">
+          <span class="dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></svg></span>
+          <h3>Holiday Party</h3>
+        </div>
+        <p class="note">"red lip, no tights"</p>
+        <div class="mini-grid">
+          <div class="mini-tile t1"><span>Slip</span></div>
+          <div class="mini-tile t2"><span>Coat</span></div>
+          <div class="mini-tile t6"><span>Heels</span></div>
+          <div class="mini-tile t3"><span>Clutch</span></div>
+          <div class="mini-tile t4"><span>Pearls</span></div>
+          <div class="mini-tile t5"><span>Ring</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip a">Owned</span><span class="chip b">Winter</span><span class="chip c">Evening</span>
+        <span class="chip d">Silk</span><span class="chip e">Jewel</span><span class="chip f">Velvet</span>
+      </div>
+      <div class="buttons">
+        <button class="btn primary">+ New Look</button>
+        <button class="btn secondary">Filters · 3</button>
+        <button class="btn tertiary">Clear</button>
+      </div>
+      <div class="footer-mark">
+        <span class="m"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></span>
+        <span class="w">Poppy</span>
+      </div>
+    </div>
+    <details>
+      <summary>Tailwind palette</summary>
+<pre>colors: {
+  poppy: { 50:'#FFEBED',100:'#FFCBD3',200:'#FF98A7',300:'#FF6175',400:'#F02F4A',500:'#D71029',600:'#B0061D',700:'#870315',800:'#5E020F',900:'#38010A' },
+  cream: { 50:'#F7FAFC',100:'#ECF1F7',200:'#DAE2EC',300:'#C2CCDA',400:'#A1ACBE',500:'#7E8A9D',600:'#5C6678',700:'#404856' },
+  ink:   { 50:'#F2F5F8',100:'#DCE3EB',200:'#B5C2D0',300:'#8C9DAF',400:'#677A8E',500:'#4A5C70',600:'#344256',700:'#232E3F',800:'#161E2B',900:'#0A0F1A' },
+  buttercup: { 50:'#FFF8DD',100:'#FFEEA8',200:'#FFE070',300:'#FFD13F',400:'#FCC117',500:'#E5A700',600:'#B98300',700:'#8C6300' },
+  leaf:  { 50:'#E5FBEC',100:'#BDF3CF',200:'#84E5AA',300:'#4DD487',400:'#21BF67',500:'#00A14F',600:'#007D3D',700:'#005D2E' },
+  petal: { 50:'#FFEBF4',100:'#FFC8E3',200:'#FF93CB',300:'#FF5DB2',400:'#F12A97',500:'#D80D7F',600:'#AD0763',700:'#800448' },
+  sky2:  { 50:'#E5F2FF',100:'#B7DCFF',200:'#7CC0FF',300:'#44A4FF',400:'#0E89FA',500:'#006AD1',600:'#0052A4',700:'#003C77' },
+  plum:  { 50:'#F0E8FF',100:'#D6C2FF',200:'#B391FF',300:'#905CFF',400:'#6F2EFE',500:'#5610E2',600:'#4308B5',700:'#320588' },
+},
+boxShadow: {
+  'poppy':   '0 12px 32px -12px rgba(215, 16, 41, 0.40)',
+  'card':    '0 4px 16px -6px rgba(20, 30, 43, 0.10)',
+  'card-hi': '0 18px 36px -16px rgba(20, 30, 43, 0.22)',
+  'pop':     '0 8px 24px -8px rgba(20, 30, 43, 0.18)',
+},
+// .poppy-wash:
+// radial-gradient(circle at 90% -10%, rgba(0,106,209,.12), transparent 40%),
+// radial-gradient(circle at -10% 110%, rgba(215,16,41,.10), transparent 45%);
+</pre>
+    </details>
+  </div>
+
+  <!-- ============== SUMMER ============== -->
+  <div class="theme-card" data-theme="summer">
+    <div class="theme-head">
+      <div class="label">Theme · 04</div>
+      <h2 class="font-display">Summer</h2>
+      <p class="desc">Cool and washed — sea glass, dusty teal, faded coral, sandy fog.</p>
+    </div>
+    <div class="swatches">
+      <div class="swatch-col"><div class="name">Pop</div>
+        <div class="sw" style="background:var(--poppy-100)"></div><div class="sw" style="background:var(--poppy-300)"></div><div class="sw" style="background:var(--poppy-500)"></div><div class="sw" style="background:var(--poppy-700)"></div></div>
+      <div class="swatch-col"><div class="name">Crm</div>
+        <div class="sw" style="background:var(--cream-100)"></div><div class="sw" style="background:var(--cream-300)"></div><div class="sw" style="background:var(--cream-500)"></div><div class="sw" style="background:var(--cream-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ink</div>
+        <div class="sw" style="background:var(--ink-100)"></div><div class="sw" style="background:var(--ink-300)"></div><div class="sw" style="background:var(--ink-500)"></div><div class="sw" style="background:var(--ink-700)"></div></div>
+      <div class="swatch-col"><div class="name">Btr</div>
+        <div class="sw" style="background:var(--buttercup-100)"></div><div class="sw" style="background:var(--buttercup-300)"></div><div class="sw" style="background:var(--buttercup-500)"></div><div class="sw" style="background:var(--buttercup-700)"></div></div>
+      <div class="swatch-col"><div class="name">Lf</div>
+        <div class="sw" style="background:var(--leaf-100)"></div><div class="sw" style="background:var(--leaf-300)"></div><div class="sw" style="background:var(--leaf-500)"></div><div class="sw" style="background:var(--leaf-700)"></div></div>
+      <div class="swatch-col"><div class="name">Ptl</div>
+        <div class="sw" style="background:var(--petal-100)"></div><div class="sw" style="background:var(--petal-300)"></div><div class="sw" style="background:var(--petal-500)"></div><div class="sw" style="background:var(--petal-700)"></div></div>
+      <div class="swatch-col"><div class="name">Sky</div>
+        <div class="sw" style="background:var(--sky2-100)"></div><div class="sw" style="background:var(--sky2-300)"></div><div class="sw" style="background:var(--sky2-500)"></div><div class="sw" style="background:var(--sky2-700)"></div></div>
+      <div class="swatch-col"><div class="name">Plm</div>
+        <div class="sw" style="background:var(--plum-100)"></div><div class="sw" style="background:var(--plum-300)"></div><div class="sw" style="background:var(--plum-500)"></div><div class="sw" style="background:var(--plum-700)"></div></div>
+    </div>
+    <div class="sample">
+      <div class="mini-card">
+        <div class="title-row">
+          <span class="dot"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></svg></span>
+          <h3>Tide Pools</h3>
+        </div>
+        <p class="note">"linen, sand, salt"</p>
+        <div class="mini-grid">
+          <div class="mini-tile t1"><span>Shirt</span></div>
+          <div class="mini-tile t2"><span>Shorts</span></div>
+          <div class="mini-tile t6"><span>Tank</span></div>
+          <div class="mini-tile t3"><span>Sandals</span></div>
+          <div class="mini-tile t4"><span>Hat</span></div>
+          <div class="mini-tile t5"><span>Shell</span></div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chip a">Owned</span><span class="chip b">Summer</span><span class="chip c">Casual</span>
+        <span class="chip d">Coast</span><span class="chip e">Cotton</span><span class="chip f">Faded</span>
+      </div>
+      <div class="buttons">
+        <button class="btn primary">+ New Look</button>
+        <button class="btn secondary">Filters · 3</button>
+        <button class="btn tertiary">Clear</button>
+      </div>
+      <div class="footer-mark">
+        <span class="m"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-11a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 6.5-7 11-7 11z"/></svg></span>
+        <span class="w">Poppy</span>
+      </div>
+    </div>
+    <details>
+      <summary>Tailwind palette</summary>
+<pre>colors: {
+  poppy: { 50:'#FAEDEE',100:'#F2D1D3',200:'#E1A4A8',300:'#CB777D',400:'#B45258',500:'#993D43',600:'#7B2C32',700:'#5C1E24',800:'#3E1418',900:'#240B0E' },
+  cream: { 50:'#F4F5F4',100:'#E5E7E6',200:'#CDD0CE',300:'#B0B4B1',400:'#909591',500:'#6F7470',600:'#4F5350',700:'#363936' },
+  ink:   { 50:'#F4F4F2',100:'#DEDDD8',200:'#B5B3A9',300:'#8C887B',400:'#686457',500:'#4D4A3F',600:'#36342B',700:'#25241D',800:'#181712',900:'#0C0B08' },
+  buttercup: { 50:'#FAF6E8',100:'#F1E7C2',200:'#DDCE8C',300:'#C2B15E',400:'#A2933F',500:'#82772C',600:'#635A1F',700:'#474016' },
+  leaf:  { 50:'#EEF5EF',100:'#D3E3D2',200:'#A8C9A8',300:'#80AC83',400:'#5F8D65',500:'#486F4F',600:'#36573B',700:'#283F2B' },
+  petal: { 50:'#F7EDEE',100:'#E9D0D3',200:'#D2A4AA',300:'#B97983',400:'#9D5862',500:'#7F3F48',600:'#5F2D33',700:'#461F23' },
+  sky2:  { 50:'#ECF1F2',100:'#CFD9DC',200:'#A2B5BB',300:'#769198',400:'#527078',500:'#39555D',600:'#2A3F46',700:'#1D2D32' },
+  plum:  { 50:'#EFEEF5',100:'#D5D2E2',200:'#AAA6C3',300:'#807BA3',400:'#5F5985',500:'#494369',600:'#36314F',700:'#272239' },
+},
+boxShadow: {
+  'poppy':   '0 12px 32px -12px rgba(153, 61, 67, 0.32)',
+  'card':    '0 4px 16px -6px rgba(37, 36, 29, 0.08)',
+  'card-hi': '0 18px 36px -16px rgba(37, 36, 29, 0.18)',
+  'pop':     '0 8px 24px -8px rgba(37, 36, 29, 0.14)',
+},
+// .poppy-wash:
+// radial-gradient(circle at 90% -10%, rgba(57,85,93,.12), transparent 40%),
+// radial-gradient(circle at -10% 110%, rgba(153,61,67,.11), transparent 45%);
+</pre>
+    </details>
+  </div>
+
+</div>
+
+<div class="copy-help">
+  <strong style="color:#FFFBF6">How to apply a theme:</strong> open <code>pwa/index.html</code>, find the <code>tailwind.config = { ... }</code> block, and replace the <code>colors</code> and <code>boxShadow</code> objects with the snippet from the theme you want. Then update the <code>.poppy-wash</code> rule in the &lt;style&gt; block below it. No other code changes are needed — every Tailwind utility class (<code>bg-poppy-500</code>, <code>text-petal-600</code>, etc.) re-renders to the new palette automatically.
+</div>
+
+</body>
+</html>

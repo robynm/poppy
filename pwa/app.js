@@ -50,6 +50,7 @@ const I = {
   sunglasses: (p) => <Icon {...p} d={<><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></>} />,
   suitcase:   (p) => <Icon {...p} d={<><path d="M8 16V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><rect x="4" y="6" width="16" height="10" rx="2"/></>} />,
   share:    (p) => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />,
+  more:     (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></>} />,
 };
 
 // The Poppy brand mark — embedded raster of the watercolor poppy from poppy-icon-cropped.png
@@ -84,6 +85,7 @@ const STORAGE_KEYS = {
   collections: "closet:collections:v1",
   seeded: "closet:seeded:v1",
   imagesMigrated: "closet:images_migrated:v1", // set to true once legacy localStorage images have been moved to IDB
+  theme: "closet:theme",
 };
 
 // Legacy localStorage key — only read once during one-time migration, then deleted
@@ -946,6 +948,14 @@ function ClosetApp() {
   const [headerAction, setHeaderAction] = useState(null);
   const [activeCollection, setActiveCollection] = useState(null); // currently selected collection id (closet filter)
   const [scrollToOutfitId, setScrollToOutfitId] = useState(null);
+  const [theme, setTheme] = useState(() => lsGet(STORAGE_KEYS.theme, 'spring'));
+  const [showMenu, setShowMenu] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme === 'winter' ? 'winter' : '';
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'winter' ? '#D71029' : '#FF5A36');
+    lsSet(STORAGE_KEYS.theme, theme);
+  }, [theme]);
 
   useEffect(() => { setHeaderAction(null); window.scrollTo(0, 0); }, [view]);
   const { canInstall, promptInstall } = useInstallPrompt();
@@ -1082,14 +1092,6 @@ function ClosetApp() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {canInstall && (
-              <button
-                onClick={promptInstall}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
-              >
-                <I.install size={12} /> Install
-              </button>
-            )}
             {headerAction && (
               <button
                 onClick={headerAction.onClick}
@@ -1102,14 +1104,47 @@ function ClosetApp() {
                 <I.plus size={12} /> {headerAction.label}
               </button>
             )}
-            <button
-              onClick={() => setShowBackup(true)}
-              aria-label="Backup and restore"
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
-            >
-              <I.archive size={12} />
-              <span className="hidden sm:inline">Save</span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(m => !m)}
+                aria-label="Menu"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-cream-50 border-2 border-cream-100 text-ink-600 active:scale-95"
+              >
+                <I.more size={16} />
+              </button>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-2xl shadow-card-hi border-2 border-cream-100 overflow-hidden min-w-[180px]">
+                    <button
+                      onClick={() => { setTheme(t => t === 'winter' ? 'spring' : 'winter'); setShowMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
+                    >
+                      {theme === 'winter' ? <I.sun size={15} className="shrink-0" /> : <I.sparkles size={15} className="shrink-0" />}
+                      {theme === 'winter' ? 'Spring theme' : 'Winter theme'}
+                    </button>
+                    <div className="h-px bg-cream-100 mx-3" />
+                    <button
+                      onClick={() => { setShowBackup(true); setShowMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
+                    >
+                      <I.archive size={15} className="shrink-0" /> Save &amp; restore
+                    </button>
+                    {canInstall && (
+                      <>
+                        <div className="h-px bg-cream-100 mx-3" />
+                        <button
+                          onClick={() => { promptInstall(); setShowMenu(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-poppy-600 active:bg-poppy-50"
+                        >
+                          <I.install size={15} className="shrink-0" /> Install app
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -1581,7 +1616,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
             className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-poppy-300 rounded-3xl overflow-hidden"
             style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(255, 90, 54, 0.35)' }}
           >
-            <div className="aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center overflow-hidden">
+            <div className="aspect-[3/4] bg-gradient-to-br bg-poppy-gradient flex items-center justify-center overflow-hidden">
               {image ? <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" /> : <I.shirt size={32} className="text-poppy-300" />}
             </div>
             <div className="p-3">
@@ -1724,7 +1759,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
         </div>
 
         <div className="px-4 sm:px-6 pt-6 pb-4 flex flex-col items-center">
-          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 rounded-2xl overflow-hidden flex items-center justify-center">
+          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden flex items-center justify-center">
             {image
               ? <img src={image} alt={item.name} className="w-full h-full object-contain p-4" />
               : <I.shirt size={48} className="text-ink-400" />
@@ -1886,7 +1921,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
 
         <div className="p-4 sm:p-6">
           <div className="flex flex-col items-center">
-            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br from-cream-100 to-poppy-100 rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
+            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
               {image && <img src={image} alt={draft.name} className="w-full h-full object-contain p-4" />}
               {replacing && (
                 <div className="absolute inset-0 bg-white/85 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-ink-600">
@@ -2383,7 +2418,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                           onClick={() => toggleItem(it.id)}
                           className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                         >
-                          <div className="aspect-square bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center">
+                          <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center">
                             {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-2" />}
                             {active && (
                               <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
@@ -3103,7 +3138,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                   className={`cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                   style={{ animationDelay: `${i * 20}ms` }}
                 >
-                  <div className="aspect-square bg-gradient-to-br from-cream-100 to-poppy-100 flex items-center justify-center relative">
+                  <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center relative">
                     {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-1.5" />}
                     {active && (
                       <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-pop">
