@@ -1616,7 +1616,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
             className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-poppy-300 rounded-3xl overflow-hidden"
             style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(255, 90, 54, 0.35)' }}
           >
-            <div className="aspect-[3/4] bg-gradient-to-br to-poppy-100 from-cream-100 flex items-center justify-center overflow-hidden">
+            <div className="aspect-[3/4] bg-gradient-to-br bg-poppy-gradient flex items-center justify-center overflow-hidden">
               {image ? <img src={image} alt={item.name} className="w-full h-full object-contain p-2 sm:p-3" /> : <I.shirt size={32} className="text-poppy-300" />}
             </div>
             <div className="p-3">
@@ -1759,7 +1759,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
         </div>
 
         <div className="px-4 sm:px-6 pt-6 pb-4 flex flex-col items-center">
-          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br to-poppy-100 from-cream-100 rounded-2xl overflow-hidden flex items-center justify-center">
+          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden flex items-center justify-center">
             {image
               ? <img src={image} alt={item.name} className="w-full h-full object-contain p-4" />
               : <I.shirt size={48} className="text-ink-400" />
@@ -1921,7 +1921,7 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
 
         <div className="p-4 sm:p-6">
           <div className="flex flex-col items-center">
-            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br to-poppy-100 from-cream-100 rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
+            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
               {image && <img src={image} alt={draft.name} className="w-full h-full object-contain p-4" />}
               {replacing && (
                 <div className="absolute inset-0 bg-white/85 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-ink-600">
@@ -2418,7 +2418,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                           onClick={() => toggleItem(it.id)}
                           className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                         >
-                          <div className="aspect-square bg-gradient-to-br to-poppy-100 from-cream-100 flex items-center justify-center">
+                          <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center">
                             {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-2" />}
                             {active && (
                               <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
@@ -3138,7 +3138,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                   className={`cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                   style={{ animationDelay: `${i * 20}ms` }}
                 >
-                  <div className="aspect-square bg-gradient-to-br to-poppy-100 from-cream-100 flex items-center justify-center relative">
+                  <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center relative">
                     {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-1.5" />}
                     {active && (
                       <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-pop">
