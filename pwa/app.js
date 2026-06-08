@@ -42,7 +42,7 @@ const I = {
   alert:    (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>} />,
   folder:   (p) => <Icon {...p} d="M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />,
   bookmark: (p) => <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
-  grip:     (p) => <Icon {...p} d={<><circle cx="9" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="18" r="1.2"/></>} />,
+  grip:     (p) => <Icon {...p} d={<><path d="M12 3l-4 4h8l-4-4z"/><path d="M12 21l4-4H8l4 4z"/><line x1="12" y1="7" x2="12" y2="17"/></>} />,
   camera:   (p) => <Icon {...p} d={<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></>} />,
   flower:   (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="12" r="3"/><path d="M12 2a3.5 3.5 0 0 0-3 5.3A3.5 3.5 0 0 0 7.3 9 3.5 3.5 0 0 0 5 12c0 1.13.54 2.13 1.37 2.77A3.5 3.5 0 0 0 6 17a3.5 3.5 0 0 0 5.3 3 3.5 3.5 0 0 0 1.7 1.7A3.5 3.5 0 0 0 18 17a3.5 3.5 0 0 0-.37-2.23A3.5 3.5 0 0 0 19 12a3.5 3.5 0 0 0-2.3-3.3A3.5 3.5 0 0 0 17 7a3.5 3.5 0 0 0-5-5z"/></>} />,
   sun:      (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></>} />,
@@ -1659,6 +1659,18 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
         );
       })()}
 
+      {dragMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+            <span className="flex-1 text-sm font-bold text-ink-600">Drag items to reorder</span>
+            <button
+              onClick={() => setDragMode(false)}
+              className="px-3.5 py-2 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-poppy-600"
+            >Done</button>
+          </div>
+        </div>
+      )}
+
       {viewing && !editing && (
         <ViewDrawer
           item={items.find(i => i.id === viewing)}
@@ -3243,6 +3255,8 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
 // --- Backup Modal ---------------------------------------------------------
 function StatsModal({ items, outfits, collections, customTags, brands, onClose }) {
   useBodyScrollLock();
+  const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [tagSort, setTagSort] = useState('count');
 
   const stats = useMemo(() => {
     const owned = items.filter(i => (i.status || 'owned') === 'owned');
@@ -3270,7 +3284,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
     owned.forEach(i => {
       (i.custom || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; });
     });
-    const topTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const allTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
 
     // Closet utilization — owned items appearing in ≥1 outfit
     const usedItemIds = new Set();
@@ -3289,7 +3303,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       collectionCount: collections.length,
       brandTotal: Object.keys(brandCount).length,
       tagTotal: Object.keys(tagCount).length,
-      byCat, byStatus, bySeason, byOccasion, topBrands, topTags,
+      byCat, byStatus, bySeason, byOccasion, topBrands, allTags,
       usedCount, utilizationPct, avgItemsPerLook,
     };
   }, [items, outfits, collections]);
@@ -3422,7 +3436,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
               ].map(s => (
                 <div key={s.label} className="p-4 bg-cream-50 border-2 border-cream-100 rounded-2xl text-center">
                   <div className={`font-display font-bold text-3xl sm:text-4xl ${s.color}`}>{s.n}</div>
-                  <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mt-1">{s.label}</div>
+                  <div className="text-[10px] font-bold tracking-wide uppercase text-ink-500 mt-1">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -3480,26 +3494,50 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
                   <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Top brands</p>
                   <p className="text-[10px] text-ink-500">{stats.brandTotal} total</p>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
                   {stats.topBrands.map(([b, n]) => (
-                    <Bar key={b} label={b} count={n} max={ownedTotal} color="bg-sky2-400" />
+                    <div key={b} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-sky2-50 border-2 border-sky2-100 rounded-full">
+                      <span className="text-[12px] font-bold text-ink-800">{b}</span>
+                      <span className="text-[11px] font-bold bg-sky2-200 text-sky2-800 rounded-full px-1.5 min-w-[20px] text-center leading-5">{n}</span>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Top custom tags */}
-            {stats.topTags.length > 0 && (
+            {/* Tags */}
+            {stats.allTags.length > 0 && (
               <div className="mb-2">
-                <div className="flex items-baseline justify-between mb-3">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Top tags</p>
-                  <p className="text-[10px] text-ink-500">{stats.tagTotal} total</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Tags</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setTagSort(s => s === 'count' ? 'alpha' : 'count')}
+                      className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-500 px-2 py-0.5 rounded-full border-2 border-ink-200 active:bg-cream-100 transition-colors"
+                    >{tagSort === 'count' ? 'A–Z' : '#'}</button>
+                    <p className="text-[10px] text-ink-500">{stats.tagTotal} total</p>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {stats.topTags.map(([t, n]) => (
-                    <Bar key={t} label={t} count={n} max={ownedTotal} color="bg-buttercup-400" />
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    let tags = tagSort === 'alpha'
+                      ? [...stats.allTags].sort((a, b) => a[0].localeCompare(b[0]))
+                      : stats.allTags;
+                    if (!tagsExpanded) tags = tags.slice(0, 10);
+                    return tags.map(([t, n]) => (
+                      <div key={t} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-buttercup-50 border-2 border-buttercup-100 rounded-full">
+                        <span className="text-[12px] font-bold text-ink-800">{t}</span>
+                        <span className="text-[11px] font-bold bg-buttercup-200 text-ink-700 rounded-full px-1.5 min-w-[20px] text-center leading-5">{n}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
+                {stats.tagTotal > 10 && (
+                  <button
+                    onClick={() => setTagsExpanded(e => !e)}
+                    className="mt-3 text-[11px] font-bold text-ink-500 active:text-ink-800"
+                  >{tagsExpanded ? 'Show less' : `Show all ${stats.tagTotal} tags`}</button>
+                )}
               </div>
             )}
           </>
