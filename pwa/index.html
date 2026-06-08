@@ -18,8 +18,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,500;1,9..144,600;1,9..144,700&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-  <!-- Tailwind via CDN (Play CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind via local vendor (offline-capable) -->
+  <script src="vendor/tailwind.js"></script>
   <script>
     // Poppy design tokens — resolved at runtime from CSS custom properties
     tailwind.config = {
@@ -157,10 +157,10 @@
     </div>
   </div>
 
-  <!-- React + Babel for JSX (small app, no build step) -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- React + Babel for JSX (vendored for offline support) -->
+  <script src="vendor/react.min.js"></script>
+  <script src="vendor/react-dom.min.js"></script>
+  <script src="vendor/babel.min.js"></script>
 
   <!-- Seed data: window.SEED_ITEMS, window.SEED_IMAGES -->
   <script src="seed.js"></script>

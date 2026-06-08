@@ -11,6 +11,11 @@ const CORE_ASSETS = [
   './icons/icon-maskable.png',
   './icons/apple-touch-icon.png',
   './icons/favicon.png',
+  './icons/poppy-mark.svg',
+  './vendor/tailwind.js',
+  './vendor/react.min.js',
+  './vendor/react-dom.min.js',
+  './vendor/babel.min.js',
 ];
 
 // Install: pre-cache core assets
