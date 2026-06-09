@@ -745,6 +745,7 @@ function Chip({ children, active, onClick, tone = "default" }) {
     collection: active ? "bg-sky2-500 text-white border-sky2-500 shadow-pop"       : "bg-sky2-50 text-sky2-700 border-sky2-100",
     status:     active ? "bg-ink-500 text-white border-ink-500 shadow-pop" : "bg-ink-50 text-ink-700 border-ink-400",
     brand:      active ? "bg-petal-600 text-white border-petal-600 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
+    year:       active ? "bg-buttercup-500 text-white border-buttercup-500 shadow-pop" : "bg-buttercup-50 text-buttercup-700 border-buttercup-100",
   };
   return (
     <button
@@ -767,6 +768,7 @@ function RemovableChip({ children, tone = "default", onRemove }) {
     collection: "bg-sky2-500 text-white border-sky2-500",
     status:     "bg-ink-500 text-white border-ink-500",
     brand:      "bg-petal-600 text-white border-petal-600",
+    year:       "bg-buttercup-500 text-white border-buttercup-500",
   };
   return (
     <span className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full shadow-pop ${tones[tone]}`}>
@@ -1082,6 +1084,23 @@ function ClosetApp() {
 
   return (
     <div className="min-h-screen bg-cream-50 text-ink-900 pb-24 poppy-wash">
+      {/* INSTALL BAR — shown only when the app can be installed */}
+      {canInstall && (
+        <div className="bg-poppy-500 text-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <I.install size={16} className="shrink-0" />
+              <span className="text-[11px] sm:text-xs font-bold tracking-wide truncate">Install Poppy for a faster, full-screen closet.</span>
+            </div>
+            <button
+              onClick={promptInstall}
+              className="shrink-0 px-3.5 py-1.5 bg-white text-poppy-600 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            >
+              Install
+            </button>
+          </div>
+        </div>
+      )}
       {/* HEADER */}
       <header className="bg-white/95 backdrop-blur border-b border-cream-100 z-30 sticky top-0 shadow-card">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
@@ -1140,17 +1159,6 @@ function ClosetApp() {
                     >
                       <I.archive size={15} className="shrink-0" /> Save &amp; restore
                     </button>
-                    {canInstall && (
-                      <>
-                        <div className="h-px bg-cream-100 mx-3" />
-                        <button
-                          onClick={() => { promptInstall(); setShowMenu(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-poppy-600 active:bg-poppy-50"
-                        >
-                          <I.install size={15} className="shrink-0" /> Install app
-                        </button>
-                      </>
-                    )}
                   </div>
                 </>
               )}
@@ -1283,6 +1291,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
   const [activeCustom, setActiveCustom] = useState([]);
   const [activeStatuses, setActiveStatuses] = useState(["owned"]);
   const [activeBrands, setActiveBrands] = useState([]);
+  const [activeYears, setActiveYears] = useState([]);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const addButtonRef = useRef(null);
@@ -1323,13 +1332,20 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     if (activeCollectionObj && !activeCollectionObj.itemIds.includes(it.id)) return false;
     if (activeStatuses.length && !activeStatuses.includes(it.status || "owned")) return false;
     if (activeBrands.length && !activeBrands.includes(it.brand || "")) return false;
+    if (activeYears.length && !activeYears.includes(it.yearPurchased || "")) return false;
     if (activeCategories.length && !activeCategories.includes(it.category)) return false;
     if (activeSeasons.length && !activeSeasons.some(s => it.seasons?.includes(s))) return false;
     if (activeOccasions.length && !activeOccasions.some(o => it.occasions?.includes(o))) return false;
     if (activeCustom.length && !activeCustom.some(t => it.custom?.includes(t))) return false;
     if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
-  }), [items, activeCollectionObj, activeStatuses, activeBrands, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
+  }), [items, activeCollectionObj, activeStatuses, activeBrands, activeYears, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
+
+  // Distinct purchase years present in the closet, most recent first
+  const years = useMemo(
+    () => [...new Set(items.map(i => i.yearPurchased).filter(Boolean))].sort((a, b) => b.localeCompare(a)),
+    [items]
+  );
 
   const selectAll = () => setSelectedIds(new Set(filtered.map(i => i.id)));
 
@@ -1346,6 +1362,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       custom: [],
       status: "owned",
       brand: "",
+      yearPurchased: "",
     };
     onSaveItems([newItem, ...items]);
     if (blob) await onPutImage(id, blob);
@@ -1413,7 +1430,8 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     + activeCustom.length
     + (activeCollection ? 1 : 0)
     + (activeStatuses.length === 1 && activeStatuses[0] === "owned" ? 0 : 1)
-    + activeBrands.length;
+    + activeBrands.length
+    + activeYears.length;
 
   return (
     <>
@@ -1536,9 +1554,16 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               ))}
             </FilterRow>
           )}
+          {years.length > 0 && (
+            <FilterRow label="Year">
+              {years.map(y => (
+                <Chip key={y} tone="year" active={activeYears.includes(y)} onClick={() => toggle(activeYears, setActiveYears, y)}>{y}</Chip>
+              ))}
+            </FilterRow>
+          )}
           {filterCount > 0 && (
             <button
-              onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); }}
+              onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); setActiveYears([]); }}
               className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
             >
               Clear all
@@ -1587,8 +1612,13 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               {t}
             </RemovableChip>
           ))}
+          {activeYears.map(y => (
+            <RemovableChip key={`y-${y}`} tone="year" onRemove={() => toggle(activeYears, setActiveYears, y)}>
+              {y}
+            </RemovableChip>
+          ))}
           <button
-            onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); }}
+            onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); setActiveYears([]); }}
             className="text-[10px] tracking-[0.2em] uppercase text-ink-500 underline active:text-poppy-600 ml-1"
           >
             Clear all
@@ -1834,6 +1864,15 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
             </div>
           )}
 
+          {item.yearPurchased && (
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop">{item.yearPurchased}</span>
+              </div>
+            </div>
+          )}
+
           {(item.seasons && item.seasons.length > 0) && (
             <div>
               <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
@@ -2031,6 +2070,15 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
             />
             <button onClick={addBrand} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
           </div>
+
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
+          <input
+            value={draft.yearPurchased || ""}
+            onChange={(e) => setDraft({ ...draft, yearPurchased: e.target.value.replace(/[^0-9]/g, "").slice(0, 4) })}
+            inputMode="numeric"
+            placeholder="e.g. 2024"
+            className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1 mb-6"
+          />
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
           <div className="flex flex-wrap gap-2 mb-6">
@@ -2739,7 +2787,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
   };
 
   return (
-    <div id={id} className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
+    <div id={id} className="fade-up bg-white border-2 border-cream-200 rounded-3xl overflow-hidden shadow-card-hi" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5 border-b-2 border-poppy-50">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -2769,7 +2817,7 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
           {outfit.note && <p className="text-sm italic text-ink-500 mt-1">"{outfit.note}"</p>}
         </div>
       </div>
-      <div className="p-4 bg-poppy-50 grid grid-cols-3 gap-2 min-h-[200px]">
+      <div className="p-4 bg-buttercup-50 grid grid-cols-3 gap-2 min-h-[200px]">
         {selfieUrl && (
           <div className="row-span-2 overflow-hidden rounded-2xl relative bg-white">
             <img src={selfieUrl} alt="Outfit selfie" className="absolute inset-0 w-full h-full object-contain" />
@@ -2964,7 +3012,7 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
     }
   };
   return (
-    <div className="fade-up bg-white border-2 border-cream-100 rounded-3xl overflow-hidden shadow-card" style={{ animationDelay: `${delay}ms` }}>
+    <div className="fade-up bg-white border-2 border-cream-200 rounded-3xl overflow-hidden shadow-card-hi" style={{ animationDelay: `${delay}ms` }}>
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -2995,11 +3043,11 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
         </div>
       </div>
       {preview.length === 0 ? (
-        <div className="p-4 bg-poppy-50 min-h-[120px] flex items-center justify-center">
+        <div className="p-4 bg-buttercup-50 min-h-[120px] flex items-center justify-center">
           <p className="font-display italic text-ink-500 text-sm">no pieces yet</p>
         </div>
       ) : (
-        <div className="p-4 bg-poppy-50 grid grid-cols-3 gap-2 min-h-[200px]">
+        <div className="p-4 bg-buttercup-50 grid grid-cols-3 gap-2 min-h-[200px]">
           {preview.map(p => (
             <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
               <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
@@ -3280,17 +3328,33 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
     });
     const topBrands = Object.entries(brandCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
-    const tagCount = {};
+    const yearCount = {};
     owned.forEach(i => {
-      (i.custom || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; });
+      const y = i.yearPurchased;
+      if (y) yearCount[y] = (yearCount[y] || 0) + 1;
+    });
+    const byYear = Object.entries(yearCount).sort((a, b) => b[0].localeCompare(a[0]));
+    const maxYearCount = byYear.reduce((m, [, n]) => Math.max(m, n), 0);
+
+    const tagCount = {};
+    const tagSet = new Set(customTags);
+    owned.forEach(i => {
+      (i.custom || []).forEach(t => { if (tagSet.has(t)) tagCount[t] = (tagCount[t] || 0) + 1; });
     });
     const allTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
 
     // Closet utilization — owned items appearing in ≥1 outfit
-    const usedItemIds = new Set();
-    outfits.forEach(o => (o.itemIds || []).forEach(id => usedItemIds.add(id)));
-    const usedCount = owned.filter(i => usedItemIds.has(i.id)).length;
+    const lookCount = {};
+    outfits.forEach(o => (o.itemIds || []).forEach(id => { lookCount[id] = (lookCount[id] || 0) + 1; }));
+    const usedCount = owned.filter(i => lookCount[i.id]).length;
     const utilizationPct = owned.length ? Math.round((usedCount / owned.length) * 100) : 0;
+
+    // Most-worn pieces — owned items ranked by number of looks they appear in
+    const topItems = owned
+      .map(i => ({ id: i.id, name: i.name, count: lookCount[i.id] || 0 }))
+      .filter(x => x.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
 
     const avgItemsPerLook = outfits.length
       ? (outfits.reduce((s, o) => s + (o.itemIds?.length || 0), 0) / outfits.length).toFixed(1)
@@ -3303,10 +3367,10 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       collectionCount: collections.length,
       brandTotal: Object.keys(brandCount).length,
       tagTotal: Object.keys(tagCount).length,
-      byCat, byStatus, bySeason, byOccasion, topBrands, allTags,
+      byCat, byStatus, bySeason, byOccasion, topBrands, topItems, byYear, maxYearCount, allTags,
       usedCount, utilizationPct, avgItemsPerLook,
     };
-  }, [items, outfits, collections]);
+  }, [items, outfits, collections, customTags]);
 
   const Bar = ({ label, count, max, color }) => {
     const pct = max > 0 ? (count / max) * 100 : 0;
@@ -3413,7 +3477,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
       <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={22} /></button>
 
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
           <I.pie size={12} className="text-poppy-600" />
@@ -3487,12 +3551,40 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
               </div>
             </div>
 
+            {/* By year purchased */}
+            {stats.byYear.length > 0 && (
+              <div className="mb-8">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 mb-3">By year purchased</p>
+                <div className="flex flex-col gap-2">
+                  {stats.byYear.map(([y, n]) => (
+                    <Bar key={y} label={y} count={n} max={stats.maxYearCount} color="bg-buttercup-400" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Most worn */}
+            {stats.topItems.length > 0 && (
+              <div className="mb-8">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">Most versatile items</p>
+                <div className="flex flex-col gap-2">
+                  {stats.topItems.map(({ id, name, count }, idx) => (
+                    <div key={id} className="flex items-center gap-3 p-2.5 bg-cream-50 border-2 border-cream-100 rounded-2xl">
+                      <div className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-poppy-100 text-poppy-700 font-display font-bold text-[12px]">{idx + 1}</div>
+                      <span className="flex-1 text-[13px] font-bold text-ink-800 capitalize truncate">{toTitle(name)}</span>
+                      <span className="shrink-0 text-[11px] font-bold bg-petal-100 text-petal-700 rounded-full px-2 py-0.5">{count} {count === 1 ? 'look' : 'looks'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Top brands */}
             {stats.topBrands.length > 0 && (
               <div className="mb-8">
                 <div className="flex items-baseline justify-between mb-3">
                   <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Top brands</p>
-                  <p className="text-[10px] text-ink-500">{stats.brandTotal} total</p>
+                  <p className="text-[12px] text-ink-500">{stats.brandTotal} total</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {stats.topBrands.map(([b, n]) => (
@@ -3515,7 +3607,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
                       onClick={() => setTagSort(s => s === 'count' ? 'alpha' : 'count')}
                       className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-500 px-2 py-0.5 rounded-full border-2 border-ink-200 active:bg-cream-100 transition-colors"
                     >{tagSort === 'count' ? 'A–Z' : '#'}</button>
-                    <p className="text-[10px] text-ink-500">{stats.tagTotal} total</p>
+                    <p className="text-[12px] text-ink-500">{stats.tagTotal} total</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
