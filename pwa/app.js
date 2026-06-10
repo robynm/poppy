@@ -43,6 +43,7 @@ const I = {
   folder:   (p) => <Icon {...p} d="M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />,
   bookmark: (p) => <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
   grip:     (p) => <Icon {...p} d={<><path d="M12 3l-4 4h8l-4-4z"/><path d="M12 21l4-4H8l4 4z"/><line x1="12" y1="7" x2="12" y2="17"/></>} />,
+  dots:     (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="9" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="18" r="1.5"/></>} />,
   camera:   (p) => <Icon {...p} d={<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></>} />,
   flower:   (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="12" r="3"/><path d="M12 2a3.5 3.5 0 0 0-3 5.3A3.5 3.5 0 0 0 7.3 9 3.5 3.5 0 0 0 5 12c0 1.13.54 2.13 1.37 2.77A3.5 3.5 0 0 0 6 17a3.5 3.5 0 0 0 5.3 3 3.5 3.5 0 0 0 1.7 1.7A3.5 3.5 0 0 0 18 17a3.5 3.5 0 0 0-.37-2.23A3.5 3.5 0 0 0 19 12a3.5 3.5 0 0 0-2.3-3.3A3.5 3.5 0 0 0 17 7a3.5 3.5 0 0 0-5-5z"/></>} />,
   sun:      (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></>} />,
@@ -1779,25 +1780,23 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
     <div
       ref={cardRef}
       onClick={onClick}
-      className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl" : "cursor-pointer rounded-3xl active:scale-[0.98]"} overflow-hidden relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
-      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
+      onPointerDown={reorderHandle || undefined}
+      className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl cursor-grab active:cursor-grabbing select-none" : "cursor-pointer rounded-3xl active:scale-[0.98]"} overflow-hidden relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
+      style={{ animationDelay: `${delay}ms`, ...(reorderHandle && { touchAction: 'none' }), ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
       <div className={`${compact ? "aspect-square" : "aspect-[3/4]"} flex items-center justify-center overflow-hidden relative`}>
         {image ? (
-          <img src={image} alt={item.name} className="w-full h-full object-contain p-1.5" />
+          <img src={image} alt={item.name} draggable={false} className="w-full h-full object-contain p-1.5 select-none" />
         ) : (
           <I.shirt size={compact ? 20 : 32} className="text-poppy-300" />
         )}
         {reorderHandle && (
-          <button
-            onPointerDown={reorderHandle}
-            onClick={(e) => { e.stopPropagation(); }}
-            aria-label="Drag to reorder"
-            className={`absolute top-1 left-1 ${compact ? "p-1" : "p-1.5"} bg-white/95 backdrop-blur rounded-full text-ink-600 cursor-grab active:cursor-grabbing shadow-card`}
-            style={{ touchAction: 'none' }}
+          <div
+            aria-hidden="true"
+            className={`absolute top-1 left-1 ${compact ? "p-1" : "p-1.5"} bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card pointer-events-none`}
           >
-            <I.grip size={compact ? 11 : 14} />
-          </button>
+            <I.dots size={compact ? 12 : 15} />
+          </div>
         )}
         {onSelectToggle && (
           <button
@@ -1940,11 +1939,77 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 }
 
 // --- EDIT DRAWER ----------------------------------------------------------
+// Brand picker: autocompletes against existing brands, lets you add a new one.
+function BrandCombobox({ value, brands, onChange, onAddBrand }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  }, [open]);
+
+  const all = (brands || []).slice().sort((a, b) => a.localeCompare(b));
+  const q = query.trim();
+  const filtered = q ? all.filter(b => b.toLowerCase().includes(q.toLowerCase())) : all;
+  const exact = all.find(b => b.toLowerCase() === q.toLowerCase());
+  const canAdd = q.length > 0 && !exact;
+
+  const select = (b) => { onChange(b); setQuery(""); setOpen(false); };
+  const addNew = () => {
+    if (!q) return;
+    const existing = (brands || []).find(x => x.toLowerCase() === q.toLowerCase());
+    const canonical = existing || q;
+    if (!existing && onAddBrand) onAddBrand(canonical);
+    select(canonical);
+  };
+
+  return (
+    <div ref={wrapRef} className="relative mb-6">
+      <div className="flex items-center gap-2 border-b border-cream-200 focus-within:border-poppy-500">
+        <input
+          value={open ? query : (value || "")}
+          onChange={(e) => { setQuery(e.target.value); if (!open) setOpen(true); }}
+          onFocus={() => { setOpen(true); setQuery(""); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); if (canAdd) addNew(); else if (filtered.length === 1) select(filtered[0]); }
+            else if (e.key === "Escape") setOpen(false);
+          }}
+          placeholder={value ? "" : "search or add a brand…"}
+          className="flex-1 bg-transparent outline-none text-sm py-1"
+        />
+        {value && !open && (
+          <button onClick={() => onChange("")} aria-label="Clear brand" className="text-ink-400 p-1 active:scale-90"><I.x size={14} /></button>
+        )}
+        <button onClick={() => setOpen(o => !o)} aria-label="Toggle brand list" className="text-ink-400 p-1">
+          <I.chevron size={14} className={`transition-transform ${open ? "-rotate-90" : "rotate-90"}`} />
+        </button>
+      </div>
+      {open && (
+        <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border-2 border-cream-100 rounded-2xl shadow-card max-h-60 overflow-y-auto py-1">
+          {filtered.length === 0 && !canAdd && <p className="px-3 py-2 text-xs text-ink-400 italic">no brands yet — type to add one</p>}
+          {filtered.map(b => (
+            <button key={b} onClick={() => select(b)} className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between active:bg-cream-50 ${value === b ? "text-petal-700 font-semibold" : "text-ink-700"}`}>
+              <span className="truncate">{b}</span>
+              {value === b && <I.check size={14} className="text-petal-600 shrink-0" />}
+            </button>
+          ))}
+          {canAdd && (
+            <button onClick={addNew} className="w-full text-left px-3 py-2 text-sm text-poppy-600 font-semibold active:bg-cream-50">+ Add “{q}”</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EditDrawer({ item, image, customTags, brands, collections, onCustomTagsChange, onBrandsChange, onCollectionsChange, onReplaceImage, onClose, onSave, onDelete }) {
   useBodyScrollLock();
   const [draft, setDraft] = useState(item);
   const [newTag, setNewTag] = useState("");
-  const [newBrand, setNewBrand] = useState("");
   const imageInputRef = useRef();
   const [replacing, setReplacing] = useState(false);
 
@@ -1960,19 +2025,6 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
     const cur = draft.custom || [];
     if (!cur.includes(t)) setDraft({ ...draft, custom: [...cur, t] });
     setNewTag("");
-  };
-  const addBrand = () => {
-    const b = newBrand.trim();
-    if (!b) return;
-    // Brands are case-preserved but uniqued case-insensitively
-    const existing = (brands || []).find(x => x.toLowerCase() === b.toLowerCase());
-    const canonical = existing || b;
-    if (!existing && onBrandsChange) onBrandsChange([...(brands || []), canonical]);
-    setDraft({ ...draft, brand: canonical });
-    setNewBrand("");
-  };
-  const pickExistingBrand = (b) => {
-    setDraft({ ...draft, brand: draft.brand === b ? "" : b });
   };
   const toggleCollection = (collectionId) => {
     const next = (collections || []).map(c => {
@@ -2052,24 +2104,12 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
           </div>
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Brand</p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {(brands || []).length === 0 && !draft.brand && (
-              <span className="text-xs text-ink-400 italic">no brands yet — type one below</span>
-            )}
-            {(brands || []).slice().sort((a, b) => a.localeCompare(b)).map(b => (
-              <Chip key={b} tone="brand" active={draft.brand === b} onClick={() => pickExistingBrand(b)}>{b}</Chip>
-            ))}
-          </div>
-          <div className="flex gap-2 mb-6">
-            <input
-              value={newBrand}
-              onChange={(e) => setNewBrand(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addBrand()}
-              placeholder="new brand…"
-              className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
-            />
-            <button onClick={addBrand} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
-          </div>
+          <BrandCombobox
+            value={draft.brand || ""}
+            brands={brands}
+            onChange={(b) => setDraft({ ...draft, brand: b })}
+            onAddBrand={(b) => onBrandsChange && onBrandsChange([...(brands || []), b])}
+          />
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
           <input
@@ -2195,6 +2235,7 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
 
   // Tags: which to add
   const [applyStatus, setApplyStatus] = useState(null); // null = don't change
+  const [applyYear, setApplyYear] = useState(""); // "" = don't change
   const [addSeasons, setAddSeasons] = useState([]);
   const [addOccasions, setAddOccasions] = useState([]);
   const [addCustom, setAddCustom] = useState([]);
@@ -2241,6 +2282,7 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
         return {
           ...it,
           ...(applyStatus ? { status: applyStatus } : {}),
+          ...(applyYear ? { yearPurchased: applyYear } : {}),
           seasons: [...new Set([...(it.seasons || []), ...addSeasons])],
           occasions: [...new Set([...(it.occasions || []), ...addOccasions])],
           custom: [...new Set([...(it.custom || []), ...addCustom])],
@@ -2288,6 +2330,17 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
                   {STATUS_OPTIONS.map(s => <Chip key={s} tone="status" active={applyStatus === s} onClick={() => setApplyStatus(prev => prev === s ? null : s)}>{s}</Chip>)}
                 </div>
                 {applyStatus && <p className="text-[10px] text-ink-400 mt-1.5">Status will be set to "{applyStatus}" on all selected items.</p>}
+              </div>
+              <div>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
+                <input
+                  value={applyYear}
+                  onChange={(e) => setApplyYear(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
+                  inputMode="numeric"
+                  placeholder="e.g. 2024"
+                  className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
+                />
+                {applyYear && <p className="text-[10px] text-ink-400 mt-1.5">Year purchased will be set to "{applyYear}" on all selected items.</p>}
               </div>
               <div>
                 <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
@@ -3334,7 +3387,6 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       if (y) yearCount[y] = (yearCount[y] || 0) + 1;
     });
     const byYear = Object.entries(yearCount).sort((a, b) => b[0].localeCompare(a[0]));
-    const maxYearCount = byYear.reduce((m, [, n]) => Math.max(m, n), 0);
 
     const tagCount = {};
     const tagSet = new Set(customTags);
@@ -3354,7 +3406,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       .map(i => ({ id: i.id, name: i.name, count: lookCount[i.id] || 0 }))
       .filter(x => x.count > 0)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
+      .slice(0, 5);
 
     const avgItemsPerLook = outfits.length
       ? (outfits.reduce((s, o) => s + (o.itemIds?.length || 0), 0) / outfits.length).toFixed(1)
@@ -3367,7 +3419,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       collectionCount: collections.length,
       brandTotal: Object.keys(brandCount).length,
       tagTotal: Object.keys(tagCount).length,
-      byCat, byStatus, bySeason, byOccasion, topBrands, topItems, byYear, maxYearCount, allTags,
+      byCat, byStatus, bySeason, byOccasion, topBrands, topItems, byYear, allTags,
       usedCount, utilizationPct, avgItemsPerLook,
     };
   }, [items, outfits, collections, customTags]);
@@ -3557,7 +3609,7 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 mb-3">By year purchased</p>
                 <div className="flex flex-col gap-2">
                   {stats.byYear.map(([y, n]) => (
-                    <Bar key={y} label={y} count={n} max={stats.maxYearCount} color="bg-buttercup-400" />
+                    <Bar key={y} label={y} count={n} max={ownedTotal} color="bg-buttercup-400" />
                   ))}
                 </div>
               </div>
