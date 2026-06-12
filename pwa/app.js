@@ -1221,8 +1221,8 @@ function ClosetApp() {
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="max-w-6xl mx-auto grid grid-cols-3 px-3 pt-2 pb-1">
           <BottomTab IconC={I.shirt}  label="Closet"      tone="poppy"  active={view === "closet"}      onClick={() => setView("closet")} />
-          <BottomTab IconC={I.sunglasses} label="Looks"       tone="poppy"  active={view === "outfits"}     onClick={() => setView("outfits")} />
-          <BottomTab IconC={I.suitcase}   label="Collections" tone="poppy"  active={view === "collections"} onClick={() => setView("collections")} />
+          <BottomTab IconC={I.sunglasses} label="Looks"       tone="petal"  active={view === "outfits"}     onClick={() => setView("outfits")} />
+          <BottomTab IconC={I.suitcase}   label="Collections" tone="sky2"   active={view === "collections"} onClick={() => setView("collections")} />
         </div>
       </nav>
 
@@ -1346,6 +1346,12 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
   const years = useMemo(
     () => [...new Set(items.map(i => i.yearPurchased).filter(Boolean))].sort((a, b) => b.localeCompare(a)),
     [items]
+  );
+
+  // Custom tags actually applied to at least one item — unused tags don't surface in filters
+  const usedCustomTags = useMemo(
+    () => customTags.filter(t => items.some(i => (i.custom || []).includes(t))),
+    [customTags, items]
   );
 
   const selectAll = () => setSelectedIds(new Set(filtered.map(i => i.id)));
@@ -1548,9 +1554,9 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               ))}
             </FilterRow>
           )}
-          {customTags.length > 0 && (
+          {usedCustomTags.length > 0 && (
             <FilterRow label="Custom">
-              {customTags.map(t => (
+              {usedCustomTags.map(t => (
                 <Chip key={t} tone="custom" active={activeCustom.includes(t)} onClick={() => toggle(activeCustom, setActiveCustom, t)}>{t}</Chip>
               ))}
             </FilterRow>
@@ -1642,7 +1648,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
         </div>
       ) : (
-        <div className={dragMode ? "grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2" : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"}>
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">
           {filtered.map((item, i) => (
             <ItemCard
               key={item.id}
@@ -1717,6 +1723,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           item={items.find(i => i.id === editing)}
           image={images[editing]}
           customTags={customTags}
+          usedCustomTags={usedCustomTags}
           brands={brands}
           collections={collections}
           onCustomTagsChange={onSaveCustomTags}
@@ -1780,22 +1787,23 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
     <div
       ref={cardRef}
       onClick={onClick}
-      onPointerDown={reorderHandle || undefined}
-      className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl cursor-grab active:cursor-grabbing select-none" : "cursor-pointer rounded-3xl active:scale-[0.98]"} overflow-hidden relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
-      style={{ animationDelay: `${delay}ms`, ...(reorderHandle && { touchAction: 'none' }), ...(isDragging && { animation: 'none', opacity: 0 }) }}
+      className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl select-none" : "cursor-pointer rounded-2xl active:scale-[0.98]"} overflow-hidden relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
+      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
-      <div className={`${compact ? "aspect-square" : "aspect-[3/4]"} flex items-center justify-center overflow-hidden relative`}>
+      <div className="aspect-square flex items-center justify-center overflow-hidden relative">
         {image ? (
           <img src={image} alt={item.name} draggable={false} className="w-full h-full object-contain p-1.5 select-none" />
         ) : (
-          <I.shirt size={compact ? 20 : 32} className="text-poppy-300" />
+          <I.shirt size={24} className="text-poppy-300" />
         )}
         {reorderHandle && (
           <div
             aria-hidden="true"
-            className={`absolute top-1 left-1 ${compact ? "p-1" : "p-1.5"} bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card pointer-events-none`}
+            onPointerDown={reorderHandle}
+            style={{ touchAction: 'none' }}
+            className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
           >
-            <I.dots size={compact ? 12 : 15} />
+            <I.dots size={18} />
           </div>
         )}
         {onSelectToggle && (
@@ -1809,9 +1817,9 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
         )}
       </div>
       {!compact && (
-        <div className="p-3 border-t-2 border-cream-100">
-          <p className="font-display font-semibold text-sm sm:text-base leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
-          <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{item.category}</p>
+        <div className="p-2 border-t-2 border-cream-100">
+          <p className="font-display font-semibold text-xs leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
+          <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-poppy-600 mt-0.5 truncate">{item.category}</p>
         </div>
       )}
     </div>
@@ -2006,7 +2014,7 @@ function BrandCombobox({ value, brands, onChange, onAddBrand }) {
   );
 }
 
-function EditDrawer({ item, image, customTags, brands, collections, onCustomTagsChange, onBrandsChange, onCollectionsChange, onReplaceImage, onClose, onSave, onDelete }) {
+function EditDrawer({ item, image, customTags, usedCustomTags, brands, collections, onCustomTagsChange, onBrandsChange, onCollectionsChange, onReplaceImage, onClose, onSave, onDelete }) {
   useBodyScrollLock();
   const [draft, setDraft] = useState(item);
   const [newTag, setNewTag] = useState("");
@@ -2136,10 +2144,15 @@ function EditDrawer({ item, image, customTags, brands, collections, onCustomTags
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Custom Tags</p>
           <div className="flex flex-wrap gap-2 mb-3">
-            {customTags.map(t => (
-              <Chip key={t} tone="custom" active={(draft.custom || []).includes(t)} onClick={() => toggle("custom", t)}>{t}</Chip>
-            ))}
-            {customTags.length === 0 && <span className="text-xs text-ink-400 italic">none yet — add one below</span>}
+            {(() => {
+              const shownTags = [...new Set([...(usedCustomTags || customTags), ...(draft.custom || [])])];
+              return <>
+                {shownTags.map(t => (
+                  <Chip key={t} tone="custom" active={(draft.custom || []).includes(t)} onClick={() => toggle("custom", t)}>{t}</Chip>
+                ))}
+                {shownTags.length === 0 && <span className="text-xs text-ink-400 italic">none yet — add one below</span>}
+              </>;
+            })()}
           </div>
           <div className="flex gap-2 mb-8">
             <input
@@ -2357,8 +2370,11 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
               <div>
                 <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Custom Tags</p>
                 <div className="flex flex-wrap gap-2 mb-3">
-                  {customTags.length === 0 && <span className="text-xs text-ink-400 italic">none yet — add one below</span>}
-                  {customTags.map(t => <Chip key={t} tone="custom" active={addCustom.includes(t)} onClick={() => toggleTag(addCustom, setAddCustom, t)}>{t}</Chip>)}
+                  {(() => {
+                    const shownTags = customTags.filter(t => addCustom.includes(t) || items.some(i => (i.custom || []).includes(t)));
+                    if (shownTags.length === 0) return <span className="text-xs text-ink-400 italic">none yet — add one below</span>;
+                    return shownTags.map(t => <Chip key={t} tone="custom" active={addCustom.includes(t)} onClick={() => toggleTag(addCustom, setAddCustom, t)}>{t}</Chip>);
+                  })()}
                 </div>
                 <div className="flex gap-2">
                   <input value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNewTag()} placeholder="new tag…" className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1" />
@@ -2623,6 +2639,7 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 // --- OUTFITS VIEW ----------------------------------------------------------
 function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit, onPutImage, onDeleteImage, scrollToId, onScrolled, onSetHeaderAction }) {
   const [selfieModal, setSelfieModal] = useState(null);
+  const [viewingId, setViewingId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
@@ -2653,7 +2670,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
     const el = newLookButtonRef.current;
     if (!el || !onSetHeaderAction) return;
     const obs = new IntersectionObserver(
-      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "New Look", tone: "poppy", onClick: onNewOutfit }),
+      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "New Look", tone: "petal", onClick: onNewOutfit }),
       { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" }
     );
     obs.observe(el);
@@ -2667,12 +2684,12 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
       <div className="mb-6 sm:mb-10">
         <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Looks</h2>
         <div className="flex items-end justify-between gap-4">
-          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">worth keeping.</em></h3>
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-petal-600">worth keeping.</em></h3>
           <button
             ref={newLookButtonRef}
             onClick={onNewOutfit}
             style={{flexShrink: 0}}
-            className="flex items-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            className="flex items-center gap-2 px-5 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
           >
             <I.plus size={16} /> New Look
           </button>
@@ -2682,7 +2699,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
       <div className="mb-4 flex gap-2">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
         >
           Filters{filterCount > 0 && ` · ${filterCount}`}
         </button>
@@ -2707,26 +2724,26 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
       )}
 
       {outfits.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-poppy-200 bg-poppy-50/40 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
-            <I.sunglasses size={28} className="text-poppy-500" />
+        <div className="py-16 text-center border-2 border-dashed border-petal-200 bg-petal-50/40 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
+            <I.sunglasses size={28} className="text-petal-500" />
           </div>
           <p className="font-display font-bold text-2xl mb-2 text-ink-900">No looks yet.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mb-6">Compose your first one</p>
-          <button onClick={onNewOutfit} className="inline-flex items-center gap-2 px-5 py-2.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
+          <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mb-6">Compose your first one</p>
+          <button onClick={onNewOutfit} className="inline-flex items-center gap-2 px-5 py-2.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
             Open Builder <I.chevron size={14} />
           </button>
         </div>
       ) : filteredOutfits.length === 0 ? (
         <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
-            <I.search size={26} className="text-poppy-500" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
+            <I.search size={26} className="text-petal-500" />
           </div>
           <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mt-2">Try clearing a filter</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {filteredOutfits.map((o, i) => (
             <OutfitCard
               key={o.id}
@@ -2734,18 +2751,25 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
               outfit={o}
               items={items}
               images={images}
-              onDelete={() => handleDelete(o.id)}
-              onEdit={onEditOutfit ? () => onEditOutfit(o) : undefined}
-              onPutImage={onPutImage}
-              onDeleteImage={onDeleteImage}
-              onOpenSelfie={() => setSelfieModal({ outfitId: o.id, outfitName: o.name })}
-              delay={i * 80}
+              onOpen={() => setViewingId(o.id)}
+              delay={i * 40}
             />
           ))}
         </div>
       )}
     </div>
     </main>
+    {viewingId && outfits.find(o => o.id === viewingId) && (
+      <OutfitDetailModal
+        outfit={outfits.find(o => o.id === viewingId)}
+        items={items}
+        images={images}
+        onClose={() => setViewingId(null)}
+        onEdit={onEditOutfit ? () => { const o = outfits.find(x => x.id === viewingId); setViewingId(null); onEditOutfit(o); } : undefined}
+        onDelete={() => handleDelete(viewingId)}
+        onOpenSelfie={() => { const o = outfits.find(x => x.id === viewingId); setSelfieModal({ outfitId: o.id, outfitName: o.name }); }}
+      />
+    )}
     {selfieModal && (
       <SelfieModal
         outfitName={selfieModal.outfitName}
@@ -2813,10 +2837,39 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
   );
 }
 
-function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDeleteImage, onOpenSelfie, delay = 0, id }) {
+function OutfitCard({ outfit, items, images, onOpen, delay = 0, id }) {
   const pieces = items.filter(i => outfit.itemIds.includes(i.id));
-  const selfieKey = `selfie_${outfit.id}`;
-  const selfieUrl = images[selfieKey];
+  const selfieUrl = images[`selfie_${outfit.id}`];
+  const thumbs = selfieUrl ? [{ id: 'selfie', url: selfieUrl }] : pieces.slice(0, 4).map(p => ({ id: p.id, url: images[p.id] }));
+
+  return (
+    <button
+      id={id}
+      onClick={onOpen}
+      className="fade-up text-left bg-white border-2 border-cream-200 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-all"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className={`aspect-square bg-petal-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}>
+        {thumbs.length === 0 ? (
+          <div className="flex items-center justify-center text-petal-300"><I.sunglasses size={28} /></div>
+        ) : thumbs.map(t => (
+          <div key={t.id} className="bg-white rounded-lg overflow-hidden flex items-center justify-center">
+            {t.url && <img src={t.url} alt="" className="w-full h-full object-contain p-1" />}
+          </div>
+        ))}
+      </div>
+      <div className="p-2">
+        <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">{toTitle(outfit.name)}</h3>
+        <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-petal-600 mt-0.5">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
+      </div>
+    </button>
+  );
+}
+
+function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, onOpenSelfie }) {
+  useBodyScrollLock();
+  const pieces = items.filter(i => outfit.itemIds.includes(i.id));
+  const selfieUrl = images[`selfie_${outfit.id}`];
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
     if (sharing) return;
@@ -2840,58 +2893,70 @@ function OutfitCard({ outfit, items, images, onDelete, onEdit, onPutImage, onDel
   };
 
   return (
-    <div id={id} className="fade-up bg-white border-2 border-cream-200 rounded-3xl overflow-hidden shadow-card-hi" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5 border-b-2 border-poppy-50">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-full bg-poppy-100 flex items-center justify-center mb-2">
-              <I.sunglasses size={14} className="text-poppy-600" />
+    <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
+        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="p-4 sm:p-6 border-b-2 border-petal-50 bg-white shrink-0"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
+        >
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="w-8 h-8 rounded-full bg-petal-100 flex items-center justify-center">
+              <I.sunglasses size={14} className="text-petal-600" />
+            </div>
+            <div className="flex gap-1 shrink-0">
+              <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40" aria-label="Share outfit">
+                <I.share size={15} />
+              </button>
+              <button onClick={onOpenSelfie} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
+                <I.camera size={15} />
+              </button>
+              {onEdit && (
+                <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Edit outfit">
+                  <I.pencil size={15} />
+                </button>
+              )}
+              <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete outfit">
+                <I.trash size={15} />
+              </button>
+              <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors" aria-label="Close"><I.x size={18} /></button>
             </div>
           </div>
-          <div className="flex gap-1 shrink-0">
-            <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors disabled:opacity-40" aria-label="Share outfit">
-              <I.share size={15} />
-            </button>
-            <button onClick={onOpenSelfie} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
-              <I.camera size={15} />
-            </button>
-            {onEdit && (
-              <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors" aria-label="Edit outfit">
-                <I.pencil size={15} />
-              </button>
-            )}
-            <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete outfit">
-              <I.trash size={15} />
-            </button>
-          </div>
-        </div>
-        <div>
-          <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(outfit.name)}</h3>
+          <h3 className="font-display font-bold text-2xl sm:text-3xl truncate text-ink-900">{toTitle(outfit.name)}</h3>
           {outfit.note && <p className="text-sm italic text-ink-500 mt-1">"{outfit.note}"</p>}
         </div>
-      </div>
-      <div className="p-4 bg-buttercup-50 grid grid-cols-3 gap-2 min-h-[200px]">
-        {selfieUrl && (
-          <div className="row-span-2 overflow-hidden rounded-2xl relative bg-white">
-            <img src={selfieUrl} alt="Outfit selfie" className="absolute inset-0 w-full h-full object-contain" />
+
+        {/* Scrollable content */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="p-4 bg-petal-50 grid grid-cols-3 gap-2 min-h-[200px]">
+            {selfieUrl && (
+              <div className="row-span-2 overflow-hidden rounded-2xl relative bg-white">
+                <img src={selfieUrl} alt="Outfit selfie" className="absolute inset-0 w-full h-full object-contain" />
+              </div>
+            )}
+            {pieces.map(p => (
+              <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
+                {images[p.id] && <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />}
+              </div>
+            ))}
           </div>
-        )}
-        {pieces.map(p => (
-          <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
-            {images[p.id] && <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />}
+          <div className="p-4 sm:p-6 flex flex-wrap gap-1.5">
+            {(outfit.seasons || []).map(s => (
+              <span key={`s-${s}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full">{s}</span>
+            ))}
+            {(outfit.occasions || []).map(o => (
+              <span key={`o-${o}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full">{o}</span>
+            ))}
+            {pieces.map(p => (
+              <span key={p.id} className="text-[10px] font-bold tracking-[0.1em] uppercase text-ink-700 bg-cream-50 px-2.5 py-1 rounded-full">{toTitle(p.name)}</span>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="p-3 sm:p-4 flex flex-wrap gap-1.5">
-        {(outfit.seasons || []).map(s => (
-          <span key={`s-${s}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full">{s}</span>
-        ))}
-        {(outfit.occasions || []).map(o => (
-          <span key={`o-${o}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full">{o}</span>
-        ))}
-        {pieces.map(p => (
-          <span key={p.id} className="text-[10px] font-bold tracking-[0.1em] uppercase text-ink-700 bg-cream-50 px-2.5 py-1 rounded-full">{toTitle(p.name)}</span>
-        ))}
+        </div>
       </div>
     </div>
   );
@@ -2919,7 +2984,7 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
     const el = addButtonRef.current;
     if (!el || !onSetHeaderAction) return;
     const obs = new IntersectionObserver(
-      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "New Collection", tone: "poppy", onClick: startNew }),
+      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "New Collection", tone: "sky2", onClick: startNew }),
       { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" }
     );
     obs.observe(el);
@@ -2938,12 +3003,12 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
       <div className="mb-6 sm:mb-10">
         <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Collections</h2>
         <div className="flex items-end justify-between gap-4">
-          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">you've curated.</em></h3>
+          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-sky2-600">you've curated.</em></h3>
           <button
             ref={addButtonRef}
             onClick={startNew}
             style={{flexShrink: 0}}
-            className="flex items-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
           >
             <I.plus size={16} /> New Collection
           </button>
@@ -2953,7 +3018,7 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
       <div className="mb-4 flex gap-2">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
         >
           Filters{filterCount > 0 && ` · ${filterCount}`}
         </button>
@@ -2978,25 +3043,25 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
       )}
 
       {collections.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-poppy-200 bg-poppy-50/40 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
-            <I.suitcase size={28} className="text-poppy-500" />
+        <div className="py-16 text-center border-2 border-dashed border-sky2-200 bg-sky2-50/40 rounded-3xl">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
+            <I.suitcase size={28} className="text-sky2-500" />
           </div>
           <p className="font-display font-bold text-2xl mb-2 text-ink-900">No collections yet.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mb-6 px-4">
+          <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mb-6 px-4">
             Group pieces — a packing list, a capsule, a season
           </p>
-          <button onClick={startNew} className="inline-flex items-center gap-2 px-5 py-2.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
+          <button onClick={startNew} className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
             Create your first <I.chevron size={14} />
           </button>
         </div>
       ) : filteredCollections.length === 0 ? (
         <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
-            <I.search size={26} className="text-poppy-500" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
+            <I.search size={26} className="text-sky2-500" />
           </div>
           <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
+          <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mt-2">Try clearing a filter</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
@@ -3069,15 +3134,15 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-full bg-poppy-100 flex items-center justify-center mb-2">
-              <I.suitcase size={14} className="text-poppy-600" />
+            <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center mb-2">
+              <I.suitcase size={14} className="text-sky2-600" />
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
-            <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors disabled:opacity-40" aria-label="Share collection">
+            <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
               <I.share size={15} />
             </button>
-            <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-poppy-50 active:text-poppy-600 transition-colors" aria-label="Edit collection">
+            <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
               <I.pencil size={15} />
             </button>
             <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
@@ -3087,7 +3152,7 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
         </div>
         <div>
           <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(collection.name)}</h3>
-          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-700 mt-1">
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1">
             {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
           </p>
           {collection.description && (
@@ -3096,19 +3161,19 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
         </div>
       </div>
       {preview.length === 0 ? (
-        <div className="p-4 bg-buttercup-50 min-h-[120px] flex items-center justify-center">
+        <div className="p-4 bg-sky2-50 min-h-[120px] flex items-center justify-center">
           <p className="font-display italic text-ink-500 text-sm">no pieces yet</p>
         </div>
       ) : (
-        <div className="p-4 bg-buttercup-50 grid grid-cols-3 gap-2 min-h-[200px]">
+        <div className="p-4 bg-sky2-50 grid grid-cols-3 gap-2 min-h-[200px]">
           {preview.map(p => (
             <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
               <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
             </div>
           ))}
           {remaining > 0 && (
-            <div className="bg-white/80 rounded-2xl flex items-center justify-center aspect-square border-2 border-dashed border-poppy-200">
-              <p className="font-display font-bold italic text-poppy-600 text-sm">+{remaining} more</p>
+            <div className="bg-white/80 rounded-2xl flex items-center justify-center aspect-square border-2 border-dashed border-sky2-200">
+              <p className="font-display font-bold italic text-sky2-600 text-sm">+{remaining} more</p>
             </div>
           )}
         </div>
@@ -3232,7 +3297,42 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5">
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name this look…"
+              className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display font-bold text-xl py-1"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Note (optional)</label>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="a vibe, a memory…"
+              className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
+            />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Season</p>
+            <div className="flex gap-2 flex-wrap">
+              {SEASON_OPTIONS.map(s => (
+                <Chip key={s} tone="season" active={seasons.includes(s)} onClick={() => toggleTag(seasons, setSeasons, s)}>{s}</Chip>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasion</p>
+            <div className="flex gap-2 flex-wrap">
+              {OCCASION_OPTIONS.map(o => (
+                <Chip key={o} tone="occasion" active={occasions.includes(o)} onClick={() => toggleTag(occasions, setOccasions, o)}>{o}</Chip>
+              ))}
+            </div>
+          </div>
+
           {(collections || []).length > 0 && (
             <div>
               <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700 mb-2">Choose from</p>
@@ -3279,6 +3379,8 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
             </div>
           </div>
 
+          <div>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Pieces ({selected.length})</p>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {filtered.map((it, i) => {
               const active = selected.includes(it.id);
@@ -3302,51 +3404,22 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
               );
             })}
           </div>
+          </div>
         </div>
 
         {/* Footer */}
         <div
-          className="p-4 sm:p-6 border-t-2 border-cream-100 bg-white shrink-0 space-y-3"
+          className="p-4 sm:p-6 border-t-2 border-cream-100 bg-white shrink-0 flex gap-2"
           style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
         >
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name this look…"
-            className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display font-bold text-lg py-1"
-          />
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="a vibe, a memory… (optional)"
-            className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
-          />
-          <div>
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-400 mb-2">Season</p>
-            <div className="flex gap-2 flex-wrap">
-              {SEASON_OPTIONS.map(s => (
-                <Chip key={s} tone="season" active={seasons.includes(s)} onClick={() => toggleTag(seasons, setSeasons, s)}>{s}</Chip>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-400 mb-2">Occasion</p>
-            <div className="flex gap-2 flex-wrap">
-              {OCCASION_OPTIONS.map(o => (
-                <Chip key={o} tone="occasion" active={occasions.includes(o)} onClick={() => toggleTag(occasions, setOccasions, o)}>{o}</Chip>
-              ))}
-            </div>
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button onClick={onCancel} className="flex-1 py-3 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95">Cancel</button>
-            <button
-              onClick={handleSave}
-              disabled={!canSave}
-              className="flex-[2] flex items-center justify-center gap-2 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"
-            >
-              <I.check size={14} /> {isEdit ? "Save Changes" : "Save Look"}
-            </button>
-          </div>
+          <button onClick={onCancel} className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95">Cancel</button>
+          <button
+            onClick={handleSave}
+            disabled={!canSave}
+            className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"
+          >
+            <I.check size={14} /> {isEdit ? "Save Changes" : "Save Look"}
+          </button>
         </div>
       </div>
     </div>
