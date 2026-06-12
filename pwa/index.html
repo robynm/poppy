@@ -125,7 +125,7 @@
     }
 
 
-    .item-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; }
+    .item-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; content-visibility: auto; contain-intrinsic-size: auto 150px; }
     .item-card:hover { transform: translateY(-3px); box-shadow: 0 18px 36px -16px rgba(94, 21, 5, 0.25); }
 
     @keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
