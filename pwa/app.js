@@ -1210,7 +1210,7 @@ function ClosetApp() {
         </div>
       )}
       {/* HEADER */}
-      <header className="bg-white/95 backdrop-blur border-b border-cream-100 z-30 sticky top-0 shadow-card">
+      <header className="bg-white border-b border-cream-100 z-30 sticky top-0 shadow-card">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-poppy-500 flex items-center justify-center shadow-poppy overflow-hidden">
@@ -1325,7 +1325,7 @@ function ClosetApp() {
       )}
 
       {/* BOTTOM NAV — mobile-first, Poppy-style: chunky, colorful, with a soft pill on the active tab */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="max-w-6xl mx-auto grid grid-cols-3 px-3 pt-2 pb-1">
           <BottomTab IconC={I.shirt}  label="Closet"      tone="poppy"  active={view === "closet"}      onClick={() => setView("closet")} />
           <BottomTab IconC={I.sunglasses} label="Looks"       tone="petal"  active={view === "outfits"}     onClick={() => setView("outfits")} />
@@ -1908,7 +1908,7 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
             aria-hidden="true"
             onPointerDown={reorderHandle}
             style={{ touchAction: 'none' }}
-            className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
+            className="absolute top-1 left-1 p-2.5 bg-white rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
           >
             <I.dots size={18} />
           </div>
@@ -1917,7 +1917,7 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
           <button
             onClick={(e) => { e.stopPropagation(); onSelectToggle(); }}
             aria-label={isSelected ? "Deselect item" : "Select item"}
-            className={`absolute top-1.5 right-1.5 rounded-full w-6 h-6 flex items-center justify-center transition-colors shadow-card ${isSelected ? "bg-poppy-500 text-white" : "bg-white/95 backdrop-blur text-ink-300 border border-cream-200"}`}
+            className={`absolute top-1.5 right-1.5 rounded-full w-6 h-6 flex items-center justify-center transition-colors shadow-card ${isSelected ? "bg-poppy-500 text-white" : "bg-white text-ink-300 border border-cream-200"}`}
           >
             <I.check size={12} />
           </button>
@@ -2777,6 +2777,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
     if (!scrollToId) return;
     const el = document.getElementById(`outfit-${scrollToId}`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (outfits.some(o => o.id === scrollToId)) setViewingId(scrollToId);
     onScrolled?.();
   }, [scrollToId]);
 
@@ -3019,7 +3020,7 @@ function OutfitCard({ outfit, items, images, onOpen, delay = 0, id, cardRef, reo
       ref={cardRef}
       onClick={onOpen}
       className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-petal-500 ring-4 ring-petal-500/25" : "border-cream-200"}`}
-      style={{ animationDelay: `${delay}ms`, ...(reorderHandle && { touchAction: 'none' }), ...(isDragging && { animation: 'none', opacity: 0 }) }}
+      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
       <OutfitCardPreview outfit={outfit} items={items} images={images} />
       {reorderHandle && (
@@ -3138,6 +3139,7 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
   const [showManager, setShowManager] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [dragMode, setDragMode] = useState(false);
+  const [viewingId, setViewingId] = useState(null);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
 
@@ -3249,41 +3251,21 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
           <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
           <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mt-2">Try clearing a filter</p>
         </div>
-      ) : dragMode ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {filteredCollections.map((c, i) => (
-            <div
-              key={c.id}
-              ref={(el) => register(i, el)}
-              className={`fade-up relative select-none bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${dragIndex === i ? "opacity-0" : (dragIndex !== null && hoverIndex === i) ? "border-sky2-500 ring-4 ring-sky2-500/25" : "border-cream-200"}`}
-              style={{ animationDelay: `${i * 40}ms`, touchAction: 'none', ...(dragIndex === i && { animation: 'none', opacity: 0 }) }}
-            >
-              <CollectionCardPreview collection={c} items={items} images={images} />
-              <div
-                aria-hidden="true"
-                onPointerDown={onHandlePointerDown(i)}
-                style={{ touchAction: 'none' }}
-                className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
-              >
-                <I.dots size={18} />
-              </div>
-            </div>
-          ))}
-        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {filteredCollections.map((c, i) => (
             <CollectionCard
               key={c.id}
+              id={`collection-${c.id}`}
               collection={c}
               items={items}
               images={images}
-              outfits={outfits}
-              onOpen={() => onViewCollection(c.id)}
-              onOpenOutfit={onOpenOutfit}
-              onEdit={() => startEdit(c.id)}
-              onDelete={() => handleDelete(c.id)}
-              delay={i * 80}
+              onOpen={dragMode ? undefined : () => setViewingId(c.id)}
+              delay={i * 40}
+              cardRef={(el) => register(i, el)}
+              reorderHandle={dragMode ? onHandlePointerDown(i) : null}
+              isDragging={dragMode && dragIndex === i}
+              isDropTarget={dragMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
             />
           ))}
         </div>
@@ -3314,6 +3296,20 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
             <button onClick={() => setDragMode(false)} className="px-3.5 py-2 bg-sky2-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-600">Done</button>
           </div>
         </div>
+      )}
+
+      {viewingId && collections.find(c => c.id === viewingId) && (
+        <CollectionDetailModal
+          collection={collections.find(c => c.id === viewingId)}
+          items={items}
+          images={images}
+          outfits={outfits}
+          onClose={() => setViewingId(null)}
+          onEdit={() => { startEdit(viewingId); setViewingId(null); }}
+          onDelete={() => handleDelete(viewingId)}
+          onOpenOutfit={(oid) => { setViewingId(null); onOpenOutfit?.(oid); }}
+          onOpenInCloset={() => { const id = viewingId; setViewingId(null); onViewCollection(id); }}
+        />
       )}
 
       {showManager && (
@@ -3353,15 +3349,36 @@ function CollectionCardPreview({ collection, items, images }) {
   );
 }
 
-function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutfit, onEdit, onDelete, delay = 0 }) {
+function CollectionCard({ collection, items, images, onOpen, delay = 0, id, cardRef, reorderHandle, isDragging, isDropTarget }) {
+  return (
+    <div
+      id={id}
+      ref={cardRef}
+      onClick={onOpen}
+      className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-sky2-500 ring-4 ring-sky2-500/25" : "border-cream-200"}`}
+      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
+    >
+      <CollectionCardPreview collection={collection} items={items} images={images} />
+      {reorderHandle && (
+        <div
+          aria-hidden="true"
+          onPointerDown={reorderHandle}
+          style={{ touchAction: 'none' }}
+          className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
+        >
+          <I.dots size={18} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CollectionDetailModal({ collection, items, images, outfits, onClose, onEdit, onDelete, onOpenOutfit, onOpenInCloset }) {
+  useBodyScrollLock();
   const pieces = items.filter(i => collection.itemIds.includes(i.id));
   const collectionOutfits = (outfits || []).filter(o =>
     o.itemIds.length > 0 && o.itemIds.every(id => collection.itemIds.includes(id))
   );
-  // Show up to 9 in a 3×3 grid; truncate only when there are 10+
-  const TRUNCATE_AT = 10;
-  const preview = pieces.length >= TRUNCATE_AT ? pieces.slice(0, 8) : pieces;
-  const remaining = pieces.length - preview.length;
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
     if (sharing) return;
@@ -3383,98 +3400,102 @@ function CollectionCard({ collection, items, images, outfits, onOpen, onOpenOutf
       setSharing(false);
     }
   };
+
   return (
-    <div className="fade-up bg-white border-2 border-cream-200 rounded-3xl overflow-hidden shadow-card-hi" style={{ animationDelay: `${delay}ms` }}>
-      <div className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center mb-2">
+    <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
+        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div
+          className="p-4 sm:p-6 border-b-2 border-sky2-50 bg-white shrink-0"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
+        >
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center">
               <I.suitcase size={14} className="text-sky2-600" />
             </div>
-          </div>
-          <div className="flex gap-1 shrink-0">
-            <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
-              <I.share size={15} />
-            </button>
-            <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
-              <I.pencil size={15} />
-            </button>
-            <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
-              <I.trash size={15} />
-            </button>
-          </div>
-        </div>
-        <div>
-          <h3 className="font-display font-bold text-xl sm:text-2xl truncate text-ink-900">{toTitle(collection.name)}</h3>
-          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1">
-            {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
-          </p>
-          {collection.description && (
-            <p className="text-sm italic text-ink-500 mt-1">"{collection.description}"</p>
-          )}
-        </div>
-      </div>
-      {preview.length === 0 ? (
-        <div className="p-4 bg-sky2-50 min-h-[120px] flex items-center justify-center">
-          <p className="font-display italic text-ink-500 text-sm">no pieces yet</p>
-        </div>
-      ) : (
-        <div className="p-4 bg-sky2-50 grid grid-cols-3 gap-2 min-h-[200px]">
-          {preview.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
-              <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />
+            <div className="flex gap-1 shrink-0">
+              <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
+                <I.share size={15} />
+              </button>
+              <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
+                <I.pencil size={15} />
+              </button>
+              <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
+                <I.trash size={15} />
+              </button>
+              <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors" aria-label="Close"><I.x size={18} /></button>
             </div>
-          ))}
-          {remaining > 0 && (
-            <div className="bg-white/80 rounded-2xl flex items-center justify-center aspect-square border-2 border-dashed border-sky2-200">
-              <p className="font-display font-bold italic text-sky2-600 text-sm">+{remaining} more</p>
+          </div>
+          <h3 className="font-display font-bold text-2xl sm:text-3xl truncate text-ink-900">{toTitle(collection.name)}</h3>
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
+          {collection.description && <p className="text-sm italic text-ink-500 mt-1">"{collection.description}"</p>}
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {pieces.length === 0 ? (
+            <div className="p-4 bg-sky2-50 min-h-[120px] flex items-center justify-center">
+              <p className="font-display italic text-ink-500 text-sm">no pieces yet</p>
+            </div>
+          ) : (
+            <div className="p-4 bg-sky2-50 grid grid-cols-3 gap-2 min-h-[200px]">
+              {pieces.map(p => (
+                <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
+                  {images[p.id] && <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />}
+                </div>
+              ))}
             </div>
           )}
-        </div>
-      )}
-      {collectionOutfits.length > 0 && (
-        <div className="px-4 py-3 border-t-2 border-sky2-50">
-          <p className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2"><span className="inline-flex items-center justify-center bg-petal-500 text-white rounded-full w-5 h-5 text-[10px] font-bold tracking-normal normal-case">{collectionOutfits.length}</span> Look{collectionOutfits.length > 1 ? 's' : ''} in this collection</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {collectionOutfits.map(o => {
-              const opieces = items.filter(i => o.itemIds.includes(i.id));
-              return (
-                <button
-                  key={o.id}
-                  onClick={() => onOpenOutfit?.(o.id)}
-                  className="shrink-0 w-28 border-2 border-cream-100 rounded-2xl p-1.5 text-left active:scale-95 active:border-petal-200 transition-all bg-white"
-                >
-                  <div className="grid grid-cols-3 gap-0.5 rounded-xl overflow-hidden mb-1 bg-cream-50">
-                    {opieces.slice(0, 3).map(p => (
-                      <div key={p.id} className="bg-cream-50 aspect-square flex items-center justify-center overflow-hidden">
-                        <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-0.5" />
+          {collectionOutfits.length > 0 && (
+            <div className="px-4 py-3 border-t-2 border-sky2-50">
+              <p className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2"><span className="inline-flex items-center justify-center bg-petal-500 text-white rounded-full w-5 h-5 text-[10px] font-bold tracking-normal normal-case">{collectionOutfits.length}</span> Look{collectionOutfits.length > 1 ? 's' : ''} in this collection</p>
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+                {collectionOutfits.map(o => {
+                  const opieces = items.filter(i => o.itemIds.includes(i.id));
+                  return (
+                    <button
+                      key={o.id}
+                      onClick={() => onOpenOutfit?.(o.id)}
+                      className="shrink-0 w-28 border-2 border-cream-100 rounded-2xl p-1.5 text-left active:scale-95 active:border-petal-200 transition-all bg-white"
+                    >
+                      <div className="grid grid-cols-3 gap-0.5 rounded-xl overflow-hidden mb-1 bg-cream-50">
+                        {opieces.slice(0, 3).map(p => (
+                          <div key={p.id} className="bg-cream-50 aspect-square flex items-center justify-center overflow-hidden">
+                            <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-0.5" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] font-bold tracking-[0.05em] uppercase text-ink-700 truncate">{toTitle(o.name)}</p>
-                </button>
-              );
-            })}
+                      <p className="text-[10px] font-bold tracking-[0.05em] uppercase text-ink-700 truncate">{toTitle(o.name)}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          <div className="p-4 sm:p-6 border-t-2 border-cream-100">
+            {((collection.seasons || []).length > 0 || (collection.occasions || []).length > 0) && (
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {(collection.seasons || []).map(s => (
+                  <span key={`s-${s}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full">{s}</span>
+                ))}
+                {(collection.occasions || []).map(o => (
+                  <span key={`o-${o}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full">{o}</span>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={onOpenInCloset}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-sky2-50 text-sky2-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100 transition-colors"
+            >
+              Open in Closet <I.chevron size={12} />
+            </button>
           </div>
         </div>
-      )}
-      <div className="p-3 sm:p-4 border-t-2 border-cream-100">
-        {((collection.seasons || []).length > 0 || (collection.occasions || []).length > 0) && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {(collection.seasons || []).map(s => (
-              <span key={`s-${s}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full">{s}</span>
-            ))}
-            {(collection.occasions || []).map(o => (
-              <span key={`o-${o}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full">{o}</span>
-            ))}
-          </div>
-        )}
-        <button
-          onClick={onOpen}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-sky2-50 text-sky2-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100 transition-colors"
-        >
-          Open in Closet <I.chevron size={12} />
-        </button>
       </div>
     </div>
   );
