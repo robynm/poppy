@@ -911,6 +911,30 @@ function useDragReorder(onCommit) {
   return { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown };
 }
 
+// Translate a reorder within a (possibly filtered) visible list into a new master array,
+// preserving the positions of items that are filtered out. Items must have an `id`.
+// Returns the original array reference when nothing changes.
+function reorderByVisible(master, visibleIds, fromVisible, toVisible) {
+  if (fromVisible === toVisible) return master;
+  const movingId = visibleIds[fromVisible];
+  if (movingId == null) return master;
+  const fromIdx = master.findIndex(x => x.id === movingId);
+  if (fromIdx === -1) return master;
+  const moving = master[fromIdx];
+  const without = master.filter(x => x.id !== movingId);
+  const targetVisibleId = visibleIds[toVisible];
+  let toIdx;
+  if (targetVisibleId == null || targetVisibleId === movingId) {
+    toIdx = fromIdx;
+  } else {
+    const targetIdx = without.findIndex(x => x.id === targetVisibleId);
+    toIdx = fromVisible < toVisible ? targetIdx + 1 : targetIdx;
+  }
+  const next = [...without];
+  next.splice(toIdx, 0, moving);
+  return next;
+}
+
 // --- Install prompt --------------------------------------------------------
 function useInstallPrompt() {
   const [deferred, setDeferred] = useState(null);
@@ -1657,7 +1681,7 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
               onClick={dragMode ? undefined : () => setViewing(item.id)}
               onSelectToggle={dragMode ? undefined : () => toggleItemSelect(item.id)}
               isSelected={selectedIds.has(item.id)}
-              delay={i * 40}
+              delay={Math.min(i, 16) * 25}
               cardRef={(el) => register(i, el)}
               reorderHandle={dragMode ? onHandlePointerDown(i) : null}
               isDragging={dragMode && dragIndex === i}
@@ -1787,12 +1811,12 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
     <div
       ref={cardRef}
       onClick={onClick}
-      className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl select-none" : "cursor-pointer rounded-2xl active:scale-[0.98]"} overflow-hidden relative transition-all shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
+      className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl select-none" : "cursor-pointer rounded-2xl active:scale-[0.98]"} overflow-hidden relative transition-colors shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
       style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
     >
       <div className="aspect-square flex items-center justify-center overflow-hidden relative">
         {image ? (
-          <img src={image} alt={item.name} draggable={false} className="w-full h-full object-contain p-1.5 select-none" />
+          <img src={image} alt={item.name} draggable={false} loading="lazy" decoding="async" className="w-full h-full object-contain p-1.5 select-none" />
         ) : (
           <I.shirt size={24} className="text-poppy-300" />
         )}
@@ -2641,6 +2665,7 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   const [selfieModal, setSelfieModal] = useState(null);
   const [viewingId, setViewingId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [dragMode, setDragMode] = useState(false);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
   const newLookButtonRef = useRef(null);
@@ -2652,6 +2677,12 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
     (activeSeasons.length === 0 || activeSeasons.some(s => (o.seasons || []).includes(s))) &&
     (activeOccasions.length === 0 || activeOccasions.some(oc => (o.occasions || []).includes(oc)))
   );
+
+  const handleReorder = (from, to) => {
+    const next = reorderByVisible(outfits, filteredOutfits.map(o => o.id), from, to);
+    if (next !== outfits) onSave(next);
+  };
+  const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
 
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
@@ -2703,6 +2734,15 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
         >
           Filters{filterCount > 0 && ` · ${filterCount}`}
         </button>
+        {filteredOutfits.length > 1 && (
+          <button
+            onClick={() => setDragMode(!dragMode)}
+            aria-label={dragMode ? "Exit reorder mode" : "Reorder looks"}
+            className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
+          >
+            {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
+          </button>
+        )}
       </div>
 
       {showFilters && (
@@ -2751,14 +2791,42 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
               outfit={o}
               items={items}
               images={images}
-              onOpen={() => setViewingId(o.id)}
+              onOpen={dragMode ? undefined : () => setViewingId(o.id)}
               delay={i * 40}
+              cardRef={(el) => register(i, el)}
+              reorderHandle={dragMode ? onHandlePointerDown(i) : null}
+              isDragging={dragMode && dragIndex === i}
+              isDropTarget={dragMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
             />
           ))}
         </div>
       )}
     </div>
     </main>
+
+    {dragIndex !== null && filteredOutfits[dragIndex] && (() => {
+      const o = filteredOutfits[dragIndex];
+      const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
+      const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
+      return (
+        <div
+          ref={(el) => { ghostRef.current = el; if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`; }}
+          className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-petal-300 rounded-2xl overflow-hidden"
+          style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(236, 71, 120, 0.35)' }}
+        >
+          <OutfitCardPreview outfit={o} items={items} images={images} />
+        </div>
+      );
+    })()}
+
+    {dragMode && (
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+          <span className="flex-1 text-sm font-bold text-ink-600">Drag looks to reorder</span>
+          <button onClick={() => setDragMode(false)} className="px-3.5 py-2 bg-petal-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-600">Done</button>
+        </div>
+      </div>
+    )}
     {viewingId && outfits.find(o => o.id === viewingId) && (
       <OutfitDetailModal
         outfit={outfits.find(o => o.id === viewingId)}
@@ -2837,18 +2905,13 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
   );
 }
 
-function OutfitCard({ outfit, items, images, onOpen, delay = 0, id }) {
+// The thumbnail + label block of a look tile — shared by the card and the drag ghost.
+function OutfitCardPreview({ outfit, items, images }) {
   const pieces = items.filter(i => outfit.itemIds.includes(i.id));
   const selfieUrl = images[`selfie_${outfit.id}`];
   const thumbs = selfieUrl ? [{ id: 'selfie', url: selfieUrl }] : pieces.slice(0, 4).map(p => ({ id: p.id, url: images[p.id] }));
-
   return (
-    <button
-      id={id}
-      onClick={onOpen}
-      className="fade-up text-left bg-white border-2 border-cream-200 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-all"
-      style={{ animationDelay: `${delay}ms` }}
-    >
+    <>
       <div className={`aspect-square bg-petal-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}>
         {thumbs.length === 0 ? (
           <div className="flex items-center justify-center text-petal-300"><I.sunglasses size={28} /></div>
@@ -2862,7 +2925,31 @@ function OutfitCard({ outfit, items, images, onOpen, delay = 0, id }) {
         <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">{toTitle(outfit.name)}</h3>
         <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-petal-600 mt-0.5">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
       </div>
-    </button>
+    </>
+  );
+}
+
+function OutfitCard({ outfit, items, images, onOpen, delay = 0, id, cardRef, reorderHandle, isDragging, isDropTarget }) {
+  return (
+    <div
+      id={id}
+      ref={cardRef}
+      onClick={onOpen}
+      className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-petal-500 ring-4 ring-petal-500/25" : "border-cream-200"}`}
+      style={{ animationDelay: `${delay}ms`, ...(reorderHandle && { touchAction: 'none' }), ...(isDragging && { animation: 'none', opacity: 0 }) }}
+    >
+      <OutfitCardPreview outfit={outfit} items={items} images={images} />
+      {reorderHandle && (
+        <div
+          aria-hidden="true"
+          onPointerDown={reorderHandle}
+          style={{ touchAction: 'none' }}
+          className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
+        >
+          <I.dots size={18} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2967,6 +3054,7 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
   const [editingId, setEditingId] = useState(null);
   const [showManager, setShowManager] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [dragMode, setDragMode] = useState(false);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
 
@@ -2977,6 +3065,12 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
     (activeSeasons.length === 0 || activeSeasons.some(s => (c.seasons || []).includes(s))) &&
     (activeOccasions.length === 0 || activeOccasions.some(o => (c.occasions || []).includes(o)))
   );
+
+  const handleReorder = (from, to) => {
+    const next = reorderByVisible(collections, filteredCollections.map(c => c.id), from, to);
+    if (next !== collections) onSave(next);
+  };
+  const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
 
   const startNew = () => { setEditingId("new"); setShowManager(true); };
   const addButtonRef = useRef(null);
@@ -3022,6 +3116,15 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
         >
           Filters{filterCount > 0 && ` · ${filterCount}`}
         </button>
+        {filteredCollections.length > 1 && (
+          <button
+            onClick={() => setDragMode(!dragMode)}
+            aria-label={dragMode ? "Exit reorder mode" : "Reorder collections"}
+            className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
+          >
+            {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
+          </button>
+        )}
       </div>
 
       {showFilters && (
@@ -3063,6 +3166,27 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
           <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
           <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mt-2">Try clearing a filter</p>
         </div>
+      ) : dragMode ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {filteredCollections.map((c, i) => (
+            <div
+              key={c.id}
+              ref={(el) => register(i, el)}
+              className={`fade-up relative select-none bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${dragIndex === i ? "opacity-0" : (dragIndex !== null && hoverIndex === i) ? "border-sky2-500 ring-4 ring-sky2-500/25" : "border-cream-200"}`}
+              style={{ animationDelay: `${i * 40}ms`, touchAction: 'none', ...(dragIndex === i && { animation: 'none', opacity: 0 }) }}
+            >
+              <CollectionCardPreview collection={c} items={items} images={images} />
+              <div
+                aria-hidden="true"
+                onPointerDown={onHandlePointerDown(i)}
+                style={{ touchAction: 'none' }}
+                className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
+              >
+                <I.dots size={18} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {filteredCollections.map((c, i) => (
@@ -3085,6 +3209,30 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
       </div>
       </main>
 
+      {dragIndex !== null && filteredCollections[dragIndex] && (() => {
+        const c = filteredCollections[dragIndex];
+        const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
+        const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
+        return (
+          <div
+            ref={(el) => { ghostRef.current = el; if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`; }}
+            className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-sky2-300 rounded-2xl overflow-hidden"
+            style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(40, 130, 183, 0.35)' }}
+          >
+            <CollectionCardPreview collection={c} items={items} images={images} />
+          </div>
+        );
+      })()}
+
+      {dragMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+            <span className="flex-1 text-sm font-bold text-ink-600">Drag collections to reorder</span>
+            <button onClick={() => setDragMode(false)} className="px-3.5 py-2 bg-sky2-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-600">Done</button>
+          </div>
+        </div>
+      )}
+
       {showManager && (
         <ManageCollectionsModal
           collections={collections}
@@ -3095,6 +3243,29 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
           onClose={() => { setShowManager(false); setEditingId(null); }}
         />
       )}
+    </>
+  );
+}
+
+// Compact thumbnail + label block for a collection — used by reorder tiles and the drag ghost.
+function CollectionCardPreview({ collection, items, images }) {
+  const pieces = items.filter(i => collection.itemIds.includes(i.id));
+  const thumbs = pieces.slice(0, 4);
+  return (
+    <>
+      <div className={`aspect-square bg-sky2-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}>
+        {thumbs.length === 0 ? (
+          <div className="flex items-center justify-center text-sky2-300"><I.suitcase size={28} /></div>
+        ) : thumbs.map(p => (
+          <div key={p.id} className="bg-white rounded-lg overflow-hidden flex items-center justify-center">
+            {images[p.id] && <img src={images[p.id]} alt="" className="w-full h-full object-contain p-1" />}
+          </div>
+        ))}
+      </div>
+      <div className="p-2">
+        <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">{toTitle(collection.name)}</h3>
+        <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-sky2-600 mt-0.5">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
+      </div>
     </>
   );
 }
