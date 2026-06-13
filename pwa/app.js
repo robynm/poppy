@@ -968,10 +968,17 @@ function useInstallPrompt() {
 // using it in the browser.
 function SplashScreen({ canInstall, onInstall, onContinue }) {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent || "");
+  const [showHelp, setShowHelp] = useState(false);
+  const handleInstall = () => {
+    // Use the native install prompt when the browser offers one; otherwise
+    // reveal platform-specific instructions (iOS Safari has no prompt API).
+    if (canInstall) onInstall();
+    else setShowHelp(true);
+  };
   const features = [
-    { Icon: I.shirt,      tone: "text-poppy-600 bg-poppy-100", title: "Your closet",  desc: "Snap and organize every piece you own." },
-    { Icon: I.sunglasses, tone: "text-petal-600 bg-petal-100", title: "Looks",        desc: "Compose outfits worth keeping." },
-    { Icon: I.suitcase,   tone: "text-sky2-600 bg-sky2-100",   title: "Collections",  desc: "Packing lists, capsules, a season's rotation." },
+    { Icon: I.shirt,      tone: "text-poppy-600 bg-poppy-100", title: "Your closet",  desc: "Photograph and organize your clothing." },
+    { Icon: I.sunglasses, tone: "text-petal-600 bg-petal-100", title: "Looks",        desc: "Compose items into outfits." },
+    { Icon: I.suitcase,   tone: "text-sky2-600 bg-sky2-100",   title: "Collections",  desc: "Save packing lists, capsules, or seasonal selections." },
   ];
   return (
     <div
@@ -986,8 +993,8 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
         <p className="font-display text-2xl sm:text-3xl leading-tight mb-3">
           <em className="text-poppy-600">Cultivate</em> your closet.
         </p>
-        <p className="text-sm text-ink-500 mb-8">
-          Catalog every piece, build looks worth keeping, and curate collections — all in one calm, private space that lives on your phone.
+        <p className="text-sm text-ink-500 mb-8 text-left">
+          Catalog your wardrobe and organize it into looks and collections. You own all your data. No ads, subscriptions or trackers.
         </p>
 
         <div className="w-full space-y-2.5 text-left mb-8">
@@ -1002,21 +1009,23 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
           ))}
         </div>
 
-        {canInstall ? (
-          <button
-            onClick={onInstall}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-poppy-500 text-white text-xs font-bold tracking-[0.2em] uppercase rounded-full active:scale-95 shadow-poppy"
-          >
-            <I.install size={16} /> Install Poppy
-          </button>
-        ) : isIOS ? (
-          <div className="w-full bg-white border-2 border-cream-100 rounded-2xl p-4 text-sm text-ink-600 shadow-card">
-            <p className="font-bold text-ink-800 mb-1 flex items-center justify-center gap-2"><I.share size={15} /> Add to Home Screen</p>
-            <p>In Safari, tap the <span className="font-bold">Share</span> button, then <span className="font-bold">"Add to Home Screen"</span> to install Poppy.</p>
-          </div>
-        ) : (
-          <div className="w-full bg-white border-2 border-cream-100 rounded-2xl p-4 text-sm text-ink-600 shadow-card">
-            Install Poppy from your browser's menu for a faster, full-screen experience.
+        <button
+          onClick={handleInstall}
+          className="w-full flex items-center justify-center gap-2 py-4 bg-poppy-500 text-white text-xs font-bold tracking-[0.2em] uppercase rounded-full active:scale-95 shadow-poppy"
+        >
+          <I.install size={16} /> Install Poppy
+        </button>
+
+        {showHelp && !canInstall && (
+          <div className="w-full mt-3 bg-white border-2 border-cream-100 rounded-2xl p-4 text-sm text-ink-600 shadow-card fade-up">
+            {isIOS ? (
+              <>
+                <p className="font-bold text-ink-800 mb-1 flex items-center justify-center gap-2"><I.share size={15} /> Add to Home Screen</p>
+                <p>In Safari, tap the <span className="font-bold">Share</span> button, then <span className="font-bold">"Add to Home Screen"</span> to install Poppy.</p>
+              </>
+            ) : (
+              <p>To install, open your browser's menu and choose <span className="font-bold">"Install Poppy"</span> or <span className="font-bold">"Add to Home Screen"</span>.</p>
+            )}
           </div>
         )}
 
