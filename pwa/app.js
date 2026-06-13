@@ -54,6 +54,8 @@ const I = {
   more:     (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></>} />,
   chart:    (p) => <Icon {...p} d={<><line x1="3" y1="20" x2="21" y2="20"/><rect x="6" y="11" width="3" height="9"/><rect x="11" y="6" width="3" height="14"/><rect x="16" y="14" width="3" height="6"/></>} />,
   pie:      (p) => <Icon {...p} d={<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>} />,
+  help:     (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></>} />,
+  shield:   (p) => <Icon {...p} d={<><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></>} />,
 };
 
 // The Poppy brand mark — embedded raster of the watercolor poppy from poppy-icon-cropped.png
@@ -1052,6 +1054,7 @@ function ClosetApp() {
   const [loaded, setLoaded] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [editingOutfit, setEditingOutfit] = useState(null); // outfit being edited (full object) or null
   const [builderOpen, setBuilderOpen] = useState(false);
   const [headerAction, setHeaderAction] = useState(null);
@@ -1276,6 +1279,13 @@ function ClosetApp() {
                     >
                       <I.archive size={15} className="shrink-0" /> Save &amp; restore
                     </button>
+                    <div className="h-px bg-cream-100 mx-3" />
+                    <button
+                      onClick={() => { setShowAbout(true); setShowMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
+                    >
+                      <I.help size={15} className="shrink-0" /> About &amp; FAQ
+                    </button>
                   </div>
                 </>
               )}
@@ -1351,6 +1361,10 @@ function ClosetApp() {
           brands={brands}
           onClose={() => setShowStats(false)}
         />
+      )}
+
+      {showAbout && (
+        <AboutModal onClose={() => setShowAbout(false)} />
       )}
 
       {showBackup && (
@@ -4207,6 +4221,156 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
             <span>{status.message}</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// --- About & FAQ ----------------------------------------------------------
+function AboutModal({ onClose }) {
+  useBodyScrollLock();
+
+  // A section with an icon chip, heading, and free-form body
+  const Section = ({ icon: IconC, tone = 'poppy', eyebrow, title, children }) => (
+    <div className="mb-8">
+      <div className={`inline-flex items-center gap-2 px-3 py-1 bg-${tone}-50 rounded-full mb-3`}>
+        <IconC size={12} className={`text-${tone}-600`} />
+        <p className={`text-[10px] font-bold tracking-[0.2em] uppercase text-${tone}-700`}>{eyebrow}</p>
+      </div>
+      <h4 className="font-display font-bold text-xl text-ink-900 mb-2">{title}</h4>
+      <div className="text-sm text-ink-700 leading-relaxed space-y-3">{children}</div>
+    </div>
+  );
+
+  // A how-to row inside the "Using Poppy" card
+  const HowTo = ({ icon: IconC, title, children }) => (
+    <div className="flex gap-3">
+      <div className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-cream-50 border-2 border-cream-100 text-ink-600">
+        <IconC size={16} />
+      </div>
+      <div className="flex-1">
+        <p className="font-bold text-sm text-ink-900 mb-0.5">{title}</p>
+        <p className="text-sm text-ink-700 leading-relaxed">{children}</p>
+      </div>
+    </div>
+  );
+
+  // A single tip pill
+  const Tip = ({ children }) => (
+    <div className="flex items-start gap-2 p-3 bg-cream-50 border-2 border-cream-100 rounded-2xl">
+      <I.check size={14} className="shrink-0 mt-0.5 text-leaf-600" />
+      <span className="text-sm text-ink-700 leading-relaxed">{children}</span>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
+      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+
+      <div className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up">
+        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-ink-500 p-2 active:scale-90">
+          <I.x size={22} />
+        </button>
+
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
+          <I.help size={12} className="text-poppy-600" />
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">About &amp; FAQ</p>
+        </div>
+
+        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-6 text-ink-900">
+          Hello, and welcome to <em className="text-poppy-600">Poppy.</em>
+        </h3>
+
+        <Section icon={I.heart} tone="petal" eyebrow="About me" title="About the app creator">
+          <p>
+            Hi, I'm Robyn. I'm a software engineer, a mom, and a stereotypically unfashionable Seattlite. 
+            </p>
+            <p>
+              After my daughter was born I went through a bit of an aesthetic identity crisis and 
+              found myself spending a lot of time staring at clothes online. 
+            </p>
+            <p>
+              Poppy is something I put together
+              in my limited free time to help navigate through the maze of personal style words,
+              color seasons, image identities, and more. 
+            </p>
+            <p>
+              The goal is to come out the other side a little more
+              confident, self-aware, and content with what I have. Thanks for coming along on this journey, 
+              maybe I'll see you there.
+            </p>
+        </Section>
+
+        <Section icon={I.sparkles} tone="buttercup" eyebrow="Why Poppy" title="Why I created this app">
+          <p>
+            Poppy is, essentially, a tool to help you appreciate what you already have. My hope is to make 
+            interacting with you existing wardrobe as engaging and aesthetically pleasing as searching for the
+            next new thing.
+          </p>
+          <p>
+            What if we looked at the clothes we already own in the same aspirational light as the ads we're surrounded with?
+            Instead of constantly chasing something new, let's sell ourselves on what we already own.
+          </p>
+        </Section>
+
+        <Section icon={I.camera} tone="sky2" eyebrow="Photo tips" title="Tips for photographing your clothes">
+          <p>The right item photos are essential to making your closet an aesthetic, aspirational experience. Here are some tips:</p>
+          <div className="grid gap-2 mt-1">
+            <Tip><strong>Use soft, natural light.</strong> Shoot near a window during the day and avoid harsh overhead bulbs that flatten color.</Tip>
+            <Tip><strong>Pick a plain background.</strong> A bed, a clean floor, or a single-color wall keeps the focus on the garment.</Tip>
+            <Tip><strong>Lay it flat or hang it.</strong> Smooth out wrinkles and straighten sleeves so the true shape shows.</Tip>
+            <Tip><strong>Fill the frame.</strong> Get close enough that the piece fills most of the photo — you can always crop later.</Tip>
+            <Tip><strong>Keep colors true.</strong> Don't over-edit. The goal is to recognize the piece instantly, not to make it look like a catalog.</Tip>
+            <Tip><strong>Stay consistent.</strong> Using a similar angle and background for every item makes your closet grid feel tidy and calm.</Tip>
+          </div>
+        </Section>
+
+        <Section icon={I.shirt} tone="poppy" eyebrow="Using Poppy" title="How to use the app">
+          <div className="space-y-4">
+            <HowTo icon={I.plus} title="Add an item">
+              Tap the <strong>+</strong> button in the Closet to add a piece. Snap or upload a photo, then fill in
+              details like category, brand, season, and the year you bought it. The more you add, the richer your stats become.
+            </HowTo>
+            <HowTo icon={I.sunglasses} title="Create outfits (Looks)">
+              Head to the <strong>Looks</strong> tab and start a new look. Pick pieces from your closet to combine them
+              into a complete outfit, then save it. Looks are perfect for planning what to wear or remembering combos you love.
+            </HowTo>
+            <HowTo icon={I.suitcase} title="Build collections">
+              Open the <strong>Collections</strong> tab to group items and looks around a theme — think "Summer
+              capsule," "Work," or "Italy trip." Tap any collection to filter your closet down to just those pieces.
+            </HowTo>
+            <HowTo icon={I.tag} title="Add tags">
+              While editing an item, add your own <strong>custom tags</strong> (like "cozy," "going out," or "needs
+              tailoring"). Tags are searchable and show up in your stats, so you can slice your wardrobe any way you think about it.
+            </HowTo>
+            <HowTo icon={I.pie} title="View your stats">
+              Open <strong>Stats</strong> from this menu to see your closet by the numbers — breakdowns by category,
+              season, and brand, your most-worn pieces, and how much of your closet you actually put into looks.
+            </HowTo>
+          </div>
+        </Section>
+
+        <Section icon={I.shield} tone="leaf" eyebrow="Privacy" title="How your data is used">
+          <p>
+            Short version: <strong>your closet stays yours.</strong> Poppy stores everything — your items, photos,
+            looks, collections, and tags — locally on your own device. Nothing is uploaded to a server, and there are
+            no accounts, ads, or trackers.
+          </p>
+          <p>
+            Because your data lives on your device, it's a good idea to back it up. Use <strong>Save &amp; restore</strong>
+            in this menu to export a copy you can keep safe or move to a new device. If you clear your browser data or
+            uninstall the app without a backup, your closet may be lost.
+          </p>
+          <p className="text-ink-500">
+            No part of your wardrobe is ever sold, shared, or used to train anything. Poppy simply isn't built that way.
+          </p>
+        </Section>
+
+        <div className="pt-2 border-t-2 border-cream-100">
+          <p className="text-xs text-ink-400 text-center">
+            Made with <I.heart size={11} className="inline text-poppy-500 -mt-0.5" /> for closets everywhere.
+          </p>
+        </div>
       </div>
     </div>
   );
