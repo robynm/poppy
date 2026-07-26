@@ -90,6 +90,7 @@ const STORAGE_KEYS = {
   imagesMigrated: "closet:images_migrated:v1", // set to true once legacy localStorage images have been moved to IDB
   theme: "closet:theme",
   splashDismissed: "closet:splash_dismissed:v1", // set once a browser (non-installed) visitor chooses to continue
+  diag: "closet:diag:v1", // rolling diagnostics log (see Log below)
 };
 
 // Legacy localStorage key — only read once during one-time migration, then deleted
@@ -112,8 +113,61 @@ function lsSet(key, value) {
       window.__quotaWarned = true;
       alert("Storage is full. Phones limit a website to roughly 5MB. Try deleting some items or use smaller photos.");
     }
-    console.error("localStorage set failed", e);
+    Log.error('localStorage.setFailed', { key, error: String(e) });
   }
+}
+
+// --- Diagnostics log -------------------------------------------------------
+// A tiny persisted ring buffer. Problems on a phone happen where the dev
+// console isn't reachable, so we keep a trail in localStorage that survives
+// reloads and can be read back / copied from the Backup screen. Every entry is
+// also mirrored to the console. Capped so it can never meaningfully grow.
+const Log = (() => {
+  const KEY = STORAGE_KEYS.diag;
+  const MAX = 200;
+  let buf = [];
+  try { buf = JSON.parse(localStorage.getItem(KEY) || "[]") || []; } catch { buf = []; }
+
+  // Errors don't survive JSON.stringify (they serialize to {}), so pull the
+  // useful fields off by hand; everything else round-trips through JSON.
+  function normalize(data) {
+    if (data === undefined) return undefined;
+    if (data instanceof Error) return { name: data.name, message: data.message, stack: data.stack };
+    try { return JSON.parse(JSON.stringify(data)); } catch { return String(data); }
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(buf)); }
+    catch { /* if there's no room for the log itself, let it go */ }
+  }
+  function add(level, event, data) {
+    const entry = { t: new Date().toISOString(), level, event };
+    const norm = normalize(data);
+    if (norm !== undefined) entry.data = norm;
+    buf.push(entry);
+    if (buf.length > MAX) buf = buf.slice(-MAX);
+    persist();
+    const fn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+    fn(`[poppy] ${event}`, norm !== undefined ? norm : '');
+    return entry;
+  }
+  return {
+    info:  (event, data) => add('info', event, data),
+    warn:  (event, data) => add('warn', event, data),
+    error: (event, data) => add('error', event, data),
+    entries: () => buf.slice(),
+    clear: () => { buf = []; persist(); },
+  };
+})();
+
+// Catch anything that slips past the try/catch blocks so it still leaves a trail.
+if (typeof window !== 'undefined' && !window.__poppyErrorHooks) {
+  window.__poppyErrorHooks = true;
+  window.addEventListener('error', (e) => {
+    Log.error('window.error', { message: e.message, source: e.filename, line: e.lineno, col: e.colno, stack: e.error && e.error.stack });
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    Log.error('unhandledrejection', e.reason);
+  });
 }
 
 // --- image helpers ---------------------------------------------------------
@@ -319,11 +373,16 @@ async function hydrateImages() {
 // to whether storage is persistent afterwards.
 async function ensurePersistentStorage() {
   try {
-    if (!navigator.storage || !navigator.storage.persist) return false;
+    if (!navigator.storage || !navigator.storage.persist) {
+      Log.warn('persist.unsupported');
+      return false;
+    }
     if (await navigator.storage.persisted()) return true;
-    return await navigator.storage.persist();
+    const granted = await navigator.storage.persist();
+    Log[granted ? 'info' : 'warn']('persist.request', { granted });
+    return granted;
   } catch (e) {
-    console.error("persist request failed", e);
+    Log.error('persist.failed', e);
     return false;
   }
 }
@@ -346,16 +405,17 @@ async function migrateLegacyImagesIfNeeded() {
   for (const [id, dataUrl] of Object.entries(legacy)) {
     if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) continue;
     try { entries.push([id, dataUrlToBlob(dataUrl)]); }
-    catch (e) { console.error("legacy image decode failed for", id, e); }
+    catch (e) { Log.error('migrate.decodeFailed', { id, error: String(e) }); }
   }
   let migrated = 0;
   if (entries.length) {
     try { migrated = await IDB.putMany(entries); }
-    catch (e) { console.error("legacy migration write failed", e); }
+    catch (e) { Log.error('migrate.writeFailed', e); }
   }
   // Free the ~1MB the legacy key occupies before marking migrated.
   try { localStorage.removeItem(LEGACY_IMAGES_KEY); } catch {}
   lsSet(STORAGE_KEYS.imagesMigrated, true);
+  Log.info('migrate.done', { migrated, attempted: entries.length });
   return { migrated };
 }
 
@@ -676,6 +736,7 @@ async function exportBackup({ items, outfits, customTags, brands, collections })
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  Log.info('export.done', { items: items.length, photos: Object.keys(images).length, bytes: blob.size });
   return { sizeBytes: blob.size };
 }
 
@@ -1107,12 +1168,13 @@ function ClosetApp() {
         const seedEntries = [];
         for (const [id, dataUrl] of Object.entries(SEED_IMAGES)) {
           try { seedEntries.push([id, dataUrlToBlob(dataUrl)]); }
-          catch (e) { console.error("seed image decode failed", id, e); }
+          catch (e) { Log.error('seed.decodeFailed', { id, error: String(e) }); }
         }
         if (seedEntries.length) {
           try { await IDB.putMany(seedEntries); }
-          catch (e) { console.error("seed image batch write failed", e); }
+          catch (e) { Log.error('seed.writeFailed', e); }
         }
+        Log.info('seed.done', { items: seedItems.length, photos: seedEntries.length });
         lsSet(STORAGE_KEYS.outfits, []);
         lsSet(STORAGE_KEYS.customTags, []);
         lsSet(STORAGE_KEYS.brands, []);
@@ -1137,6 +1199,16 @@ function ClosetApp() {
 
       // Hydrate object URLs from IDB into the cache and state.
       const urlMap = await hydrateImages();
+
+      // Load summary — recorded every launch. The key health signal: if items
+      // survive but photos are 0, the browser has evicted the IndexedDB store.
+      const photoCount = Object.keys(urlMap).length;
+      const itemsMissingPhoto = items2.filter(it => !urlMap[it.id]).length;
+      if (items2.length > 0 && photoCount === 0) {
+        Log.warn('load.photosMissing', { items: items2.length, photos: photoCount });
+      } else {
+        Log.info('load', { items: items2.length, photos: photoCount, itemsMissingPhoto });
+      }
 
       if (cancelled) return;
       setItems(items2);
@@ -1163,7 +1235,7 @@ function ClosetApp() {
       const url = ObjectUrlCache.set(id, blob); // revokes any old URL for this id
       setImages(prev => ({ ...prev, [id]: url }));
     } catch (e) {
-      console.error("putImage failed", id, e);
+      Log.error('putImage.failed', { id, error: String(e) });
       if (!window.__quotaWarned) {
         window.__quotaWarned = true;
         alert("Couldn't save that image. You may be out of device storage.");
@@ -1171,7 +1243,7 @@ function ClosetApp() {
     }
   };
   const deleteImage = async (id) => {
-    try { await IDB.delete(id); } catch (e) { console.error("deleteImage failed", id, e); }
+    try { await IDB.delete(id); } catch (e) { Log.error('deleteImage.failed', { id, error: String(e) }); }
     ObjectUrlCache.delete(id);
     setImages(prev => { const n = { ...prev }; delete n[id]; return n; });
   };
@@ -1187,7 +1259,7 @@ function ClosetApp() {
         const existingIds = await IDB.keys();
         for (const id of existingIds) ObjectUrlCache.delete(id);
         await IDB.clear();
-      } catch (e) { console.error("clear IDB failed", e); }
+      } catch (e) { Log.error('import.clearFailed', e); }
     }
     const ids = Object.keys(dataUrlMap || {});
     let written = 0;
@@ -1197,17 +1269,19 @@ function ClosetApp() {
       if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) { failed.push(id); continue; }
       let blob;
       try { blob = dataUrlToBlob(dataUrl); }
-      catch (e) { console.error("import image decode failed", id, e); failed.push(id); continue; }
+      catch (e) { Log.error('import.decodeFailed', { id, error: String(e) }); failed.push(id); continue; }
       try {
         await IDB.put(id, blob);
         ObjectUrlCache.set(id, blob);
         written++;
       } catch (e) {
-        console.error("import image write failed", id, e);
+        Log.error('import.writeFailed', { id, error: String(e) });
         failed.push(id);
       }
     }
     setImages(ObjectUrlCache.snapshot());
+    const result = { total: ids.length, written, failed: failed.length };
+    Log[failed.length ? 'warn' : 'info']('import.done', { strategy: clearFirst ? 'replace' : 'merge', ...result });
     return { total: ids.length, written, failed };
   };
 
@@ -2200,7 +2274,7 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
       const blob = await resizeImageToBlob(file, 640, 0.85);
       if (blob) await onReplaceImage(item.id, blob);
     } catch (e) {
-      console.error("replace image failed", e);
+      Log.error('replaceImage.failed', { id: item.id, error: String(e) });
     } finally {
       setReplacing(false);
     }
@@ -3100,7 +3174,7 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, o
         kindLabel: 'Look',
       });
     } catch (e) {
-      console.error('share failed', e);
+      Log.warn('share.failed', e);
       alert("Sorry — couldn't create the share image.");
     } finally {
       setSharing(false);
@@ -3438,7 +3512,7 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
         maxCols: 6,
       });
     } catch (e) {
-      console.error('share failed', e);
+      Log.warn('share.failed', e);
       alert("Sorry — couldn't create the share image.");
     } finally {
       setSharing(false);
@@ -4089,13 +4163,63 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
   const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'warn'|'success', message}
   const [pending, setPending] = useState(null); // parsed valid backup awaiting strategy choice
   const [storageEstimate, setStorageEstimate] = useState(null); // {usage, quota} in bytes
+  const [persisted, setPersisted] = useState(null); // null=unknown, true/false once checked
   const [busy, setBusy] = useState(false); // an import/export is in flight
 
   useEffect(() => {
     if (navigator.storage && navigator.storage.estimate) {
       navigator.storage.estimate().then(setStorageEstimate).catch(() => {});
     }
+    if (navigator.storage && navigator.storage.persisted) {
+      navigator.storage.persisted().then(setPersisted).catch(() => {});
+    }
   }, [images]);
+
+  // Build a plain-text diagnostics report: environment, storage health, and the
+  // recent event log. Reads live IDB so the photo count reflects what's actually
+  // on disk, not just what's in memory.
+  const buildDiagnostics = async () => {
+    let idbCount = null;
+    try { idbCount = (await IDB.keys()).length; } catch { /* leave null */ }
+    const lines = [
+      `Poppy diagnostics — ${new Date().toISOString()}`,
+      `User agent: ${navigator.userAgent}`,
+      `Standalone (installed): ${window.matchMedia && window.matchMedia('(display-mode: standalone)').matches}`,
+      `Persistent storage: ${persisted === null ? 'unknown' : persisted}`,
+      storageEstimate && storageEstimate.quota
+        ? `Storage: ${formatBytes(storageEstimate.usage || 0)} used of ${formatBytes(storageEstimate.quota)}`
+        : `Storage: estimate unavailable`,
+      `Items: ${items.length} · Outfits: ${outfits.length} · Photos in IndexedDB: ${idbCount === null ? '?' : idbCount} · Photos in memory: ${Object.keys(images).length}`,
+      ``,
+      `Recent events (newest last):`,
+      ...Log.entries().map(e => `${e.t} [${e.level}] ${e.event}${e.data !== undefined ? ' ' + JSON.stringify(e.data) : ''}`),
+    ];
+    return lines.join('\n');
+  };
+
+  const handleCopyDiagnostics = async () => {
+    const report = await buildDiagnostics();
+    try {
+      await navigator.clipboard.writeText(report);
+      setStatus({ kind: 'success', message: 'Diagnostics copied to clipboard. Paste them anywhere to share.' });
+    } catch {
+      // Clipboard is often blocked on mobile — fall back to a downloaded file.
+      try {
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `poppy-diagnostics-${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setStatus({ kind: 'info', message: 'Clipboard was blocked — diagnostics downloaded as a file instead.' });
+      } catch (e) {
+        setStatus({ kind: 'error', message: 'Could not copy diagnostics: ' + (e.message || e) });
+      }
+    }
+  };
 
   const handleExport = async () => {
     if (busy) return;
@@ -4291,6 +4415,30 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
               </div>
             </div>
           )}
+        </div>
+
+        {/* DIAGNOSTICS */}
+        <div className="mt-8 pt-6 border-t border-cream-100">
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Diagnostics</p>
+          <div className={`flex items-start gap-2 text-xs mb-3 p-2.5 rounded-2xl border-2 ${
+            persisted === true  ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
+            persisted === false ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700" :
+                                  "bg-cream-50 border-cream-100 text-ink-600"
+          }`}>
+            <I.alert size={14} className="shrink-0 mt-0.5" />
+            <span>
+              {persisted === true  ? "Photo storage is protected — the browser won't evict your photos." :
+               persisted === false ? "Photo storage is not protected yet — the browser may still clear photos. Installing to your home screen usually fixes this." :
+                                     "Checking storage protection…"}
+            </span>
+          </div>
+          <p className="text-sm text-ink-600 mb-3">If something looks wrong, copy the diagnostics log — it records recent events and storage health so an issue can be traced.</p>
+          <button
+            onClick={handleCopyDiagnostics}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-cream-200 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
+          >
+            <I.download size={14} /> Copy diagnostics
+          </button>
         </div>
 
         {status && (
