@@ -180,6 +180,18 @@ function blobToDataUrl(blob) {
   });
 }
 
+// Human-readable byte size: picks KB / MB / GB so we never show something like
+// "10,252 MB". Small numbers keep one decimal; large ones round.
+function formatBytes(bytes) {
+  const b = Number(bytes) || 0;
+  const KB = 1024, MB = KB * 1024, GB = MB * 1024;
+  const trim = (n) => n.toFixed(1).replace(/\.0$/, '');
+  if (b >= GB) return `${trim(b / GB)} GB`;
+  if (b >= MB) return `${Math.round(b / MB).toLocaleString()} MB`;
+  if (b >= KB) return `${Math.round(b / KB).toLocaleString()} KB`;
+  return `${Math.round(b)} B`;
+}
+
 // --- IndexedDB image store -------------------------------------------------
 // Single store keyed by item id, values are Blobs. No schema, no migrations
 // beyond the one-time localStorage → IDB import below.
@@ -4108,8 +4120,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
         }
       }
       const { sizeBytes } = await exportBackup({ items, outfits, customTags, brands, collections });
-      const kb = Math.round(sizeBytes / 1024);
-      setStatus({ kind: 'success', message: `Backup saved (${kb.toLocaleString()} KB). Check your Downloads folder.` });
+      setStatus({ kind: 'success', message: `Backup saved (${formatBytes(sizeBytes)}). Check your Downloads folder.` });
     } catch (e) {
       setStatus({ kind: 'error', message: "Could not create the backup file: " + (e.message || e) });
     } finally {
@@ -4184,10 +4195,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
   // Storage line — show real device usage if available, else omit.
   const storageLine = (() => {
     if (storageEstimate && storageEstimate.quota) {
-      const usedMB = (storageEstimate.usage || 0) / (1024 * 1024);
-      const quotaMB = storageEstimate.quota / (1024 * 1024);
-      const fmt = (n) => n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString();
-      return `Using ${fmt(usedMB)} MB of ${fmt(quotaMB)} MB available`;
+      return `${formatBytes(storageEstimate.usage || 0)} used of ${formatBytes(storageEstimate.quota)}`;
     }
     return null;
   })();
