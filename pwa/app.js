@@ -299,6 +299,23 @@ async function hydrateImages() {
   return ObjectUrlCache.snapshot();
 }
 
+// Ask the browser to make this origin's storage persistent. By default, PWA
+// storage is "best-effort" and the browser may evict IndexedDB (where photos
+// live) under storage pressure or time-based policies — which silently wipes
+// every photo while leaving localStorage metadata intact. Requesting
+// persistence opts us out of that eviction. Safe to call repeatedly; resolves
+// to whether storage is persistent afterwards.
+async function ensurePersistentStorage() {
+  try {
+    if (!navigator.storage || !navigator.storage.persist) return false;
+    if (await navigator.storage.persisted()) return true;
+    return await navigator.storage.persist();
+  } catch (e) {
+    console.error("persist request failed", e);
+    return false;
+  }
+}
+
 // One-time migration: legacy localStorage `closet:images:v1` (data URLs) → IDB blobs.
 // Safe to call repeatedly; the migrated flag stops re-runs.
 async function migrateLegacyImagesIfNeeded() {
@@ -1065,6 +1082,9 @@ function ClosetApp() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Opt out of storage eviction so IndexedDB photos survive. Fire-and-forget
+      // so it never blocks the initial render.
+      ensurePersistentStorage();
       const seeded = lsGet(STORAGE_KEYS.seeded, false);
       if (!seeded && typeof SEED_ITEMS !== 'undefined' && typeof SEED_IMAGES !== 'undefined') {
         const seedItems = SEED_ITEMS.map(i => ({ ...i, custom: [], status: "owned", brand: "" }));
@@ -1143,7 +1163,12 @@ function ClosetApp() {
     ObjectUrlCache.delete(id);
     setImages(prev => { const n = { ...prev }; delete n[id]; return n; });
   };
-  // For import: write a batch of {id: dataUrl} into IDB, optionally clearing first.
+  // For import: write a map of {id: dataUrl} into IDB, optionally clearing first.
+  // Writes each image in its own transaction so that one bad/oversized blob (or
+  // hitting a storage limit partway through) can't abort the whole restore — the
+  // old single-transaction putMany failed all-or-nothing and only logged to the
+  // console, so a partial failure looked like "no photos restored" with no error.
+  // Returns {total, written, failed:[ids]} so the caller can surface the outcome.
   const replaceAllImages = async (dataUrlMap, { clearFirst = false } = {}) => {
     if (clearFirst) {
       try {
@@ -1152,19 +1177,26 @@ function ClosetApp() {
         await IDB.clear();
       } catch (e) { console.error("clear IDB failed", e); }
     }
-    const entries = [];
-    for (const [id, dataUrl] of Object.entries(dataUrlMap || {})) {
-      if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) continue;
-      try { entries.push([id, dataUrlToBlob(dataUrl)]); }
-      catch (e) { console.error("import image decode failed", id, e); }
+    const ids = Object.keys(dataUrlMap || {});
+    let written = 0;
+    const failed = [];
+    for (const id of ids) {
+      const dataUrl = dataUrlMap[id];
+      if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) { failed.push(id); continue; }
+      let blob;
+      try { blob = dataUrlToBlob(dataUrl); }
+      catch (e) { console.error("import image decode failed", id, e); failed.push(id); continue; }
+      try {
+        await IDB.put(id, blob);
+        ObjectUrlCache.set(id, blob);
+        written++;
+      } catch (e) {
+        console.error("import image write failed", id, e);
+        failed.push(id);
+      }
     }
-    if (entries.length) {
-      try { await IDB.putMany(entries); }
-      catch (e) { console.error("import batch write failed", e); }
-    }
-    // Refresh object URL cache from the written blobs.
-    for (const [id, blob] of entries) ObjectUrlCache.set(id, blob);
     setImages(ObjectUrlCache.snapshot());
+    return { total: ids.length, written, failed };
   };
 
   // Browser visitors (not the installed app) land on a splash page instead of
@@ -1359,7 +1391,7 @@ function ClosetApp() {
             saveCustomTags(next.customTags);
             if (next.brands) saveBrands(next.brands);
             if (next.collections) saveCollections(next.collections);
-            await replaceAllImages(next.images, { clearFirst: strategy === 'replace' });
+            return await replaceAllImages(next.images, { clearFirst: strategy === 'replace' });
           }}
         />
       )}
@@ -4042,9 +4074,10 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
 function BackupModal({ items, images, outfits, customTags, brands, collections, onClose, onImport }) {
   useBodyScrollLock();
   const fileRef = useRef();
-  const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'success', message}
+  const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'warn'|'success', message}
   const [pending, setPending] = useState(null); // parsed valid backup awaiting strategy choice
   const [storageEstimate, setStorageEstimate] = useState(null); // {usage, quota} in bytes
+  const [busy, setBusy] = useState(false); // an import/export is in flight
 
   useEffect(() => {
     if (navigator.storage && navigator.storage.estimate) {
@@ -4053,12 +4086,34 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
   }, [images]);
 
   const handleExport = async () => {
+    if (busy) return;
+    setBusy(true);
     try {
+      // Preflight: a backup only carries the photos that are actually in IDB
+      // right now. If the browser has evicted the photo store, exporting would
+      // silently produce a picture-less backup — so warn before writing one.
+      let missing = 0;
+      try {
+        const keys = new Set(await IDB.keys());
+        missing = items.filter(it => !keys.has(it.id)).length;
+      } catch { /* if we can't check, don't block the export */ }
+      if (missing > 0) {
+        const proceed = confirm(
+          `Heads up: ${missing} of your ${items.length} items ${missing === 1 ? "has" : "have"} no photo in storage right now, so this backup won't include ${missing === 1 ? "it" : "them"}. ` +
+          `This usually means the browser cleared your photos. Export anyway?`
+        );
+        if (!proceed) {
+          setStatus({ kind: 'warn', message: "Export cancelled. If a photo backup exists, restore it first — then export a fresh backup." });
+          return;
+        }
+      }
       const { sizeBytes } = await exportBackup({ items, outfits, customTags, brands, collections });
       const kb = Math.round(sizeBytes / 1024);
       setStatus({ kind: 'success', message: `Backup saved (${kb.toLocaleString()} KB). Check your Downloads folder.` });
     } catch (e) {
       setStatus({ kind: 'error', message: "Could not create the backup file: " + (e.message || e) });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -4073,28 +4128,60 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
       catch { setStatus({ kind: 'error', message: "That file isn't valid JSON." }); return; }
       const result = validateBackup(parsed);
       if (!result.ok) { setStatus({ kind: 'error', message: result.error }); return; }
-      setPending({ filename: file.name, data: result.data, counts: parsed.counts || {}, exportedAt: parsed.exportedAt });
+      const itemCount = result.data.items.length;
+      // Count photos that belong to items (ignore outfit selfies) so we can warn
+      // if this backup can't fully restore the closet's pictures.
+      const imgIds = new Set(Object.keys(result.data.images || {}));
+      const itemsWithPhoto = result.data.items.filter(it => imgIds.has(it.id)).length;
+      const photoCount = imgIds.size;
+      const missing = itemCount - itemsWithPhoto;
+      setPending({ filename: file.name, data: result.data, counts: parsed.counts || {}, exportedAt: parsed.exportedAt, photoCount, missing });
       const colsCount = result.data.collections?.length || 0;
-      setStatus({
-        kind: 'info',
-        message: `Found ${result.data.items.length} items, ${result.data.outfits.length} outfits${colsCount ? `, ${colsCount} collections` : ""}. Choose how to apply it.`
-      });
+      const found = `Found ${itemCount} items, ${result.data.outfits.length} outfits${colsCount ? `, ${colsCount} collections` : ""}, ${photoCount} photos.`;
+      if (missing > 0) {
+        setStatus({
+          kind: 'warn',
+          message: `${found} ⚠ ${missing} item${missing === 1 ? "" : "s"} in this backup ${missing === 1 ? "has" : "have"} no photo — restoring won't bring ${missing === 1 ? "that picture" : "those pictures"} back. Choose how to apply it.`
+        });
+      } else {
+        setStatus({ kind: 'info', message: `${found} Choose how to apply it.` });
+      }
     } catch (e) {
       setStatus({ kind: 'error', message: "Could not read the file: " + (e.message || e) });
     }
   };
 
-  const applyStrategy = (strategy) => {
-    if (!pending) return;
+  const applyStrategy = async (strategy) => {
+    if (!pending || busy) return;
     // Build a `current` snapshot without the images map — images live in IDB now.
     const current = { items, outfits, customTags, brands: brands || [], collections: collections || [] };
     const next = strategy === 'replace' ? pending.data : mergeBackup(current, pending.data);
-    onImport(next, strategy);
-    setStatus({ kind: 'success', message: strategy === 'replace' ? "Closet replaced with the backup." : "Backup merged into your closet." });
+    setBusy(true);
+    setStatus({ kind: 'info', message: strategy === 'replace' ? "Replacing your closet…" : "Merging backup…" });
+    let result;
+    try {
+      result = await onImport(next, strategy);
+    } catch (e) {
+      setBusy(false);
+      setStatus({ kind: 'error', message: "Import failed: " + (e.message || e) });
+      return;
+    }
     setPending(null);
+    setBusy(false);
+    const base = strategy === 'replace' ? "Closet replaced with the backup." : "Backup merged into your closet.";
+    if (result && result.failed && result.failed.length) {
+      setStatus({
+        kind: 'error',
+        message: `${base} But ${result.failed.length} of ${result.total} photos could not be saved — you may be out of device storage. Free some space and re-import to recover them.`
+      });
+    } else {
+      setStatus({ kind: 'success', message: base });
+    }
   };
 
-  // Storage line — show real device usage if available, else fall back to item count.
+  const photoCount = Object.keys(images).length;
+
+  // Storage line — show real device usage if available, else omit.
   const storageLine = (() => {
     if (storageEstimate && storageEstimate.quota) {
       const usedMB = (storageEstimate.usage || 0) / (1024 * 1024);
@@ -4102,7 +4189,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
       const fmt = (n) => n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString();
       return `Using ${fmt(usedMB)} MB of ${fmt(quotaMB)} MB available`;
     }
-    return `${Object.keys(images).length} images stored`;
+    return null;
   })();
 
   return (
@@ -4117,7 +4204,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
         <h3 className="font-display font-bold text-2xl sm:text-3xl mb-4 text-ink-900">Keep your closet<br/><em className="text-leaf-600">safe and sound.</em></h3>
 
         <div className="mb-6 p-3 bg-cream-50 border-2 border-cream-100 rounded-2xl text-xs text-ink-600 leading-relaxed">
-          <span className="font-bold text-ink-800">{items.length}</span> pieces · <span className="font-bold text-ink-800">{outfits.length}</span> outfits · {storageLine}
+          <span className="font-bold text-ink-800">{items.length}</span> pieces · <span className="font-bold text-ink-800">{outfits.length}</span> outfits · <span className="font-bold text-ink-800">{photoCount}</span> photos{storageLine ? ` · ${storageLine}` : ""}
         </div>
 
         {/* EXPORT */}
@@ -4126,9 +4213,10 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
           <p className="text-sm text-ink-600 mb-3">Download everything as a single JSON file. Keep it somewhere safe — Google Drive, email to yourself, anywhere.</p>
           <button
             onClick={handleExport}
-            className="w-full flex items-center justify-center gap-2 py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
           >
-            <I.download size={14} /> Export Backup
+            <I.download size={14} /> {busy ? "Working…" : "Export Backup"}
           </button>
         </div>
 
@@ -4160,12 +4248,19 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
               {pending.exportedAt && (
                 <p className="text-[10px] text-ink-500 mt-1">Exported {new Date(pending.exportedAt).toLocaleString()}</p>
               )}
+              <p className="text-[11px] text-ink-600 mt-2">
+                {pending.data.items.length} items · {pending.photoCount} photos
+                {pending.missing > 0 && (
+                  <span className="text-petal-700 font-bold"> · {pending.missing} without a photo</span>
+                )}
+              </p>
               <div className="mt-4 flex flex-col gap-2">
                 <button
                   onClick={() => applyStrategy('merge')}
-                  className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+                  disabled={busy}
+                  className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
                 >
-                  Merge (keep current, add new)
+                  {busy ? "Working…" : "Merge (keep current, add new)"}
                 </button>
                 <button
                   onClick={() => {
@@ -4173,13 +4268,15 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
                       applyStrategy('replace');
                     }
                   }}
-                  className="w-full py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
+                  disabled={busy}
+                  className="w-full py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                 >
                   Replace everything
                 </button>
                 <button
                   onClick={() => { setPending(null); setStatus(null); }}
-                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline pt-1"
+                  disabled={busy}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline pt-1 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -4191,6 +4288,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
         {status && (
           <div className={`mt-3 p-3.5 rounded-2xl border-2 text-sm flex items-start gap-2 ${
             status.kind === 'error'   ? "bg-petal-50 border-petal-200 text-petal-700" :
+            status.kind === 'warn'    ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700" :
             status.kind === 'success' ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
                                         "bg-cream-50 border-cream-100 text-ink-700"
           }`}>
