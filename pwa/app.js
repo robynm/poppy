@@ -90,6 +90,7 @@ const STORAGE_KEYS = {
   imagesMigrated: "closet:images_migrated:v1", // set to true once legacy localStorage images have been moved to IDB
   theme: "closet:theme",
   splashDismissed: "closet:splash_dismissed:v1", // set once a browser (non-installed) visitor chooses to continue
+  diag: "closet:diag:v1", // rolling diagnostics log (see Log below)
 };
 
 // Legacy localStorage key — only read once during one-time migration, then deleted
@@ -112,8 +113,61 @@ function lsSet(key, value) {
       window.__quotaWarned = true;
       alert("Storage is full. Phones limit a website to roughly 5MB. Try deleting some items or use smaller photos.");
     }
-    console.error("localStorage set failed", e);
+    Log.error('localStorage.setFailed', { key, error: String(e) });
   }
+}
+
+// --- Diagnostics log -------------------------------------------------------
+// A tiny persisted ring buffer. Problems on a phone happen where the dev
+// console isn't reachable, so we keep a trail in localStorage that survives
+// reloads and can be read back / copied from the Backup screen. Every entry is
+// also mirrored to the console. Capped so it can never meaningfully grow.
+const Log = (() => {
+  const KEY = STORAGE_KEYS.diag;
+  const MAX = 200;
+  let buf = [];
+  try { buf = JSON.parse(localStorage.getItem(KEY) || "[]") || []; } catch { buf = []; }
+
+  // Errors don't survive JSON.stringify (they serialize to {}), so pull the
+  // useful fields off by hand; everything else round-trips through JSON.
+  function normalize(data) {
+    if (data === undefined) return undefined;
+    if (data instanceof Error) return { name: data.name, message: data.message, stack: data.stack };
+    try { return JSON.parse(JSON.stringify(data)); } catch { return String(data); }
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(buf)); }
+    catch { /* if there's no room for the log itself, let it go */ }
+  }
+  function add(level, event, data) {
+    const entry = { t: new Date().toISOString(), level, event };
+    const norm = normalize(data);
+    if (norm !== undefined) entry.data = norm;
+    buf.push(entry);
+    if (buf.length > MAX) buf = buf.slice(-MAX);
+    persist();
+    const fn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+    fn(`[poppy] ${event}`, norm !== undefined ? norm : '');
+    return entry;
+  }
+  return {
+    info:  (event, data) => add('info', event, data),
+    warn:  (event, data) => add('warn', event, data),
+    error: (event, data) => add('error', event, data),
+    entries: () => buf.slice(),
+    clear: () => { buf = []; persist(); },
+  };
+})();
+
+// Catch anything that slips past the try/catch blocks so it still leaves a trail.
+if (typeof window !== 'undefined' && !window.__poppyErrorHooks) {
+  window.__poppyErrorHooks = true;
+  window.addEventListener('error', (e) => {
+    Log.error('window.error', { message: e.message, source: e.filename, line: e.lineno, col: e.colno, stack: e.error && e.error.stack });
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    Log.error('unhandledrejection', e.reason);
+  });
 }
 
 // --- image helpers ---------------------------------------------------------
@@ -178,6 +232,18 @@ function blobToDataUrl(blob) {
     r.onerror = reject;
     r.readAsDataURL(blob);
   });
+}
+
+// Human-readable byte size: picks KB / MB / GB so we never show something like
+// "10,252 MB". Small numbers keep one decimal; large ones round.
+function formatBytes(bytes) {
+  const b = Number(bytes) || 0;
+  const KB = 1024, MB = KB * 1024, GB = MB * 1024;
+  const trim = (n) => n.toFixed(1).replace(/\.0$/, '');
+  if (b >= GB) return `${trim(b / GB)} GB`;
+  if (b >= MB) return `${Math.round(b / MB).toLocaleString()} MB`;
+  if (b >= KB) return `${Math.round(b / KB).toLocaleString()} KB`;
+  return `${Math.round(b)} B`;
 }
 
 // --- IndexedDB image store -------------------------------------------------
@@ -299,6 +365,28 @@ async function hydrateImages() {
   return ObjectUrlCache.snapshot();
 }
 
+// Ask the browser to make this origin's storage persistent. By default, PWA
+// storage is "best-effort" and the browser may evict IndexedDB (where photos
+// live) under storage pressure or time-based policies — which silently wipes
+// every photo while leaving localStorage metadata intact. Requesting
+// persistence opts us out of that eviction. Safe to call repeatedly; resolves
+// to whether storage is persistent afterwards.
+async function ensurePersistentStorage() {
+  try {
+    if (!navigator.storage || !navigator.storage.persist) {
+      Log.warn('persist.unsupported');
+      return false;
+    }
+    if (await navigator.storage.persisted()) return true;
+    const granted = await navigator.storage.persist();
+    Log[granted ? 'info' : 'warn']('persist.request', { granted });
+    return granted;
+  } catch (e) {
+    Log.error('persist.failed', e);
+    return false;
+  }
+}
+
 // One-time migration: legacy localStorage `closet:images:v1` (data URLs) → IDB blobs.
 // Safe to call repeatedly; the migrated flag stops re-runs.
 async function migrateLegacyImagesIfNeeded() {
@@ -317,16 +405,17 @@ async function migrateLegacyImagesIfNeeded() {
   for (const [id, dataUrl] of Object.entries(legacy)) {
     if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) continue;
     try { entries.push([id, dataUrlToBlob(dataUrl)]); }
-    catch (e) { console.error("legacy image decode failed for", id, e); }
+    catch (e) { Log.error('migrate.decodeFailed', { id, error: String(e) }); }
   }
   let migrated = 0;
   if (entries.length) {
     try { migrated = await IDB.putMany(entries); }
-    catch (e) { console.error("legacy migration write failed", e); }
+    catch (e) { Log.error('migrate.writeFailed', e); }
   }
   // Free the ~1MB the legacy key occupies before marking migrated.
   try { localStorage.removeItem(LEGACY_IMAGES_KEY); } catch {}
   lsSet(STORAGE_KEYS.imagesMigrated, true);
+  Log.info('migrate.done', { migrated, attempted: entries.length });
   return { migrated };
 }
 
@@ -647,6 +736,7 @@ async function exportBackup({ items, outfits, customTags, brands, collections })
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  Log.info('export.done', { items: items.length, photos: Object.keys(images).length, bytes: blob.size });
   return { sizeBytes: blob.size };
 }
 
@@ -1065,6 +1155,9 @@ function ClosetApp() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Opt out of storage eviction so IndexedDB photos survive. Fire-and-forget
+      // so it never blocks the initial render.
+      ensurePersistentStorage();
       const seeded = lsGet(STORAGE_KEYS.seeded, false);
       if (!seeded && typeof SEED_ITEMS !== 'undefined' && typeof SEED_IMAGES !== 'undefined') {
         const seedItems = SEED_ITEMS.map(i => ({ ...i, custom: [], status: "owned", brand: "" }));
@@ -1075,12 +1168,13 @@ function ClosetApp() {
         const seedEntries = [];
         for (const [id, dataUrl] of Object.entries(SEED_IMAGES)) {
           try { seedEntries.push([id, dataUrlToBlob(dataUrl)]); }
-          catch (e) { console.error("seed image decode failed", id, e); }
+          catch (e) { Log.error('seed.decodeFailed', { id, error: String(e) }); }
         }
         if (seedEntries.length) {
           try { await IDB.putMany(seedEntries); }
-          catch (e) { console.error("seed image batch write failed", e); }
+          catch (e) { Log.error('seed.writeFailed', e); }
         }
+        Log.info('seed.done', { items: seedItems.length, photos: seedEntries.length });
         lsSet(STORAGE_KEYS.outfits, []);
         lsSet(STORAGE_KEYS.customTags, []);
         lsSet(STORAGE_KEYS.brands, []);
@@ -1105,6 +1199,16 @@ function ClosetApp() {
 
       // Hydrate object URLs from IDB into the cache and state.
       const urlMap = await hydrateImages();
+
+      // Load summary — recorded every launch. The key health signal: if items
+      // survive but photos are 0, the browser has evicted the IndexedDB store.
+      const photoCount = Object.keys(urlMap).length;
+      const itemsMissingPhoto = items2.filter(it => !urlMap[it.id]).length;
+      if (items2.length > 0 && photoCount === 0) {
+        Log.warn('load.photosMissing', { items: items2.length, photos: photoCount });
+      } else {
+        Log.info('load', { items: items2.length, photos: photoCount, itemsMissingPhoto });
+      }
 
       if (cancelled) return;
       setItems(items2);
@@ -1131,7 +1235,7 @@ function ClosetApp() {
       const url = ObjectUrlCache.set(id, blob); // revokes any old URL for this id
       setImages(prev => ({ ...prev, [id]: url }));
     } catch (e) {
-      console.error("putImage failed", id, e);
+      Log.error('putImage.failed', { id, error: String(e) });
       if (!window.__quotaWarned) {
         window.__quotaWarned = true;
         alert("Couldn't save that image. You may be out of device storage.");
@@ -1139,32 +1243,46 @@ function ClosetApp() {
     }
   };
   const deleteImage = async (id) => {
-    try { await IDB.delete(id); } catch (e) { console.error("deleteImage failed", id, e); }
+    try { await IDB.delete(id); } catch (e) { Log.error('deleteImage.failed', { id, error: String(e) }); }
     ObjectUrlCache.delete(id);
     setImages(prev => { const n = { ...prev }; delete n[id]; return n; });
   };
-  // For import: write a batch of {id: dataUrl} into IDB, optionally clearing first.
+  // For import: write a map of {id: dataUrl} into IDB, optionally clearing first.
+  // Writes each image in its own transaction so that one bad/oversized blob (or
+  // hitting a storage limit partway through) can't abort the whole restore — the
+  // old single-transaction putMany failed all-or-nothing and only logged to the
+  // console, so a partial failure looked like "no photos restored" with no error.
+  // Returns {total, written, failed:[ids]} so the caller can surface the outcome.
   const replaceAllImages = async (dataUrlMap, { clearFirst = false } = {}) => {
     if (clearFirst) {
       try {
         const existingIds = await IDB.keys();
         for (const id of existingIds) ObjectUrlCache.delete(id);
         await IDB.clear();
-      } catch (e) { console.error("clear IDB failed", e); }
+      } catch (e) { Log.error('import.clearFailed', e); }
     }
-    const entries = [];
-    for (const [id, dataUrl] of Object.entries(dataUrlMap || {})) {
-      if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) continue;
-      try { entries.push([id, dataUrlToBlob(dataUrl)]); }
-      catch (e) { console.error("import image decode failed", id, e); }
+    const ids = Object.keys(dataUrlMap || {});
+    let written = 0;
+    const failed = [];
+    for (const id of ids) {
+      const dataUrl = dataUrlMap[id];
+      if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) { failed.push(id); continue; }
+      let blob;
+      try { blob = dataUrlToBlob(dataUrl); }
+      catch (e) { Log.error('import.decodeFailed', { id, error: String(e) }); failed.push(id); continue; }
+      try {
+        await IDB.put(id, blob);
+        ObjectUrlCache.set(id, blob);
+        written++;
+      } catch (e) {
+        Log.error('import.writeFailed', { id, error: String(e) });
+        failed.push(id);
+      }
     }
-    if (entries.length) {
-      try { await IDB.putMany(entries); }
-      catch (e) { console.error("import batch write failed", e); }
-    }
-    // Refresh object URL cache from the written blobs.
-    for (const [id, blob] of entries) ObjectUrlCache.set(id, blob);
     setImages(ObjectUrlCache.snapshot());
+    const result = { total: ids.length, written, failed: failed.length };
+    Log[failed.length ? 'warn' : 'info']('import.done', { strategy: clearFirst ? 'replace' : 'merge', ...result });
+    return { total: ids.length, written, failed };
   };
 
   // Browser visitors (not the installed app) land on a splash page instead of
@@ -1359,7 +1477,7 @@ function ClosetApp() {
             saveCustomTags(next.customTags);
             if (next.brands) saveBrands(next.brands);
             if (next.collections) saveCollections(next.collections);
-            await replaceAllImages(next.images, { clearFirst: strategy === 'replace' });
+            return await replaceAllImages(next.images, { clearFirst: strategy === 'replace' });
           }}
         />
       )}
@@ -2156,7 +2274,7 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
       const blob = await resizeImageToBlob(file, 640, 0.85);
       if (blob) await onReplaceImage(item.id, blob);
     } catch (e) {
-      console.error("replace image failed", e);
+      Log.error('replaceImage.failed', { id: item.id, error: String(e) });
     } finally {
       setReplacing(false);
     }
@@ -3056,7 +3174,7 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, o
         kindLabel: 'Look',
       });
     } catch (e) {
-      console.error('share failed', e);
+      Log.warn('share.failed', e);
       alert("Sorry — couldn't create the share image.");
     } finally {
       setSharing(false);
@@ -3394,7 +3512,7 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
         maxCols: 6,
       });
     } catch (e) {
-      console.error('share failed', e);
+      Log.warn('share.failed', e);
       alert("Sorry — couldn't create the share image.");
     } finally {
       setSharing(false);
@@ -4042,23 +4160,95 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
 function BackupModal({ items, images, outfits, customTags, brands, collections, onClose, onImport }) {
   useBodyScrollLock();
   const fileRef = useRef();
-  const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'success', message}
+  const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'warn'|'success', message}
   const [pending, setPending] = useState(null); // parsed valid backup awaiting strategy choice
   const [storageEstimate, setStorageEstimate] = useState(null); // {usage, quota} in bytes
+  const [persisted, setPersisted] = useState(null); // null=unknown, true/false once checked
+  const [busy, setBusy] = useState(false); // an import/export is in flight
 
   useEffect(() => {
     if (navigator.storage && navigator.storage.estimate) {
       navigator.storage.estimate().then(setStorageEstimate).catch(() => {});
     }
+    if (navigator.storage && navigator.storage.persisted) {
+      navigator.storage.persisted().then(setPersisted).catch(() => {});
+    }
   }, [images]);
 
-  const handleExport = async () => {
+  // Build a plain-text diagnostics report: environment, storage health, and the
+  // recent event log. Reads live IDB so the photo count reflects what's actually
+  // on disk, not just what's in memory.
+  const buildDiagnostics = async () => {
+    let idbCount = null;
+    try { idbCount = (await IDB.keys()).length; } catch { /* leave null */ }
+    const lines = [
+      `Poppy diagnostics — ${new Date().toISOString()}`,
+      `User agent: ${navigator.userAgent}`,
+      `Standalone (installed): ${window.matchMedia && window.matchMedia('(display-mode: standalone)').matches}`,
+      `Persistent storage: ${persisted === null ? 'unknown' : persisted}`,
+      storageEstimate && storageEstimate.quota
+        ? `Storage: ${formatBytes(storageEstimate.usage || 0)} used of ${formatBytes(storageEstimate.quota)}`
+        : `Storage: estimate unavailable`,
+      `Items: ${items.length} · Outfits: ${outfits.length} · Photos in IndexedDB: ${idbCount === null ? '?' : idbCount} · Photos in memory: ${Object.keys(images).length}`,
+      ``,
+      `Recent events (newest last):`,
+      ...Log.entries().map(e => `${e.t} [${e.level}] ${e.event}${e.data !== undefined ? ' ' + JSON.stringify(e.data) : ''}`),
+    ];
+    return lines.join('\n');
+  };
+
+  const handleCopyDiagnostics = async () => {
+    const report = await buildDiagnostics();
     try {
+      await navigator.clipboard.writeText(report);
+      setStatus({ kind: 'success', message: 'Diagnostics copied to clipboard. Paste them anywhere to share.' });
+    } catch {
+      // Clipboard is often blocked on mobile — fall back to a downloaded file.
+      try {
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `poppy-diagnostics-${new Date().toISOString().slice(0, 10)}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setStatus({ kind: 'info', message: 'Clipboard was blocked — diagnostics downloaded as a file instead.' });
+      } catch (e) {
+        setStatus({ kind: 'error', message: 'Could not copy diagnostics: ' + (e.message || e) });
+      }
+    }
+  };
+
+  const handleExport = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      // Preflight: a backup only carries the photos that are actually in IDB
+      // right now. If the browser has evicted the photo store, exporting would
+      // silently produce a picture-less backup — so warn before writing one.
+      let missing = 0;
+      try {
+        const keys = new Set(await IDB.keys());
+        missing = items.filter(it => !keys.has(it.id)).length;
+      } catch { /* if we can't check, don't block the export */ }
+      if (missing > 0) {
+        const proceed = confirm(
+          `Heads up: ${missing} of your ${items.length} items ${missing === 1 ? "has" : "have"} no photo in storage right now, so this backup won't include ${missing === 1 ? "it" : "them"}. ` +
+          `This usually means the browser cleared your photos. Export anyway?`
+        );
+        if (!proceed) {
+          setStatus({ kind: 'warn', message: "Export cancelled. If a photo backup exists, restore it first — then export a fresh backup." });
+          return;
+        }
+      }
       const { sizeBytes } = await exportBackup({ items, outfits, customTags, brands, collections });
-      const kb = Math.round(sizeBytes / 1024);
-      setStatus({ kind: 'success', message: `Backup saved (${kb.toLocaleString()} KB). Check your Downloads folder.` });
+      setStatus({ kind: 'success', message: `Backup saved (${formatBytes(sizeBytes)}). Check your Downloads folder.` });
     } catch (e) {
       setStatus({ kind: 'error', message: "Could not create the backup file: " + (e.message || e) });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -4073,36 +4263,65 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
       catch { setStatus({ kind: 'error', message: "That file isn't valid JSON." }); return; }
       const result = validateBackup(parsed);
       if (!result.ok) { setStatus({ kind: 'error', message: result.error }); return; }
-      setPending({ filename: file.name, data: result.data, counts: parsed.counts || {}, exportedAt: parsed.exportedAt });
+      const itemCount = result.data.items.length;
+      // Count photos that belong to items (ignore outfit selfies) so we can warn
+      // if this backup can't fully restore the closet's pictures.
+      const imgIds = new Set(Object.keys(result.data.images || {}));
+      const itemsWithPhoto = result.data.items.filter(it => imgIds.has(it.id)).length;
+      const photoCount = imgIds.size;
+      const missing = itemCount - itemsWithPhoto;
+      setPending({ filename: file.name, data: result.data, counts: parsed.counts || {}, exportedAt: parsed.exportedAt, photoCount, missing });
       const colsCount = result.data.collections?.length || 0;
-      setStatus({
-        kind: 'info',
-        message: `Found ${result.data.items.length} items, ${result.data.outfits.length} outfits${colsCount ? `, ${colsCount} collections` : ""}. Choose how to apply it.`
-      });
+      const found = `Found ${itemCount} items, ${result.data.outfits.length} outfits${colsCount ? `, ${colsCount} collections` : ""}, ${photoCount} photos.`;
+      if (missing > 0) {
+        setStatus({
+          kind: 'warn',
+          message: `${found} ⚠ ${missing} item${missing === 1 ? "" : "s"} in this backup ${missing === 1 ? "has" : "have"} no photo — restoring won't bring ${missing === 1 ? "that picture" : "those pictures"} back. Choose how to apply it.`
+        });
+      } else {
+        setStatus({ kind: 'info', message: `${found} Choose how to apply it.` });
+      }
     } catch (e) {
       setStatus({ kind: 'error', message: "Could not read the file: " + (e.message || e) });
     }
   };
 
-  const applyStrategy = (strategy) => {
-    if (!pending) return;
+  const applyStrategy = async (strategy) => {
+    if (!pending || busy) return;
     // Build a `current` snapshot without the images map — images live in IDB now.
     const current = { items, outfits, customTags, brands: brands || [], collections: collections || [] };
     const next = strategy === 'replace' ? pending.data : mergeBackup(current, pending.data);
-    onImport(next, strategy);
-    setStatus({ kind: 'success', message: strategy === 'replace' ? "Closet replaced with the backup." : "Backup merged into your closet." });
+    setBusy(true);
+    setStatus({ kind: 'info', message: strategy === 'replace' ? "Replacing your closet…" : "Merging backup…" });
+    let result;
+    try {
+      result = await onImport(next, strategy);
+    } catch (e) {
+      setBusy(false);
+      setStatus({ kind: 'error', message: "Import failed: " + (e.message || e) });
+      return;
+    }
     setPending(null);
+    setBusy(false);
+    const base = strategy === 'replace' ? "Closet replaced with the backup." : "Backup merged into your closet.";
+    if (result && result.failed && result.failed.length) {
+      setStatus({
+        kind: 'error',
+        message: `${base} But ${result.failed.length} of ${result.total} photos could not be saved — you may be out of device storage. Free some space and re-import to recover them.`
+      });
+    } else {
+      setStatus({ kind: 'success', message: base });
+    }
   };
 
-  // Storage line — show real device usage if available, else fall back to item count.
+  const photoCount = Object.keys(images).length;
+
+  // Storage line — show real device usage if available, else omit.
   const storageLine = (() => {
     if (storageEstimate && storageEstimate.quota) {
-      const usedMB = (storageEstimate.usage || 0) / (1024 * 1024);
-      const quotaMB = storageEstimate.quota / (1024 * 1024);
-      const fmt = (n) => n < 10 ? n.toFixed(1) : Math.round(n).toLocaleString();
-      return `Using ${fmt(usedMB)} MB of ${fmt(quotaMB)} MB available`;
+      return `${formatBytes(storageEstimate.usage || 0)} used of ${formatBytes(storageEstimate.quota)}`;
     }
-    return `${Object.keys(images).length} images stored`;
+    return null;
   })();
 
   return (
@@ -4117,7 +4336,7 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
         <h3 className="font-display font-bold text-2xl sm:text-3xl mb-4 text-ink-900">Keep your closet<br/><em className="text-leaf-600">safe and sound.</em></h3>
 
         <div className="mb-6 p-3 bg-cream-50 border-2 border-cream-100 rounded-2xl text-xs text-ink-600 leading-relaxed">
-          <span className="font-bold text-ink-800">{items.length}</span> pieces · <span className="font-bold text-ink-800">{outfits.length}</span> outfits · {storageLine}
+          <span className="font-bold text-ink-800">{items.length}</span> pieces · <span className="font-bold text-ink-800">{outfits.length}</span> outfits · <span className="font-bold text-ink-800">{photoCount}</span> photos{storageLine ? ` · ${storageLine}` : ""}
         </div>
 
         {/* EXPORT */}
@@ -4126,9 +4345,10 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
           <p className="text-sm text-ink-600 mb-3">Download everything as a single JSON file. Keep it somewhere safe — Google Drive, email to yourself, anywhere.</p>
           <button
             onClick={handleExport}
-            className="w-full flex items-center justify-center gap-2 py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
           >
-            <I.download size={14} /> Export Backup
+            <I.download size={14} /> {busy ? "Working…" : "Export Backup"}
           </button>
         </div>
 
@@ -4160,12 +4380,19 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
               {pending.exportedAt && (
                 <p className="text-[10px] text-ink-500 mt-1">Exported {new Date(pending.exportedAt).toLocaleString()}</p>
               )}
+              <p className="text-[11px] text-ink-600 mt-2">
+                {pending.data.items.length} items · {pending.photoCount} photos
+                {pending.missing > 0 && (
+                  <span className="text-petal-700 font-bold"> · {pending.missing} without a photo</span>
+                )}
+              </p>
               <div className="mt-4 flex flex-col gap-2">
                 <button
                   onClick={() => applyStrategy('merge')}
-                  className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+                  disabled={busy}
+                  className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
                 >
-                  Merge (keep current, add new)
+                  {busy ? "Working…" : "Merge (keep current, add new)"}
                 </button>
                 <button
                   onClick={() => {
@@ -4173,13 +4400,15 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
                       applyStrategy('replace');
                     }
                   }}
-                  className="w-full py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
+                  disabled={busy}
+                  className="w-full py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                 >
                   Replace everything
                 </button>
                 <button
                   onClick={() => { setPending(null); setStatus(null); }}
-                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline pt-1"
+                  disabled={busy}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline pt-1 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -4188,9 +4417,34 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
           )}
         </div>
 
+        {/* DIAGNOSTICS */}
+        <div className="mt-8 pt-6 border-t border-cream-100">
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Diagnostics</p>
+          <div className={`flex items-start gap-2 text-xs mb-3 p-2.5 rounded-2xl border-2 ${
+            persisted === true  ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
+            persisted === false ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700" :
+                                  "bg-cream-50 border-cream-100 text-ink-600"
+          }`}>
+            <I.alert size={14} className="shrink-0 mt-0.5" />
+            <span>
+              {persisted === true  ? "Photo storage is protected — the browser won't evict your photos." :
+               persisted === false ? "Photo storage is not protected yet — the browser may still clear photos. Installing to your home screen usually fixes this." :
+                                     "Checking storage protection…"}
+            </span>
+          </div>
+          <p className="text-sm text-ink-600 mb-3">If something looks wrong, copy the diagnostics log — it records recent events and storage health so an issue can be traced.</p>
+          <button
+            onClick={handleCopyDiagnostics}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-cream-200 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
+          >
+            <I.download size={14} /> Copy diagnostics
+          </button>
+        </div>
+
         {status && (
           <div className={`mt-3 p-3.5 rounded-2xl border-2 text-sm flex items-start gap-2 ${
             status.kind === 'error'   ? "bg-petal-50 border-petal-200 text-petal-700" :
+            status.kind === 'warn'    ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700" :
             status.kind === 'success' ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
                                         "bg-cream-50 border-cream-100 text-ink-700"
           }`}>
