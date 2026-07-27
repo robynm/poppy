@@ -10,59 +10,398 @@ const { useState, useEffect, useMemo, useRef } = React;
 function useBodyScrollLock() {
   useEffect(() => {
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 }
 
 // --- Inline SVG icons (replaces lucide-react) -------------------------------
-const Icon = ({ d, size = 16, stroke = 2, fill = "none", className = "", ...props }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
-       fill={fill} stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"
-       className={className} {...props}>
-    {typeof d === 'string' ? <path d={d} /> : d}
+const Icon = ({
+  d,
+  size = 16,
+  stroke = 2,
+  fill = "none",
+  className = "",
+  ...props
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke="currentColor"
+    strokeWidth={stroke}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    {typeof d === "string" ? <path d={d} /> : d}
   </svg>
 );
 const I = {
-  shirt:    (p) => <Icon {...p} d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />,
-  tag:      (p) => <Icon {...p} d={<><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><circle cx="7" cy="7" r="0.5" fill="currentColor"/></>} />,
-  layers:   (p) => <Icon {...p} d={<><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></>} />,
-  plus:     (p) => <Icon {...p} d={<><path d="M12 5v14"/><path d="M5 12h14"/></>} />,
-  x:        (p) => <Icon {...p} d={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />,
-  upload:   (p) => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></>} />,
-  trash:    (p) => <Icon {...p} d={<><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>} />,
-  pencil:   (p) => <Icon {...p} d={<><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></>} />,
-  check:    (p) => <Icon {...p} d="M20 6 9 17l-5-5" />,
-  search:   (p) => <Icon {...p} d={<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>} />,
-  sparkles: (p) => <Icon {...p} d={<><path d="M9.94 14.34 12 21l2.06-6.66L21 12.28l-6.94-2.06L12 3l-2.06 6.66L3 12.28z"/></>} />,
-  chevron:  (p) => <Icon {...p} d="m9 18 6-6-6-6" />,
-  download: (p) => <Icon {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></>} />,
-  install:  (p) => <Icon {...p} d={<><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></>} />,
-  archive:  (p) => <Icon {...p} d={<><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><line x1="10" x2="14" y1="12" y2="12"/></>} />,
-  alert:    (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>} />,
-  folder:   (p) => <Icon {...p} d="M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />,
-  bookmark: (p) => <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />,
-  grip:     (p) => <Icon {...p} d={<><path d="M12 3l-4 4h8l-4-4z"/><path d="M12 21l4-4H8l4 4z"/><line x1="12" y1="7" x2="12" y2="17"/></>} />,
-  dots:     (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="9" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="18" r="1.5"/></>} />,
-  camera:   (p) => <Icon {...p} d={<><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></>} />,
-  flower:   (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="12" r="3"/><path d="M12 2a3.5 3.5 0 0 0-3 5.3A3.5 3.5 0 0 0 7.3 9 3.5 3.5 0 0 0 5 12c0 1.13.54 2.13 1.37 2.77A3.5 3.5 0 0 0 6 17a3.5 3.5 0 0 0 5.3 3 3.5 3.5 0 0 0 1.7 1.7A3.5 3.5 0 0 0 18 17a3.5 3.5 0 0 0-.37-2.23A3.5 3.5 0 0 0 19 12a3.5 3.5 0 0 0-2.3-3.3A3.5 3.5 0 0 0 17 7a3.5 3.5 0 0 0-5-5z"/></>} />,
-  sun:      (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></>} />,
-  heart:    (p) => <Icon {...p} d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />,
-  sunglasses: (p) => <Icon {...p} d={<><path d="M14 18a2 2 0 0 0-4 0"/><path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11"/><path d="M2 11h20"/><circle cx="17" cy="18" r="3"/><circle cx="7" cy="18" r="3"/></>} />,
-  suitcase:   (p) => <Icon {...p} d={<><path d="M8 16V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><rect x="4" y="6" width="16" height="10" rx="2"/></>} />,
-  share:    (p) => <Icon {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>} />,
-  more:     (p) => <Icon {...p} fill="currentColor" stroke="none" d={<><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></>} />,
-  chart:    (p) => <Icon {...p} d={<><line x1="3" y1="20" x2="21" y2="20"/><rect x="6" y="11" width="3" height="9"/><rect x="11" y="6" width="3" height="14"/><rect x="16" y="14" width="3" height="6"/></>} />,
-  pie:      (p) => <Icon {...p} d={<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>} />,
-  help:     (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></>} />,
-  shield:   (p) => <Icon {...p} d={<><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></>} />,
-  code:     (p) => <Icon {...p} d={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>} />,
+  shirt: (p) => (
+    <Icon
+      {...p}
+      d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"
+    />
+  ),
+  tag: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z" />
+          <circle cx="7" cy="7" r="0.5" fill="currentColor" />
+        </>
+      }
+    />
+  ),
+  layers: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M12 2 2 7l10 5 10-5-10-5z" />
+          <path d="m2 17 10 5 10-5" />
+          <path d="m2 12 10 5 10-5" />
+        </>
+      }
+    />
+  ),
+  plus: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M12 5v14" />
+          <path d="M5 12h14" />
+        </>
+      }
+    />
+  ),
+  x: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </>
+      }
+    />
+  ),
+  upload: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" x2="12" y1="3" y2="15" />
+        </>
+      }
+    />
+  ),
+  trash: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M3 6h18" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </>
+      }
+    />
+  ),
+  pencil: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+        </>
+      }
+    />
+  ),
+  check: (p) => <Icon {...p} d="M20 6 9 17l-5-5" />,
+  search: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </>
+      }
+    />
+  ),
+  sparkles: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M9.94 14.34 12 21l2.06-6.66L21 12.28l-6.94-2.06L12 3l-2.06 6.66L3 12.28z" />
+        </>
+      }
+    />
+  ),
+  chevron: (p) => <Icon {...p} d="m9 18 6-6-6-6" />,
+  download: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" x2="12" y1="15" y2="3" />
+        </>
+      }
+    />
+  ),
+  install: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" x2="16" y1="21" y2="21" />
+          <line x1="12" x2="12" y1="17" y2="21" />
+        </>
+      }
+    />
+  ),
+  archive: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <rect x="2" y="3" width="20" height="5" rx="1" />
+          <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" />
+          <line x1="10" x2="14" y1="12" y2="12" />
+        </>
+      }
+    />
+  ),
+  alert: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" x2="12" y1="8" y2="12" />
+          <line x1="12" x2="12.01" y1="16" y2="16" />
+        </>
+      }
+    />
+  ),
+  folder: (p) => (
+    <Icon
+      {...p}
+      d="M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
+    />
+  ),
+  bookmark: (p) => (
+    <Icon {...p} d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+  ),
+  grip: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M12 3l-4 4h8l-4-4z" />
+          <path d="M12 21l4-4H8l4 4z" />
+          <line x1="12" y1="7" x2="12" y2="17" />
+        </>
+      }
+    />
+  ),
+  dots: (p) => (
+    <Icon
+      {...p}
+      fill="currentColor"
+      stroke="none"
+      d={
+        <>
+          <circle cx="9" cy="6" r="1.5" />
+          <circle cx="9" cy="12" r="1.5" />
+          <circle cx="9" cy="18" r="1.5" />
+          <circle cx="15" cy="6" r="1.5" />
+          <circle cx="15" cy="12" r="1.5" />
+          <circle cx="15" cy="18" r="1.5" />
+        </>
+      }
+    />
+  ),
+  camera: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+          <circle cx="12" cy="13" r="3" />
+        </>
+      }
+    />
+  ),
+  flower: (p) => (
+    <Icon
+      {...p}
+      fill="currentColor"
+      stroke="none"
+      d={
+        <>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2a3.5 3.5 0 0 0-3 5.3A3.5 3.5 0 0 0 7.3 9 3.5 3.5 0 0 0 5 12c0 1.13.54 2.13 1.37 2.77A3.5 3.5 0 0 0 6 17a3.5 3.5 0 0 0 5.3 3 3.5 3.5 0 0 0 1.7 1.7A3.5 3.5 0 0 0 18 17a3.5 3.5 0 0 0-.37-2.23A3.5 3.5 0 0 0 19 12a3.5 3.5 0 0 0-2.3-3.3A3.5 3.5 0 0 0 17 7a3.5 3.5 0 0 0-5-5z" />
+        </>
+      }
+    />
+  ),
+  sun: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m4.93 19.07 1.41-1.41" />
+          <path d="m17.66 6.34 1.41-1.41" />
+        </>
+      }
+    />
+  ),
+  heart: (p) => (
+    <Icon
+      {...p}
+      d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"
+    />
+  ),
+  sunglasses: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M14 18a2 2 0 0 0-4 0" />
+          <path d="m19 11-2.11-6.657a2 2 0 0 0-2.752-1.148l-1.276.61A2 2 0 0 1 12 4H8.5a2 2 0 0 0-1.925 1.456L5 11" />
+          <path d="M2 11h20" />
+          <circle cx="17" cy="18" r="3" />
+          <circle cx="7" cy="18" r="3" />
+        </>
+      }
+    />
+  ),
+  suitcase: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M8 16V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12" />
+          <rect x="4" y="6" width="16" height="10" rx="2" />
+        </>
+      }
+    />
+  ),
+  share: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+        </>
+      }
+    />
+  ),
+  more: (p) => (
+    <Icon
+      {...p}
+      fill="currentColor"
+      stroke="none"
+      d={
+        <>
+          <circle cx="12" cy="5" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="12" cy="19" r="1.5" />
+        </>
+      }
+    />
+  ),
+  chart: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <line x1="3" y1="20" x2="21" y2="20" />
+          <rect x="6" y="11" width="3" height="9" />
+          <rect x="11" y="6" width="3" height="14" />
+          <rect x="16" y="14" width="3" height="6" />
+        </>
+      }
+    />
+  ),
+  pie: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+          <path d="M22 12A10 10 0 0 0 12 2v10z" />
+        </>
+      }
+    />
+  ),
+  help: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" x2="12.01" y1="17" y2="17" />
+        </>
+      }
+    />
+  ),
+  shield: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+        </>
+      }
+    />
+  ),
+  code: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </>
+      }
+    />
+  ),
 };
 
 // The Poppy brand mark — embedded raster of the watercolor poppy from poppy-icon-cropped.png
 // (cropped tight on the flower for legibility at small sizes). The image is inlined
 // as a base64 PNG (transparent background) so the PWA stays self-contained.
-const POPPY_MARK_SRC = "data:image/png;base64,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";
+const POPPY_MARK_SRC =
+  "data:image/png;base64,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";
 function PoppyMark({ size, color, className = "" }) {
   // `color` is accepted for backwards compatibility but ignored — the artwork is pre-colored.
   // If `size` is omitted, the mark fills its container (width/height = 100%).
@@ -70,17 +409,48 @@ function PoppyMark({ size, color, className = "" }) {
   // out of 128) so the artwork edge sits flush against a `bg-poppy-500` container.
   const dim = size ?? "100%";
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={dim} height={dim} viewBox="22 16 91 91" className={className} aria-hidden="true" preserveAspectRatio="xMidYMid slice">
-      <image x="0" y="0" width="128" height="128" href={POPPY_MARK_SRC} preserveAspectRatio="xMidYMid meet" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={dim}
+      height={dim}
+      viewBox="22 16 91 91"
+      className={className}
+      aria-hidden="true"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <image
+        x="0"
+        y="0"
+        width="128"
+        height="128"
+        href={POPPY_MARK_SRC}
+        preserveAspectRatio="xMidYMid meet"
+      />
     </svg>
   );
 }
 
-const toTitle = s => s ? s.replace(/(?<!')\b\w/g, c => c.toUpperCase()) : s;
+const toTitle = (s) =>
+  s ? s.replace(/(?<!')\b\w/g, (c) => c.toUpperCase()) : s;
 
-const CATEGORY_OPTIONS = ["top", "bottom", "dress", "outerwear", "shoes", "accessory"];
+const CATEGORY_OPTIONS = [
+  "top",
+  "bottom",
+  "dress",
+  "outerwear",
+  "shoes",
+  "accessory",
+];
 const SEASON_OPTIONS = ["spring", "summer", "fall", "winter"];
-const OCCASION_OPTIONS = ["casual", "work", "weekend", "evening", "athletic", "loungewear", "formal"];
+const OCCASION_OPTIONS = [
+  "casual",
+  "work",
+  "weekend",
+  "evening",
+  "athletic",
+  "loungewear",
+  "formal",
+];
 const STATUS_OPTIONS = ["planned", "owned", "donated"];
 
 const STORAGE_KEYS = {
@@ -106,17 +476,22 @@ function lsGet(key, fallback) {
   try {
     const v = localStorage.getItem(key);
     return v == null ? fallback : JSON.parse(v);
-  } catch { return fallback; }
+  } catch {
+    return fallback;
+  }
 }
 function lsSet(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); }
-  catch (e) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
     // Quota exceeded — surface a single alert
     if (!window.__quotaWarned) {
       window.__quotaWarned = true;
-      alert("Storage is full. Phones limit a website to roughly 5MB. Try deleting some items or use smaller photos.");
+      alert(
+        "Storage is full. Phones limit a website to roughly 5MB. Try deleting some items or use smaller photos.",
+      );
     }
-    Log.error('localStorage.setFailed', { key, error: String(e) });
+    Log.error("localStorage.setFailed", { key, error: String(e) });
   }
 }
 
@@ -129,18 +504,30 @@ const Log = (() => {
   const KEY = STORAGE_KEYS.diag;
   const MAX = 200;
   let buf = [];
-  try { buf = JSON.parse(localStorage.getItem(KEY) || "[]") || []; } catch { buf = []; }
+  try {
+    buf = JSON.parse(localStorage.getItem(KEY) || "[]") || [];
+  } catch {
+    buf = [];
+  }
 
   // Errors don't survive JSON.stringify (they serialize to {}), so pull the
   // useful fields off by hand; everything else round-trips through JSON.
   function normalize(data) {
     if (data === undefined) return undefined;
-    if (data instanceof Error) return { name: data.name, message: data.message, stack: data.stack };
-    try { return JSON.parse(JSON.stringify(data)); } catch { return String(data); }
+    if (data instanceof Error)
+      return { name: data.name, message: data.message, stack: data.stack };
+    try {
+      return JSON.parse(JSON.stringify(data));
+    } catch {
+      return String(data);
+    }
   }
   function persist() {
-    try { localStorage.setItem(KEY, JSON.stringify(buf)); }
-    catch { /* if there's no room for the log itself, let it go */ }
+    try {
+      localStorage.setItem(KEY, JSON.stringify(buf));
+    } catch {
+      /* if there's no room for the log itself, let it go */
+    }
   }
   function add(level, event, data) {
     const entry = { t: new Date().toISOString(), level, event };
@@ -149,27 +536,41 @@ const Log = (() => {
     buf.push(entry);
     if (buf.length > MAX) buf = buf.slice(-MAX);
     persist();
-    const fn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
-    fn(`[poppy] ${event}`, norm !== undefined ? norm : '');
+    const fn =
+      level === "error"
+        ? console.error
+        : level === "warn"
+          ? console.warn
+          : console.log;
+    fn(`[poppy] ${event}`, norm !== undefined ? norm : "");
     return entry;
   }
   return {
-    info:  (event, data) => add('info', event, data),
-    warn:  (event, data) => add('warn', event, data),
-    error: (event, data) => add('error', event, data),
+    info: (event, data) => add("info", event, data),
+    warn: (event, data) => add("warn", event, data),
+    error: (event, data) => add("error", event, data),
     entries: () => buf.slice(),
-    clear: () => { buf = []; persist(); },
+    clear: () => {
+      buf = [];
+      persist();
+    },
   };
 })();
 
 // Catch anything that slips past the try/catch blocks so it still leaves a trail.
-if (typeof window !== 'undefined' && !window.__poppyErrorHooks) {
+if (typeof window !== "undefined" && !window.__poppyErrorHooks) {
   window.__poppyErrorHooks = true;
-  window.addEventListener('error', (e) => {
-    Log.error('window.error', { message: e.message, source: e.filename, line: e.lineno, col: e.colno, stack: e.error && e.error.stack });
+  window.addEventListener("error", (e) => {
+    Log.error("window.error", {
+      message: e.message,
+      source: e.filename,
+      line: e.lineno,
+      col: e.colno,
+      stack: e.error && e.error.stack,
+    });
   });
-  window.addEventListener('unhandledrejection', (e) => {
-    Log.error('unhandledrejection', e.reason);
+  window.addEventListener("unhandledrejection", (e) => {
+    Log.error("unhandledrejection", e.reason);
   });
 }
 
@@ -186,17 +587,20 @@ function readFileAsDataURL(file) {
 // Detect WebP encode support once. Some old WebViews don't support it; fall back to JPEG.
 const SUPPORTS_WEBP = (() => {
   try {
-    const c = document.createElement('canvas');
+    const c = document.createElement("canvas");
     c.width = c.height = 1;
-    return c.toDataURL('image/webp').startsWith('data:image/webp');
-  } catch { return false; }
+    return c.toDataURL("image/webp").startsWith("data:image/webp");
+  } catch {
+    return false;
+  }
 })();
 
 // Resize and re-encode an image to a Blob. WebP by default (handles transparency
 // at ~30–50% the size of JPEG/PNG); JPEG fallback for ancient browsers.
 async function resizeImageToBlob(source, maxDim = 640, quality = 0.85) {
   // `source` may be a File, a Blob, or a data URL string.
-  const srcUrl = typeof source === 'string' ? source : URL.createObjectURL(source);
+  const srcUrl =
+    typeof source === "string" ? source : URL.createObjectURL(source);
   try {
     const img = await new Promise((resolve, reject) => {
       const im = new Image();
@@ -208,21 +612,24 @@ async function resizeImageToBlob(source, maxDim = 640, quality = 0.85) {
     const scale = longest > maxDim ? maxDim / longest : 1;
     const w = Math.round(img.width * scale);
     const h = Math.round(img.height * scale);
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    const type = SUPPORTS_WEBP ? 'image/webp' : 'image/jpeg';
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+    const type = SUPPORTS_WEBP ? "image/webp" : "image/jpeg";
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, type, quality),
+    );
     return blob; // may be null if encoding failed; callers handle that.
   } finally {
-    if (typeof source !== 'string') URL.revokeObjectURL(srcUrl);
+    if (typeof source !== "string") URL.revokeObjectURL(srcUrl);
   }
 }
 
 // data URL <-> Blob conversion, for backup compatibility (backups stay JSON).
 function dataUrlToBlob(dataUrl) {
-  const [meta, b64] = dataUrl.split(',');
-  const mime = (meta.match(/data:([^;]+)/) || [, 'image/jpeg'])[1];
+  const [meta, b64] = dataUrl.split(",");
+  const mime = (meta.match(/data:([^;]+)/) || [, "image/jpeg"])[1];
   const bin = atob(b64);
   const arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -241,8 +648,10 @@ function blobToDataUrl(blob) {
 // "10,252 MB". Small numbers keep one decimal; large ones round.
 function formatBytes(bytes) {
   const b = Number(bytes) || 0;
-  const KB = 1024, MB = KB * 1024, GB = MB * 1024;
-  const trim = (n) => n.toFixed(1).replace(/\.0$/, '');
+  const KB = 1024,
+    MB = KB * 1024,
+    GB = MB * 1024;
+  const trim = (n) => n.toFixed(1).replace(/\.0$/, "");
   if (b >= GB) return `${trim(b / GB)} GB`;
   if (b >= MB) return `${Math.round(b / MB).toLocaleString()} MB`;
   if (b >= KB) return `${Math.round(b / KB).toLocaleString()} KB`;
@@ -253,9 +662,9 @@ function formatBytes(bytes) {
 // Single store keyed by item id, values are Blobs. No schema, no migrations
 // beyond the one-time localStorage → IDB import below.
 const IDB = (() => {
-  const DB_NAME = 'wardrobe';
+  const DB_NAME = "wardrobe";
   const DB_VERSION = 1;
-  const STORE = 'images';
+  const STORE = "images";
   let _dbPromise = null;
 
   function open() {
@@ -283,8 +692,12 @@ const IDB = (() => {
       const tx = db.transaction(STORE, mode);
       const store = tx.objectStore(STORE);
       let req;
-      try { req = fn(store); }
-      catch (e) { reject(e); return; }
+      try {
+        req = fn(store);
+      } catch (e) {
+        reject(e);
+        return;
+      }
       tx.oncomplete = () => resolve(req ? req.result : undefined);
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error);
@@ -299,8 +712,12 @@ const IDB = (() => {
       const tx = db.transaction(STORE, mode);
       const store = tx.objectStore(STORE);
       let acc;
-      try { acc = fn(store); }
-      catch (e) { reject(e); return; }
+      try {
+        acc = fn(store);
+      } catch (e) {
+        reject(e);
+        return;
+      }
       tx.oncomplete = () => resolve(acc);
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error);
@@ -308,12 +725,20 @@ const IDB = (() => {
   }
 
   return {
-    get(id)         { return run('readonly',  s => s.get(id)); },
-    put(id, blob)   { return run('readwrite', s => s.put(blob, id)); },
-    delete(id)      { return run('readwrite', s => s.delete(id)); },
-    keys()          { return run('readonly',  s => s.getAllKeys()); },
+    get(id) {
+      return run("readonly", (s) => s.get(id));
+    },
+    put(id, blob) {
+      return run("readwrite", (s) => s.put(blob, id));
+    },
+    delete(id) {
+      return run("readwrite", (s) => s.delete(id));
+    },
+    keys() {
+      return run("readonly", (s) => s.getAllKeys());
+    },
     entries() {
-      return runCollect('readonly', (s) => {
+      return runCollect("readonly", (s) => {
         const out = {};
         const req = s.openCursor();
         req.onsuccess = () => {
@@ -327,12 +752,14 @@ const IDB = (() => {
     },
     // Write many blobs in one transaction. `entries` is an array of [id, blob].
     putMany(entries) {
-      return runCollect('readwrite', (s) => {
+      return runCollect("readwrite", (s) => {
         for (const [id, blob] of entries) s.put(blob, id);
         return entries.length;
       });
     },
-    clear()         { return run('readwrite', s => s.clear()); },
+    clear() {
+      return run("readwrite", (s) => s.clear());
+    },
   };
 })();
 
@@ -349,13 +776,17 @@ const ObjectUrlCache = (() => {
       urls.set(id, url);
       return url;
     },
-    get(id) { return urls.get(id); },
+    get(id) {
+      return urls.get(id);
+    },
     delete(id) {
       const url = urls.get(id);
       if (url) URL.revokeObjectURL(url);
       urls.delete(id);
     },
-    snapshot() { return Object.fromEntries(urls); },
+    snapshot() {
+      return Object.fromEntries(urls);
+    },
   };
 })();
 
@@ -377,15 +808,15 @@ async function hydrateImages() {
 async function ensurePersistentStorage() {
   try {
     if (!navigator.storage || !navigator.storage.persist) {
-      Log.warn('persist.unsupported');
+      Log.warn("persist.unsupported");
       return false;
     }
     if (await navigator.storage.persisted()) return true;
     const granted = await navigator.storage.persist();
-    Log[granted ? 'info' : 'warn']('persist.request', { granted });
+    Log[granted ? "info" : "warn"]("persist.request", { granted });
     return granted;
   } catch (e) {
-    Log.error('persist.failed', e);
+    Log.error("persist.failed", e);
     return false;
   }
 }
@@ -398,27 +829,37 @@ async function migrateLegacyImagesIfNeeded() {
     try {
       const v = localStorage.getItem(LEGACY_IMAGES_KEY);
       return v == null ? null : JSON.parse(v);
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   })();
-  if (!legacy || typeof legacy !== 'object') {
+  if (!legacy || typeof legacy !== "object") {
     lsSet(STORAGE_KEYS.imagesMigrated, true);
     return { migrated: 0 };
   }
   const entries = [];
   for (const [id, dataUrl] of Object.entries(legacy)) {
-    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) continue;
-    try { entries.push([id, dataUrlToBlob(dataUrl)]); }
-    catch (e) { Log.error('migrate.decodeFailed', { id, error: String(e) }); }
+    if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
+    try {
+      entries.push([id, dataUrlToBlob(dataUrl)]);
+    } catch (e) {
+      Log.error("migrate.decodeFailed", { id, error: String(e) });
+    }
   }
   let migrated = 0;
   if (entries.length) {
-    try { migrated = await IDB.putMany(entries); }
-    catch (e) { Log.error('migrate.writeFailed', e); }
+    try {
+      migrated = await IDB.putMany(entries);
+    } catch (e) {
+      Log.error("migrate.writeFailed", e);
+    }
   }
   // Free the ~1MB the legacy key occupies before marking migrated.
-  try { localStorage.removeItem(LEGACY_IMAGES_KEY); } catch {}
+  try {
+    localStorage.removeItem(LEGACY_IMAGES_KEY);
+  } catch {}
   lsSet(STORAGE_KEYS.imagesMigrated, true);
-  Log.info('migrate.done', { migrated, attempted: entries.length });
+  Log.info("migrate.done", { migrated, attempted: entries.length });
   return { migrated };
 }
 
@@ -465,9 +906,24 @@ function _drawCover(ctx, img, x, y, w, h) {
   ctx.restore();
 }
 function _slug(s) {
-  return (s || 'share').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'share';
+  return (
+    (s || "share")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40) || "share"
+  );
 }
-async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent, kindLabel, maxCols }) {
+async function shareAsImage({
+  title,
+  subtitle,
+  items,
+  images,
+  selfieUrl,
+  accent,
+  kindLabel,
+  maxCols,
+}) {
   const W = 1080;
   const PAD = 56;
   const capCols = maxCols || 3;
@@ -484,12 +940,14 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
   const tileSize = Math.floor((innerW - gap * (cols - 1)) / cols);
 
   // Preload images so we can measure layout precisely.
-  const pieceImgs = await Promise.all(items.map(it => _loadImage(images[it.id])));
+  const pieceImgs = await Promise.all(
+    items.map((it) => _loadImage(images[it.id])),
+  );
   const selfieImg = selfieUrl ? await _loadImage(selfieUrl) : null;
   const markImg = await _loadImage(POPPY_MARK_SRC);
 
   // We'll lay out into a virtual canvas. Compute total height first.
-  const ctxMeasure = document.createElement('canvas').getContext('2d');
+  const ctxMeasure = document.createElement("canvas").getContext("2d");
 
   // Caption metrics (item name shown under each tile image) — scale down with denser grids
   const captionFontPx = cols >= 6 ? 13 : cols >= 5 ? 14 : cols >= 4 ? 16 : 18;
@@ -502,11 +960,12 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
   const wrapToLines = (text, maxW, maxLines) => {
     const words = text.split(/\s+/).filter(Boolean);
     const lines = [];
-    let cur = '';
+    let cur = "";
     for (const w of words) {
-      const trial = cur ? cur + ' ' + w : w;
-      if (ctxMeasure.measureText(trial).width <= maxW) { cur = trial; }
-      else {
+      const trial = cur ? cur + " " + w : w;
+      if (ctxMeasure.measureText(trial).width <= maxW) {
+        cur = trial;
+      } else {
         if (cur) lines.push(cur);
         cur = w;
         if (lines.length >= maxLines) break;
@@ -517,17 +976,27 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
     // Truncate last line if we overflowed
     if (lines.length === maxLines) {
       let last = lines[maxLines - 1];
-      const wordsLeft = words.length - words.indexOf(last.split(' ').pop()) - 1;
+      const wordsLeft = words.length - words.indexOf(last.split(" ").pop()) - 1;
       if (wordsLeft > 0) {
-        while (ctxMeasure.measureText(last + '…').width > maxW && last.length > 1) last = last.slice(0, -1);
-        lines[maxLines - 1] = last + '…';
+        while (
+          ctxMeasure.measureText(last + "…").width > maxW &&
+          last.length > 1
+        )
+          last = last.slice(0, -1);
+        lines[maxLines - 1] = last + "…";
       }
     }
-    return lines.length ? lines : [''];
+    return lines.length ? lines : [""];
   };
   const captionInnerW = tileSize - captionPadX * 2;
-  const captionData = items.map(it => wrapToLines(toTitle(it.name || '').toUpperCase(), captionInnerW, maxCaptionLines));
-  const maxLines = Math.max(1, ...captionData.map(l => l.length));
+  const captionData = items.map((it) =>
+    wrapToLines(
+      toTitle(it.name || "").toUpperCase(),
+      captionInnerW,
+      maxCaptionLines,
+    ),
+  );
+  const maxLines = Math.max(1, ...captionData.map((l) => l.length));
   const captionH = captionPadY * 2 + maxLines * captionLineH;
   const tileTotalH = tileSize + captionH;
 
@@ -567,47 +1036,55 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
   const footerH = 90;
   const H = footerTop + footerH + PAD;
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = Math.max(H, 1200);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   // Background — cream
-  ctx.fillStyle = '#FFFBF6';
+  ctx.fillStyle = "#FFFBF6";
   ctx.fillRect(0, 0, W, canvas.height);
 
   // Decorative wash
   const wash1 = ctx.createRadialGradient(W * 0.95, -60, 0, W * 0.95, -60, 700);
-  wash1.addColorStop(0, 'rgba(255, 90, 54, 0.18)');
-  wash1.addColorStop(1, 'rgba(255, 90, 54, 0)');
+  wash1.addColorStop(0, "rgba(255, 90, 54, 0.18)");
+  wash1.addColorStop(1, "rgba(255, 90, 54, 0)");
   ctx.fillStyle = wash1;
   ctx.fillRect(0, 0, W, canvas.height);
-  const wash2 = ctx.createRadialGradient(-60, canvas.height + 60, 0, -60, canvas.height + 60, 800);
-  wash2.addColorStop(0, 'rgba(247, 201, 72, 0.18)');
-  wash2.addColorStop(1, 'rgba(247, 201, 72, 0)');
+  const wash2 = ctx.createRadialGradient(
+    -60,
+    canvas.height + 60,
+    0,
+    -60,
+    canvas.height + 60,
+    800,
+  );
+  wash2.addColorStop(0, "rgba(247, 201, 72, 0.18)");
+  wash2.addColorStop(1, "rgba(247, 201, 72, 0)");
   ctx.fillStyle = wash2;
   ctx.fillRect(0, 0, W, canvas.height);
 
   // Label
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = accent || '#EC4778';
-  ctx.font = '800 22px Nunito, sans-serif';
-  const label = (kindLabel || 'LOOK').toUpperCase();
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = accent || "#EC4778";
+  ctx.font = "800 22px Nunito, sans-serif";
+  const label = (kindLabel || "LOOK").toUpperCase();
   ctx.fillText(label, PAD, headerTop + 24);
 
   // Title
-  ctx.fillStyle = '#241A11';
-  ctx.font = '800 64px Fraunces, Georgia, serif';
-  ctx.fillText(toTitle(title || 'Untitled'), PAD, headerTop + labelH + 8 + 60);
+  ctx.fillStyle = "#241A11";
+  ctx.font = "800 64px Fraunces, Georgia, serif";
+  ctx.fillText(toTitle(title || "Untitled"), PAD, headerTop + labelH + 8 + 60);
 
   // Subtitle (note / description)
   if (subtitle) {
-    ctx.fillStyle = '#8F7060';
-    ctx.font = 'italic 600 26px Fraunces, Georgia, serif';
+    ctx.fillStyle = "#8F7060";
+    ctx.font = "italic 600 26px Fraunces, Georgia, serif";
     let s = `"${subtitle}"`;
     // Truncate if too long
     const maxW = innerW;
-    while (ctx.measureText(s).width > maxW && s.length > 10) s = s.slice(0, -2) + '…"';
+    while (ctx.measureText(s).width > maxW && s.length > 10)
+      s = s.slice(0, -2) + '…"';
     ctx.fillText(s, PAD, headerTop + labelH + 8 + titleH + 36);
   }
 
@@ -616,7 +1093,7 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
     const sy = afterHeader;
     const sx = PAD + Math.round((innerW - selfiePanelW) / 2);
     _roundRect(ctx, sx, sy, selfiePanelW, selfieH, 36);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = "#FFFFFF";
     ctx.fill();
     ctx.save();
     _roundRect(ctx, sx, sy, selfiePanelW, selfieH, 36);
@@ -634,19 +1111,26 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
 
     // Card background
     _roundRect(ctx, x, ty, tileSize, tileTotalH, 28);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = "#FFFFFF";
     ctx.fill();
-    ctx.strokeStyle = '#FFE7D1';
+    ctx.strokeStyle = "#FFE7D1";
     ctx.lineWidth = 2;
     _roundRect(ctx, x, ty, tileSize, tileTotalH, 28);
     ctx.stroke();
 
     // Image area — inset scales with tile size
     const inset = cols >= 6 ? 10 : cols >= 5 ? 14 : cols >= 4 ? 18 : 22;
-    _drawContain(ctx, pieceImgs[i], x + inset, ty + inset, tileSize - inset * 2, tileSize - inset * 2);
+    _drawContain(
+      ctx,
+      pieceImgs[i],
+      x + inset,
+      ty + inset,
+      tileSize - inset * 2,
+      tileSize - inset * 2,
+    );
 
     // Divider line between image and caption
-    ctx.strokeStyle = '#FFE7D1';
+    ctx.strokeStyle = "#FFE7D1";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(x + 16, ty + tileSize);
@@ -655,9 +1139,9 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
 
     // Caption
     ctx.font = captionFont;
-    ctx.fillStyle = '#36281B';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.fillStyle = "#36281B";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     const lines = captionData[i];
     // Vertically center the lines block within the caption strip
     const blockH = lines.length * captionLineH;
@@ -665,41 +1149,56 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
     for (let li = 0; li < lines.length; li++) {
       ctx.fillText(lines[li], x + tileSize / 2, startY + li * captionLineH);
     }
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 
   // Footer — Poppy mark + wordmark
   const fy = footerTop;
   const markSize = 68;
   if (markImg) ctx.drawImage(markImg, PAD, fy, markSize, markSize);
-  ctx.fillStyle = '#FF5A36';
-  ctx.font = '800 36px Fraunces, Georgia, serif';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Poppy', PAD + markSize + 16, fy + markSize / 2 - 4);
-  ctx.fillStyle = '#8F7060';
-  ctx.font = '700 16px Nunito, sans-serif';
-  ctx.fillText('CULTIVATE YOUR CLOSET.', PAD + markSize + 16, fy + markSize / 2 + 22);
-  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = "#FF5A36";
+  ctx.font = "800 36px Fraunces, Georgia, serif";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Poppy", PAD + markSize + 16, fy + markSize / 2 - 4);
+  ctx.fillStyle = "#8F7060";
+  ctx.font = "700 16px Nunito, sans-serif";
+  ctx.fillText(
+    "CULTIVATE YOUR CLOSET.",
+    PAD + markSize + 16,
+    fy + markSize / 2 + 22,
+  );
+  ctx.textBaseline = "alphabetic";
 
   // Convert to blob and share / download
-  const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 0.95));
-  if (!blob) throw new Error('Could not render share image.');
-  const filename = `poppy-${(kindLabel || 'share').toLowerCase()}-${_slug(title)}.png`;
-  const file = new File([blob], filename, { type: 'image/png' });
+  const blob = await new Promise((res) =>
+    canvas.toBlob(res, "image/png", 0.95),
+  );
+  if (!blob) throw new Error("Could not render share image.");
+  const filename = `poppy-${(kindLabel || "share").toLowerCase()}-${_slug(title)}.png`;
+  const file = new File([blob], filename, { type: "image/png" });
 
-  if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.canShare &&
+    navigator.canShare({ files: [file] })
+  ) {
     try {
-      await navigator.share({ files: [file], title: toTitle(title || 'Poppy'), text: `${kindLabel || 'Look'}: ${toTitle(title || '')}` });
+      await navigator.share({
+        files: [file],
+        title: toTitle(title || "Poppy"),
+        text: `${kindLabel || "Look"}: ${toTitle(title || "")}`,
+      });
       return { ok: true, shared: true };
     } catch (err) {
-      if (err && err.name === 'AbortError') return { ok: true, shared: false, aborted: true };
+      if (err && err.name === "AbortError")
+        return { ok: true, shared: false, aborted: true };
       // fall through to download
     }
   }
 
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
@@ -714,7 +1213,13 @@ async function shareAsImage({ title, subtitle, items, images, selfieUrl, accent,
 // so backups written on the old build still restore, and backups written here
 // restore anywhere. The on-device representation is blobs; we convert at the
 // boundary.
-async function exportBackup({ items, outfits, customTags, brands, collections }) {
+async function exportBackup({
+  items,
+  outfits,
+  customTags,
+  brands,
+  collections,
+}) {
   // Read blobs straight from IDB so we don't depend on what's currently in
   // React state (defensive: if the cache is partial for any reason).
   const blobs = await IDB.entries();
@@ -725,13 +1230,24 @@ async function exportBackup({ items, outfits, customTags, brands, collections })
   const payload = {
     format: BACKUP_FORMAT,
     exportedAt: new Date().toISOString(),
-    counts: { items: items.length, outfits: outfits.length, collections: (collections || []).length },
-    data: { items, images, outfits, customTags, brands: brands || [], collections: collections || [] },
+    counts: {
+      items: items.length,
+      outfits: outfits.length,
+      collections: (collections || []).length,
+    },
+    data: {
+      items,
+      images,
+      outfits,
+      customTags,
+      brands: brands || [],
+      collections: collections || [],
+    },
   };
   const json = JSON.stringify(payload, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
   a.download = `poppy-backup-${stamp}.json`;
@@ -739,24 +1255,41 @@ async function exportBackup({ items, outfits, customTags, brands, collections })
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  Log.info('export.done', { items: items.length, photos: Object.keys(images).length, bytes: blob.size });
+  Log.info("export.done", {
+    items: items.length,
+    photos: Object.keys(images).length,
+    bytes: blob.size,
+  });
   return { sizeBytes: blob.size };
 }
 
 function validateBackup(parsed) {
-  if (!parsed || typeof parsed !== 'object') return { ok: false, error: "File is not a valid JSON object." };
+  if (!parsed || typeof parsed !== "object")
+    return { ok: false, error: "File is not a valid JSON object." };
   if (parsed.format !== BACKUP_FORMAT) {
-    return { ok: false, error: `Unknown backup format${parsed.format ? `: "${parsed.format}"` : ""}. Expected "${BACKUP_FORMAT}".` };
+    return {
+      ok: false,
+      error: `Unknown backup format${parsed.format ? `: "${parsed.format}"` : ""}. Expected "${BACKUP_FORMAT}".`,
+    };
   }
   const d = parsed.data;
-  if (!d || typeof d !== 'object') return { ok: false, error: "Backup is missing its data section." };
-  if (!Array.isArray(d.items)) return { ok: false, error: "Backup items are malformed." };
-  if (!Array.isArray(d.outfits)) return { ok: false, error: "Backup outfits are malformed." };
-  if (!Array.isArray(d.customTags)) return { ok: false, error: "Backup custom tags are malformed." };
-  if (!d.images || typeof d.images !== 'object') return { ok: false, error: "Backup images are malformed." };
+  if (!d || typeof d !== "object")
+    return { ok: false, error: "Backup is missing its data section." };
+  if (!Array.isArray(d.items))
+    return { ok: false, error: "Backup items are malformed." };
+  if (!Array.isArray(d.outfits))
+    return { ok: false, error: "Backup outfits are malformed." };
+  if (!Array.isArray(d.customTags))
+    return { ok: false, error: "Backup custom tags are malformed." };
+  if (!d.images || typeof d.images !== "object")
+    return { ok: false, error: "Backup images are malformed." };
   // light per-item check
   for (const it of d.items) {
-    if (!it.id || !it.name) return { ok: false, error: `An item is missing id or name (id: ${it.id || '?'}).` };
+    if (!it.id || !it.name)
+      return {
+        ok: false,
+        error: `An item is missing id or name (id: ${it.id || "?"}).`,
+      };
   }
   // collections and brands are optional for backward compatibility with older backups
   if (d.collections !== undefined && !Array.isArray(d.collections)) {
@@ -768,7 +1301,7 @@ function validateBackup(parsed) {
   if (!d.collections) d.collections = [];
   if (!d.brands) d.brands = [];
   // Normalize items missing the new fields
-  d.items = d.items.map(i => ({
+  d.items = d.items.map((i) => ({
     ...i,
     status: i.status || "owned",
     brand: i.brand === undefined ? "" : i.brand,
@@ -790,17 +1323,24 @@ function readFileAsText(file) {
 // value is what needs to be WRITTEN to IDB (always the incoming set; existing
 // IDB blobs are left in place for merge, cleared first for replace).
 function mergeBackup(current, incoming) {
-  const itemMap = new Map(current.items.map(i => [i.id, i]));
-  for (const it of incoming.items) if (!itemMap.has(it.id)) itemMap.set(it.id, it);
+  const itemMap = new Map(current.items.map((i) => [i.id, i]));
+  for (const it of incoming.items)
+    if (!itemMap.has(it.id)) itemMap.set(it.id, it);
   const items = Array.from(itemMap.values());
 
   const images = incoming.images || {}; // data-URL map; caller writes these to IDB
 
-  const outfitMap = new Map(current.outfits.map(o => [o.id, o]));
-  for (const o of incoming.outfits) if (!outfitMap.has(o.id)) outfitMap.set(o.id, o);
-  const outfits = Array.from(outfitMap.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const outfitMap = new Map(current.outfits.map((o) => [o.id, o]));
+  for (const o of incoming.outfits)
+    if (!outfitMap.has(o.id)) outfitMap.set(o.id, o);
+  const outfits = Array.from(outfitMap.values()).sort(
+    (a, b) => (b.createdAt || 0) - (a.createdAt || 0),
+  );
 
-  const tagSet = new Set([...(current.customTags || []), ...(incoming.customTags || [])]);
+  const tagSet = new Set([
+    ...(current.customTags || []),
+    ...(incoming.customTags || []),
+  ]);
   const customTags = Array.from(tagSet);
 
   // Brands: case-insensitive union, keeping the first-seen casing
@@ -811,8 +1351,10 @@ function mergeBackup(current, incoming) {
   }
   const brands = Array.from(brandLowerSeen.values());
 
-  const collectionMap = new Map((current.collections || []).map(c => [c.id, c]));
-  for (const c of (incoming.collections || [])) {
+  const collectionMap = new Map(
+    (current.collections || []).map((c) => [c.id, c]),
+  );
+  for (const c of incoming.collections || []) {
     if (collectionMap.has(c.id)) {
       // merge item lists for collections with the same id
       const existing = collectionMap.get(c.id);
@@ -832,15 +1374,33 @@ function mergeBackup(current, incoming) {
 // Six distinct hues plus the brand poppy red-orange, so categories read at a glance.
 function Chip({ children, active, onClick, tone = "default" }) {
   const tones = {
-    default:    active ? "bg-poppy-500 text-white border-poppy-500 shadow-pop"     : "bg-poppy-50 text-poppy-700 border-poppy-100",
-    category:   active ? "bg-amber-500 text-white border-amber-500 shadow-pop"     : "bg-amber-50 text-amber-800 border-amber-100",
-    season:     active ? "bg-leaf-500 text-white border-leaf-500 shadow-pop"       : "bg-leaf-50 text-leaf-700 border-leaf-100",
-    occasion:   active ? "bg-petal-500 text-white border-petal-500 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
-    custom:     active ? "bg-plum-500 text-white border-plum-500 shadow-pop"       : "bg-plum-50 text-plum-700 border-plum-100",
-    collection: active ? "bg-sky2-500 text-white border-sky2-500 shadow-pop"       : "bg-sky2-50 text-sky2-700 border-sky2-100",
-    status:     active ? "bg-ink-500 text-white border-ink-500 shadow-pop" : "bg-ink-50 text-ink-700 border-ink-400",
-    brand:      active ? "bg-petal-600 text-white border-petal-600 shadow-pop"     : "bg-petal-50 text-petal-700 border-petal-100",
-    year:       active ? "bg-buttercup-500 text-white border-buttercup-500 shadow-pop" : "bg-buttercup-50 text-buttercup-700 border-buttercup-100",
+    default: active
+      ? "bg-poppy-500 text-white border-poppy-500 shadow-pop"
+      : "bg-poppy-50 text-poppy-700 border-poppy-100",
+    category: active
+      ? "bg-amber-500 text-white border-amber-500 shadow-pop"
+      : "bg-amber-50 text-amber-800 border-amber-100",
+    season: active
+      ? "bg-leaf-500 text-white border-leaf-500 shadow-pop"
+      : "bg-leaf-50 text-leaf-700 border-leaf-100",
+    occasion: active
+      ? "bg-petal-500 text-white border-petal-500 shadow-pop"
+      : "bg-petal-50 text-petal-700 border-petal-100",
+    custom: active
+      ? "bg-plum-500 text-white border-plum-500 shadow-pop"
+      : "bg-plum-50 text-plum-700 border-plum-100",
+    collection: active
+      ? "bg-sky2-500 text-white border-sky2-500 shadow-pop"
+      : "bg-sky2-50 text-sky2-700 border-sky2-100",
+    status: active
+      ? "bg-ink-500 text-white border-ink-500 shadow-pop"
+      : "bg-ink-50 text-ink-700 border-ink-400",
+    brand: active
+      ? "bg-petal-600 text-white border-petal-600 shadow-pop"
+      : "bg-petal-50 text-petal-700 border-petal-100",
+    year: active
+      ? "bg-buttercup-500 text-white border-buttercup-500 shadow-pop"
+      : "bg-buttercup-50 text-buttercup-700 border-buttercup-100",
   };
   return (
     <button
@@ -855,18 +1415,20 @@ function Chip({ children, active, onClick, tone = "default" }) {
 // A pill showing an active filter with an inline × to remove it.
 function RemovableChip({ children, tone = "default", onRemove }) {
   const tones = {
-    default:    "bg-poppy-500 text-white border-poppy-500",
-    category:   "bg-amber-500 text-white border-amber-500",
-    season:     "bg-leaf-500 text-white border-leaf-500",
-    occasion:   "bg-petal-500 text-white border-petal-500",
-    custom:     "bg-plum-500 text-white border-plum-500",
+    default: "bg-poppy-500 text-white border-poppy-500",
+    category: "bg-amber-500 text-white border-amber-500",
+    season: "bg-leaf-500 text-white border-leaf-500",
+    occasion: "bg-petal-500 text-white border-petal-500",
+    custom: "bg-plum-500 text-white border-plum-500",
     collection: "bg-sky2-500 text-white border-sky2-500",
-    status:     "bg-ink-500 text-white border-ink-500",
-    brand:      "bg-petal-600 text-white border-petal-600",
-    year:       "bg-buttercup-500 text-white border-buttercup-500",
+    status: "bg-ink-500 text-white border-ink-500",
+    brand: "bg-petal-600 text-white border-petal-600",
+    year: "bg-buttercup-500 text-white border-buttercup-500",
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full shadow-pop ${tones[tone]}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full shadow-pop ${tones[tone]}`}
+    >
       <span className="inline-flex items-center gap-1.5">{children}</span>
       <button
         onClick={onRemove}
@@ -883,9 +1445,13 @@ function SectionLabel({ children, count }) {
   return (
     <div className="flex items-center gap-3 mb-4">
       <span className="w-2 h-2 rounded-full bg-poppy-500"></span>
-      <h2 className="font-display font-bold text-xl text-ink-800">{children}</h2>
+      <h2 className="font-display font-bold text-xl text-ink-800">
+        {children}
+      </h2>
       {count !== undefined && (
-        <span className="text-[11px] font-bold tracking-widest uppercase text-poppy-600 bg-poppy-50 px-2 py-0.5 rounded-full">{count}</span>
+        <span className="text-[11px] font-bold tracking-widest uppercase text-poppy-600 bg-poppy-50 px-2 py-0.5 rounded-full">
+          {count}
+        </span>
       )}
       <div className="flex-1 h-px bg-cream-200"></div>
     </div>
@@ -903,10 +1469,10 @@ function useDragReorder(onCommit) {
   const [dragIndex, setDragIndex] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
   const grabOffsetRef = useRef({ x: 0, y: 0 }); // pointer offset from card top-left at grab time
-  const startRectRef = useRef(null);             // card dimensions at grab time
+  const startRectRef = useRef(null); // card dimensions at grab time
   const lastPointerRef = useRef({ x: 0, y: 0 }); // current pointer (no state = no re-renders)
-  const ghostRef = useRef(null);                  // attached to the ghost DOM node
-  const pendingRef = useRef(null);                // pending drag before movement threshold
+  const ghostRef = useRef(null); // attached to the ghost DOM node
+  const pendingRef = useRef(null); // pending drag before movement threshold
 
   const register = (index, el) => {
     if (el) itemRefs.current.set(index, el);
@@ -917,7 +1483,12 @@ function useDragReorder(onCommit) {
     for (const [idx, el] of itemRefs.current.entries()) {
       if (!el) continue;
       const r = el.getBoundingClientRect();
-      if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+      if (
+        clientX >= r.left &&
+        clientX <= r.right &&
+        clientY >= r.top &&
+        clientY <= r.bottom
+      ) {
         return idx;
       }
     }
@@ -927,7 +1498,8 @@ function useDragReorder(onCommit) {
   useEffect(() => {
     if (dragIndex === null) return;
     const handleMove = (e) => {
-      const x = e.clientX, y = e.clientY;
+      const x = e.clientX,
+        y = e.clientY;
       lastPointerRef.current = { x, y };
       if (ghostRef.current) {
         const tx = x - grabOffsetRef.current.x;
@@ -945,14 +1517,17 @@ function useDragReorder(onCommit) {
       setHoverIndex(null);
       if (onCommit && from !== null) onCommit(from, to);
     };
-    const handleCancel = () => { setDragIndex(null); setHoverIndex(null); };
-    window.addEventListener('pointermove', handleMove, { passive: false });
-    window.addEventListener('pointerup', handleUp);
-    window.addEventListener('pointercancel', handleCancel);
+    const handleCancel = () => {
+      setDragIndex(null);
+      setHoverIndex(null);
+    };
+    window.addEventListener("pointermove", handleMove, { passive: false });
+    window.addEventListener("pointerup", handleUp);
+    window.addEventListener("pointercancel", handleCancel);
     return () => {
-      window.removeEventListener('pointermove', handleMove);
-      window.removeEventListener('pointerup', handleUp);
-      window.removeEventListener('pointercancel', handleCancel);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener("pointercancel", handleCancel);
     };
   }, [dragIndex, hoverIndex, onCommit]);
 
@@ -991,18 +1566,30 @@ function useDragReorder(onCommit) {
         activate(me);
       }
     };
-    const onPendingEnd = () => { cleanup(); pendingRef.current = null; };
-    const cleanup = () => {
-      window.removeEventListener('pointermove', onPendingMove);
-      window.removeEventListener('pointerup', onPendingEnd);
-      window.removeEventListener('pointercancel', onPendingEnd);
+    const onPendingEnd = () => {
+      cleanup();
+      pendingRef.current = null;
     };
-    window.addEventListener('pointermove', onPendingMove, { passive: false });
-    window.addEventListener('pointerup', onPendingEnd);
-    window.addEventListener('pointercancel', onPendingEnd);
+    const cleanup = () => {
+      window.removeEventListener("pointermove", onPendingMove);
+      window.removeEventListener("pointerup", onPendingEnd);
+      window.removeEventListener("pointercancel", onPendingEnd);
+    };
+    window.addEventListener("pointermove", onPendingMove, { passive: false });
+    window.addEventListener("pointerup", onPendingEnd);
+    window.addEventListener("pointercancel", onPendingEnd);
   };
 
-  return { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown };
+  return {
+    register,
+    dragIndex,
+    hoverIndex,
+    ghostRef,
+    startRectRef,
+    grabOffsetRef,
+    lastPointerRef,
+    onHandlePointerDown,
+  };
 }
 
 // Translate a reorder within a (possibly filtered) visible list into a new master array,
@@ -1012,16 +1599,16 @@ function reorderByVisible(master, visibleIds, fromVisible, toVisible) {
   if (fromVisible === toVisible) return master;
   const movingId = visibleIds[fromVisible];
   if (movingId == null) return master;
-  const fromIdx = master.findIndex(x => x.id === movingId);
+  const fromIdx = master.findIndex((x) => x.id === movingId);
   if (fromIdx === -1) return master;
   const moving = master[fromIdx];
-  const without = master.filter(x => x.id !== movingId);
+  const without = master.filter((x) => x.id !== movingId);
   const targetVisibleId = visibleIds[toVisible];
   let toIdx;
   if (targetVisibleId == null || targetVisibleId === movingId) {
     toIdx = fromIdx;
   } else {
-    const targetIdx = without.findIndex(x => x.id === targetVisibleId);
+    const targetIdx = without.findIndex((x) => x.id === targetVisibleId);
     toIdx = fromVisible < toVisible ? targetIdx + 1 : targetIdx;
   }
   const next = [...without];
@@ -1033,23 +1620,33 @@ function reorderByVisible(master, visibleIds, fromVisible, toVisible) {
 function useInstallPrompt() {
   const [deferred, setDeferred] = useState(null);
   const [installed, setInstalled] = useState(
-    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone
+    window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone,
   );
   useEffect(() => {
-    const onBeforeInstall = (e) => { e.preventDefault(); setDeferred(e); };
-    const onInstalled = () => { setInstalled(true); setDeferred(null); };
-    window.addEventListener('beforeinstallprompt', onBeforeInstall);
-    window.addEventListener('appinstalled', onInstalled);
+    const onBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferred(e);
+    };
+    const onInstalled = () => {
+      setInstalled(true);
+      setDeferred(null);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-      window.removeEventListener('appinstalled', onInstalled);
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
   const promptInstall = async () => {
     if (!deferred) return false;
     deferred.prompt();
     const { outcome } = await deferred.userChoice;
-    if (outcome === 'accepted') { setDeferred(null); return true; }
+    if (outcome === "accepted") {
+      setDeferred(null);
+      return true;
+    }
     return false;
   };
   return { canInstall: !!deferred && !installed, installed, promptInstall };
@@ -1069,33 +1666,64 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
     else setShowHelp(true);
   };
   const features = [
-    { Icon: I.shirt,      tone: "text-poppy-600 bg-poppy-100", title: "Your closet",  desc: "Photograph and organize everything you own." },
-    { Icon: I.sunglasses, tone: "text-petal-600 bg-petal-100", title: "Looks",        desc: "Combine pieces into outfits worth keeping." },
-    { Icon: I.suitcase,   tone: "text-sky2-600 bg-sky2-100",   title: "Collections",  desc: "Packing lists, capsules, and seasonal rotations." },
+    {
+      Icon: I.shirt,
+      tone: "text-poppy-600 bg-poppy-100",
+      title: "Your closet",
+      desc: "Photograph and organize everything you own.",
+    },
+    {
+      Icon: I.sunglasses,
+      tone: "text-petal-600 bg-petal-100",
+      title: "Looks",
+      desc: "Combine pieces into outfits worth keeping.",
+    },
+    {
+      Icon: I.suitcase,
+      tone: "text-sky2-600 bg-sky2-100",
+      title: "Collections",
+      desc: "Packing lists, capsules, and seasonal rotations.",
+    },
   ];
   return (
     <div
       className="min-h-screen bg-cream-50 poppy-wash text-ink-900 flex flex-col"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
     >
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 w-full max-w-md mx-auto text-center fade-up">
         <div className="w-20 h-20 rounded-full bg-poppy-500 flex items-center justify-center bloom shadow-poppy overflow-hidden mb-6">
           <PoppyMark />
         </div>
-        <h1 className="font-display font-bold text-5xl sm:text-6xl leading-[1.05] mb-3">Poppy</h1>
+        <h1 className="font-display font-bold text-5xl sm:text-6xl leading-[1.05] mb-3">
+          Poppy
+        </h1>
         <p className="font-display text-2xl sm:text-3xl leading-tight mb-3">
           <em className="text-poppy-600">Cultivate</em> your closet.
         </p>
         <p className="text-sm text-ink-500 mb-8 text-left">
-          Catalog your wardrobe and shape it into looks and collections. Everything stays on your device — no ads, no subscriptions, no trackers.
+          Catalog your wardrobe and shape it into looks and collections.
+          Everything stays on your device — no ads, no subscriptions, no
+          trackers.
         </p>
 
         <div className="w-full space-y-2.5 text-left mb-8">
           {features.map(({ Icon, tone, title, desc }) => (
-            <div key={title} className="flex items-center gap-3 bg-white/70 border-2 border-cream-100 rounded-2xl p-3 shadow-card">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tone}`}><Icon size={18} /></div>
+            <div
+              key={title}
+              className="flex items-center gap-3 bg-white/70 border-2 border-cream-100 rounded-2xl p-3 shadow-card"
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tone}`}
+              >
+                <Icon size={18} />
+              </div>
               <div className="min-w-0">
-                <p className="font-display font-bold text-base leading-tight text-ink-900">{title}</p>
+                <p className="font-display font-bold text-base leading-tight text-ink-900">
+                  {title}
+                </p>
                 <p className="text-xs text-ink-500 leading-snug">{desc}</p>
               </div>
             </div>
@@ -1113,11 +1741,22 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
           <div className="w-full mt-3 bg-white border-2 border-cream-100 rounded-2xl p-4 text-sm text-ink-600 shadow-card fade-up">
             {isIOS ? (
               <>
-                <p className="font-bold text-ink-800 mb-1 flex items-center justify-center gap-2"><I.share size={15} /> Add to Home Screen</p>
-                <p>In Safari, tap the <span className="font-bold">Share</span> button, then <span className="font-bold">"Add to Home Screen"</span> to install Poppy.</p>
+                <p className="font-bold text-ink-800 mb-1 flex items-center justify-center gap-2">
+                  <I.share size={15} /> Add to Home Screen
+                </p>
+                <p>
+                  In Safari, tap the <span className="font-bold">Share</span>{" "}
+                  button, then{" "}
+                  <span className="font-bold">"Add to Home Screen"</span> to
+                  install Poppy.
+                </p>
               </>
             ) : (
-              <p>To install, open your browser's menu and choose <span className="font-bold">"Install Poppy"</span> or <span className="font-bold">"Add to Home Screen"</span>.</p>
+              <p>
+                To install, open your browser's menu and choose{" "}
+                <span className="font-bold">"Install Poppy"</span> or{" "}
+                <span className="font-bold">"Add to Home Screen"</span>.
+              </p>
             )}
           </div>
         )}
@@ -1151,18 +1790,25 @@ function ClosetApp() {
   const [headerAction, setHeaderAction] = useState(null);
   const [activeCollection, setActiveCollection] = useState(null); // currently selected collection id (closet filter)
   const [scrollToOutfitId, setScrollToOutfitId] = useState(null);
-  const [theme, setTheme] = useState(() => lsGet(STORAGE_KEYS.theme, 'spring'));
+  const [theme, setTheme] = useState(() => lsGet(STORAGE_KEYS.theme, "spring"));
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme === 'winter' ? 'winter' : '';
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'winter' ? '#D71029' : '#FF5A36');
+    document.documentElement.dataset.theme = theme === "winter" ? "winter" : "";
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "winter" ? "#D71029" : "#FF5A36");
     lsSet(STORAGE_KEYS.theme, theme);
   }, [theme]);
 
-  useEffect(() => { setHeaderAction(null); window.scrollTo(0, 0); }, [view]);
+  useEffect(() => {
+    setHeaderAction(null);
+    window.scrollTo(0, 0);
+  }, [view]);
   const { canInstall, installed, promptInstall } = useInstallPrompt();
-  const [splashDismissed, setSplashDismissed] = useState(() => lsGet(STORAGE_KEYS.splashDismissed, false));
+  const [splashDismissed, setSplashDismissed] = useState(() =>
+    lsGet(STORAGE_KEYS.splashDismissed, false),
+  );
 
   // Load — seed if first run, importing SEED_ITEMS + SEED_IMAGES from seed.js (loaded by index.html)
   useEffect(() => {
@@ -1172,22 +1818,40 @@ function ClosetApp() {
       // so it never blocks the initial render.
       ensurePersistentStorage();
       const seeded = lsGet(STORAGE_KEYS.seeded, false);
-      if (!seeded && typeof SEED_ITEMS !== 'undefined' && typeof SEED_IMAGES !== 'undefined') {
-        const seedItems = SEED_ITEMS.map(i => ({ ...i, custom: [], status: "owned", brand: "" }));
+      if (
+        !seeded &&
+        typeof SEED_ITEMS !== "undefined" &&
+        typeof SEED_IMAGES !== "undefined"
+      ) {
+        const seedItems = SEED_ITEMS.map((i) => ({
+          ...i,
+          custom: [],
+          status: "owned",
+          brand: "",
+        }));
         lsSet(STORAGE_KEYS.items, seedItems);
         // Seed images: convert each data URL to a Blob in IDB. Mark images as
         // already migrated so we don't try to migrate legacy localStorage data
         // on a fresh install.
         const seedEntries = [];
         for (const [id, dataUrl] of Object.entries(SEED_IMAGES)) {
-          try { seedEntries.push([id, dataUrlToBlob(dataUrl)]); }
-          catch (e) { Log.error('seed.decodeFailed', { id, error: String(e) }); }
+          try {
+            seedEntries.push([id, dataUrlToBlob(dataUrl)]);
+          } catch (e) {
+            Log.error("seed.decodeFailed", { id, error: String(e) });
+          }
         }
         if (seedEntries.length) {
-          try { await IDB.putMany(seedEntries); }
-          catch (e) { Log.error('seed.writeFailed', e); }
+          try {
+            await IDB.putMany(seedEntries);
+          } catch (e) {
+            Log.error("seed.writeFailed", e);
+          }
         }
-        Log.info('seed.done', { items: seedItems.length, photos: seedEntries.length });
+        Log.info("seed.done", {
+          items: seedItems.length,
+          photos: seedEntries.length,
+        });
         lsSet(STORAGE_KEYS.outfits, []);
         lsSet(STORAGE_KEYS.customTags, []);
         lsSet(STORAGE_KEYS.brands, []);
@@ -1202,10 +1866,16 @@ function ClosetApp() {
       // Migration: backfill status="owned" and brand="" on any existing items that pre-date these fields
       const rawItems = lsGet(STORAGE_KEYS.items, []);
       let migrated = false;
-      const items2 = rawItems.map(i => {
+      const items2 = rawItems.map((i) => {
         const next = { ...i };
-        if (!next.status) { next.status = "owned"; migrated = true; }
-        if (next.brand === undefined) { next.brand = ""; migrated = true; }
+        if (!next.status) {
+          next.status = "owned";
+          migrated = true;
+        }
+        if (next.brand === undefined) {
+          next.brand = "";
+          migrated = true;
+        }
         return next;
       });
       if (migrated) lsSet(STORAGE_KEYS.items, items2);
@@ -1216,11 +1886,18 @@ function ClosetApp() {
       // Load summary — recorded every launch. The key health signal: if items
       // survive but photos are 0, the browser has evicted the IndexedDB store.
       const photoCount = Object.keys(urlMap).length;
-      const itemsMissingPhoto = items2.filter(it => !urlMap[it.id]).length;
+      const itemsMissingPhoto = items2.filter((it) => !urlMap[it.id]).length;
       if (items2.length > 0 && photoCount === 0) {
-        Log.warn('load.photosMissing', { items: items2.length, photos: photoCount });
+        Log.warn("load.photosMissing", {
+          items: items2.length,
+          photos: photoCount,
+        });
       } else {
-        Log.info('load', { items: items2.length, photos: photoCount, itemsMissingPhoto });
+        Log.info("load", {
+          items: items2.length,
+          photos: photoCount,
+          itemsMissingPhoto,
+        });
       }
 
       if (cancelled) return;
@@ -1232,23 +1909,40 @@ function ClosetApp() {
       setCollections(lsGet(STORAGE_KEYS.collections, []));
       setLoaded(true);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const saveItems = (n) => { setItems(n); lsSet(STORAGE_KEYS.items, n); };
-  const saveOutfits = (n) => { setOutfits(n); lsSet(STORAGE_KEYS.outfits, n); };
-  const saveCustomTags = (n) => { setCustomTags(n); lsSet(STORAGE_KEYS.customTags, n); };
-  const saveBrands = (n) => { setBrands(n); lsSet(STORAGE_KEYS.brands, n); };
-  const saveCollections = (n) => { setCollections(n); lsSet(STORAGE_KEYS.collections, n); };
+  const saveItems = (n) => {
+    setItems(n);
+    lsSet(STORAGE_KEYS.items, n);
+  };
+  const saveOutfits = (n) => {
+    setOutfits(n);
+    lsSet(STORAGE_KEYS.outfits, n);
+  };
+  const saveCustomTags = (n) => {
+    setCustomTags(n);
+    lsSet(STORAGE_KEYS.customTags, n);
+  };
+  const saveBrands = (n) => {
+    setBrands(n);
+    lsSet(STORAGE_KEYS.brands, n);
+  };
+  const saveCollections = (n) => {
+    setCollections(n);
+    lsSet(STORAGE_KEYS.collections, n);
+  };
 
   // Image writes go to IDB; React state holds object URLs only.
   const putImage = async (id, blob) => {
     try {
       await IDB.put(id, blob);
       const url = ObjectUrlCache.set(id, blob); // revokes any old URL for this id
-      setImages(prev => ({ ...prev, [id]: url }));
+      setImages((prev) => ({ ...prev, [id]: url }));
     } catch (e) {
-      Log.error('putImage.failed', { id, error: String(e) });
+      Log.error("putImage.failed", { id, error: String(e) });
       if (!window.__quotaWarned) {
         window.__quotaWarned = true;
         alert("Couldn't save that image. You may be out of device storage.");
@@ -1256,9 +1950,17 @@ function ClosetApp() {
     }
   };
   const deleteImage = async (id) => {
-    try { await IDB.delete(id); } catch (e) { Log.error('deleteImage.failed', { id, error: String(e) }); }
+    try {
+      await IDB.delete(id);
+    } catch (e) {
+      Log.error("deleteImage.failed", { id, error: String(e) });
+    }
     ObjectUrlCache.delete(id);
-    setImages(prev => { const n = { ...prev }; delete n[id]; return n; });
+    setImages((prev) => {
+      const n = { ...prev };
+      delete n[id];
+      return n;
+    });
   };
   // For import: write a map of {id: dataUrl} into IDB, optionally clearing first.
   // Writes each image in its own transaction so that one bad/oversized blob (or
@@ -1272,29 +1974,42 @@ function ClosetApp() {
         const existingIds = await IDB.keys();
         for (const id of existingIds) ObjectUrlCache.delete(id);
         await IDB.clear();
-      } catch (e) { Log.error('import.clearFailed', e); }
+      } catch (e) {
+        Log.error("import.clearFailed", e);
+      }
     }
     const ids = Object.keys(dataUrlMap || {});
     let written = 0;
     const failed = [];
     for (const id of ids) {
       const dataUrl = dataUrlMap[id];
-      if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) { failed.push(id); continue; }
+      if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) {
+        failed.push(id);
+        continue;
+      }
       let blob;
-      try { blob = dataUrlToBlob(dataUrl); }
-      catch (e) { Log.error('import.decodeFailed', { id, error: String(e) }); failed.push(id); continue; }
+      try {
+        blob = dataUrlToBlob(dataUrl);
+      } catch (e) {
+        Log.error("import.decodeFailed", { id, error: String(e) });
+        failed.push(id);
+        continue;
+      }
       try {
         await IDB.put(id, blob);
         ObjectUrlCache.set(id, blob);
         written++;
       } catch (e) {
-        Log.error('import.writeFailed', { id, error: String(e) });
+        Log.error("import.writeFailed", { id, error: String(e) });
         failed.push(id);
       }
     }
     setImages(ObjectUrlCache.snapshot());
     const result = { total: ids.length, written, failed: failed.length };
-    Log[failed.length ? 'warn' : 'info']('import.done', { strategy: clearFirst ? 'replace' : 'merge', ...result });
+    Log[failed.length ? "warn" : "info"]("import.done", {
+      strategy: clearFirst ? "replace" : "merge",
+      ...result,
+    });
     return { total: ids.length, written, failed };
   };
 
@@ -1305,7 +2020,10 @@ function ClosetApp() {
       <SplashScreen
         canInstall={canInstall}
         onInstall={promptInstall}
-        onContinue={() => { lsSet(STORAGE_KEYS.splashDismissed, true); setSplashDismissed(true); }}
+        onContinue={() => {
+          lsSet(STORAGE_KEYS.splashDismissed, true);
+          setSplashDismissed(true);
+        }}
       />
     );
   }
@@ -1316,7 +2034,9 @@ function ClosetApp() {
         <div className="w-14 h-14 rounded-full bg-poppy-500 flex items-center justify-center bloom shadow-poppy overflow-hidden">
           <PoppyMark />
         </div>
-        <div className="text-ink-500 text-xs font-bold tracking-[0.2em] uppercase">Loading...</div>
+        <div className="text-ink-500 text-xs font-bold tracking-[0.2em] uppercase">
+          Loading...
+        </div>
       </div>
     );
   }
@@ -1329,7 +2049,9 @@ function ClosetApp() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <I.install size={16} className="shrink-0" />
-              <span className="text-[11px] sm:text-xs font-bold tracking-wide truncate">Install Poppy for a faster, full-screen closet.</span>
+              <span className="text-[11px] sm:text-xs font-bold tracking-wide truncate">
+                Install Poppy for a faster, full-screen closet.
+              </span>
             </div>
             <button
               onClick={promptInstall}
@@ -1348,8 +2070,12 @@ function ClosetApp() {
               <PoppyMark />
             </div>
             <div>
-              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-ink-900 leading-none">Poppy</h1>
-              <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-poppy-600 hidden sm:inline">Cultivate Your Closet</span>
+              <h1 className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-ink-900 leading-none">
+                Poppy
+              </h1>
+              <span className="text-[9px] font-bold tracking-[0.25em] uppercase text-poppy-600 hidden sm:inline">
+                Cultivate Your Closet
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1357,9 +2083,11 @@ function ClosetApp() {
               <button
                 onClick={headerAction.onClick}
                 className={`flex items-center gap-1.5 px-3.5 py-2 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop ${
-                  headerAction.tone === 'petal' ? 'bg-petal-500' :
-                  headerAction.tone === 'sky2' ? 'bg-sky2-500' :
-                  'bg-poppy-500'
+                  headerAction.tone === "petal"
+                    ? "bg-petal-500"
+                    : headerAction.tone === "sky2"
+                      ? "bg-sky2-500"
+                      : "bg-poppy-500"
                 }`}
               >
                 <I.plus size={12} /> {headerAction.label}
@@ -1367,7 +2095,7 @@ function ClosetApp() {
             )}
             <div className="relative">
               <button
-                onClick={() => setShowMenu(m => !m)}
+                onClick={() => setShowMenu((m) => !m)}
                 aria-label="Menu"
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-cream-50 border-2 border-cream-100 text-ink-600 active:scale-95"
               >
@@ -1375,32 +2103,52 @@ function ClosetApp() {
               </button>
               {showMenu && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowMenu(false)}
+                  />
                   <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-2xl shadow-card-hi border-2 border-cream-100 overflow-hidden min-w-[180px]">
                     <button
-                      onClick={() => { setTheme(t => t === 'winter' ? 'spring' : 'winter'); setShowMenu(false); }}
+                      onClick={() => {
+                        setTheme((t) => (t === "winter" ? "spring" : "winter"));
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
-                      {theme === 'winter' ? <I.sun size={15} className="shrink-0" /> : <I.sparkles size={15} className="shrink-0" />}
-                      {theme === 'winter' ? 'Spring theme' : 'Winter theme'}
+                      {theme === "winter" ? (
+                        <I.sun size={15} className="shrink-0" />
+                      ) : (
+                        <I.sparkles size={15} className="shrink-0" />
+                      )}
+                      {theme === "winter" ? "Spring theme" : "Winter theme"}
                     </button>
                     <div className="h-px bg-cream-100 mx-3" />
                     <button
-                      onClick={() => { setShowStats(true); setShowMenu(false); }}
+                      onClick={() => {
+                        setShowStats(true);
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
                       <I.pie size={15} className="shrink-0" /> Stats
                     </button>
                     <div className="h-px bg-cream-100 mx-3" />
                     <button
-                      onClick={() => { setShowBackup(true); setShowMenu(false); }}
+                      onClick={() => {
+                        setShowBackup(true);
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
-                      <I.archive size={15} className="shrink-0" /> Save &amp; restore
+                      <I.archive size={15} className="shrink-0" /> Save &amp;
+                      restore
                     </button>
                     <div className="h-px bg-cream-100 mx-3" />
                     <button
-                      onClick={() => { setShowAbout(true); setShowMenu(false); }}
+                      onClick={() => {
+                        setShowAbout(true);
+                        setShowMenu(false);
+                      }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
                       <I.help size={15} className="shrink-0" /> About
@@ -1415,29 +2163,59 @@ function ClosetApp() {
 
       {view === "closet" && (
         <ClosetView
-          items={items} images={images} customTags={customTags} brands={brands} collections={collections} outfits={outfits}
-          activeCollection={activeCollection} onSetActiveCollection={setActiveCollection}
-          onSaveItems={saveItems} onPutImage={putImage} onDeleteImage={deleteImage} onSaveCustomTags={saveCustomTags} onSaveBrands={saveBrands} onSaveCollections={saveCollections} onSaveOutfits={saveOutfits}
+          items={items}
+          images={images}
+          customTags={customTags}
+          brands={brands}
+          collections={collections}
+          outfits={outfits}
+          activeCollection={activeCollection}
+          onSetActiveCollection={setActiveCollection}
+          onSaveItems={saveItems}
+          onPutImage={putImage}
+          onDeleteImage={deleteImage}
+          onSaveCustomTags={saveCustomTags}
+          onSaveBrands={saveBrands}
+          onSaveCollections={saveCollections}
+          onSaveOutfits={saveOutfits}
           onSetHeaderAction={setHeaderAction}
           onOpenStats={() => setShowStats(true)}
         />
       )}
       {view === "collections" && (
         <CollectionsView
-          collections={collections} items={items} images={images} outfits={outfits}
+          collections={collections}
+          items={items}
+          images={images}
+          outfits={outfits}
           onSave={saveCollections}
-          onViewCollection={(id) => { setActiveCollection(id); setView("closet"); }}
-          onOpenOutfit={(id) => { setScrollToOutfitId(id); setView("outfits"); }}
+          onViewCollection={(id) => {
+            setActiveCollection(id);
+            setView("closet");
+          }}
+          onOpenOutfit={(id) => {
+            setScrollToOutfitId(id);
+            setView("outfits");
+          }}
           onSetHeaderAction={setHeaderAction}
         />
       )}
       {view === "outfits" && (
         <OutfitsView
-          outfits={outfits} items={items} images={images}
+          outfits={outfits}
+          items={items}
+          images={images}
           onSave={saveOutfits}
-          onPutImage={putImage} onDeleteImage={deleteImage}
-          onNewOutfit={() => { setEditingOutfit(null); setBuilderOpen(true); }}
-          onEditOutfit={(o) => { setEditingOutfit(o); setBuilderOpen(true); }}
+          onPutImage={putImage}
+          onDeleteImage={deleteImage}
+          onNewOutfit={() => {
+            setEditingOutfit(null);
+            setBuilderOpen(true);
+          }}
+          onEditOutfit={(o) => {
+            setEditingOutfit(o);
+            setBuilderOpen(true);
+          }}
           scrollToId={scrollToOutfitId}
           onScrolled={() => setScrollToOutfitId(null)}
           onSetHeaderAction={setHeaderAction}
@@ -1445,29 +2223,60 @@ function ClosetApp() {
       )}
       {builderOpen && (
         <BuilderView
-          items={items} images={images} collections={collections}
+          items={items}
+          images={images}
+          collections={collections}
           outfit={editingOutfit}
           onSaveOutfit={(o) => {
             if (editingOutfit) {
-              const next = outfits.map(x => x.id === o.id ? { ...o, updatedAt: Date.now() } : x);
+              const next = outfits.map((x) =>
+                x.id === o.id ? { ...o, updatedAt: Date.now() } : x,
+              );
               saveOutfits(next);
             } else {
-              const next = [{ ...o, id: `o_${Date.now()}`, createdAt: Date.now() }, ...outfits];
+              const next = [
+                { ...o, id: `o_${Date.now()}`, createdAt: Date.now() },
+                ...outfits,
+              ];
               saveOutfits(next);
             }
             setEditingOutfit(null);
             setBuilderOpen(false);
           }}
-          onCancel={() => { setEditingOutfit(null); setBuilderOpen(false); }}
+          onCancel={() => {
+            setEditingOutfit(null);
+            setBuilderOpen(false);
+          }}
         />
       )}
 
       {/* BOTTOM NAV — mobile-first, Poppy-style: chunky, colorful, with a soft pill on the active tab */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-cream-100 shadow-card-hi"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="max-w-6xl mx-auto grid grid-cols-3 px-3 pt-2 pb-1">
-          <BottomTab IconC={I.shirt}  label="Closet"      tone="poppy"  active={view === "closet"}      onClick={() => setView("closet")} />
-          <BottomTab IconC={I.sunglasses} label="Looks"       tone="petal"  active={view === "outfits"}     onClick={() => setView("outfits")} />
-          <BottomTab IconC={I.suitcase}   label="Collections" tone="sky2"   active={view === "collections"} onClick={() => setView("collections")} />
+          <BottomTab
+            IconC={I.shirt}
+            label="Closet"
+            tone="poppy"
+            active={view === "closet"}
+            onClick={() => setView("closet")}
+          />
+          <BottomTab
+            IconC={I.sunglasses}
+            label="Looks"
+            tone="petal"
+            active={view === "outfits"}
+            onClick={() => setView("outfits")}
+          />
+          <BottomTab
+            IconC={I.suitcase}
+            label="Collections"
+            tone="sky2"
+            active={view === "collections"}
+            onClick={() => setView("collections")}
+          />
         </div>
       </nav>
 
@@ -1482,9 +2291,7 @@ function ClosetApp() {
         />
       )}
 
-      {showAbout && (
-        <AboutModal onClose={() => setShowAbout(false)} />
-      )}
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
 
       {showBackup && (
         <BackupModal
@@ -1501,7 +2308,9 @@ function ClosetApp() {
             saveCustomTags(next.customTags);
             if (next.brands) saveBrands(next.brands);
             if (next.collections) saveCollections(next.collections);
-            return await replaceAllImages(next.images, { clearFirst: strategy === 'replace' });
+            return await replaceAllImages(next.images, {
+              clearFirst: strategy === "replace",
+            });
           }}
         />
       )}
@@ -1512,9 +2321,9 @@ function ClosetApp() {
 function BottomTab({ IconC, label, active, onClick, count, tone = "poppy" }) {
   // Each tab has its own accent color, so the bar reads as a colorful row
   const toneMap = {
-    poppy: { bg: "bg-poppy-50",  text: "text-poppy-600",  pill: "bg-poppy-500" },
-    petal: { bg: "bg-petal-50",  text: "text-petal-600",  pill: "bg-petal-500" },
-    sky2:  { bg: "bg-sky2-50",   text: "text-sky2-600",   pill: "bg-sky2-500" },
+    poppy: { bg: "bg-poppy-50", text: "text-poppy-600", pill: "bg-poppy-500" },
+    petal: { bg: "bg-petal-50", text: "text-petal-600", pill: "bg-petal-500" },
+    sky2: { bg: "bg-sky2-50", text: "text-sky2-600", pill: "bg-sky2-500" },
   };
   const t = toneMap[tone] || toneMap.poppy;
   return (
@@ -1522,19 +2331,45 @@ function BottomTab({ IconC, label, active, onClick, count, tone = "poppy" }) {
       onClick={onClick}
       className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl transition-all ${active ? t.bg : "bg-transparent"} active:scale-95`}
     >
-      <div className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${active ? `${t.pill} text-white shadow-pop` : "text-ink-400"}`}>
+      <div
+        className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${active ? `${t.pill} text-white shadow-pop` : "text-ink-400"}`}
+      >
         <IconC size={20} stroke={active ? 2.4 : 2} />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 bg-poppy-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 leading-none border-2 border-white">{count}</span>
+          <span className="absolute -top-1 -right-1 bg-poppy-500 text-white text-[9px] font-bold rounded-full px-1.5 py-0.5 leading-none border-2 border-white">
+            {count}
+          </span>
         )}
       </div>
-      <span className={`text-[10px] font-bold tracking-[0.1em] uppercase ${active ? t.text : "text-ink-400"}`}>{label}</span>
+      <span
+        className={`text-[10px] font-bold tracking-[0.1em] uppercase ${active ? t.text : "text-ink-400"}`}
+      >
+        {label}
+      </span>
     </button>
   );
 }
 
 // --- CLOSET VIEW ----------------------------------------------------------
-function ClosetView({ items, images, customTags, brands, collections, outfits, activeCollection, onSetActiveCollection, onSaveItems, onPutImage, onDeleteImage, onSaveCustomTags, onSaveBrands, onSaveCollections, onSaveOutfits, onSetHeaderAction, onOpenStats }) {
+function ClosetView({
+  items,
+  images,
+  customTags,
+  brands,
+  collections,
+  outfits,
+  activeCollection,
+  onSetActiveCollection,
+  onSaveItems,
+  onPutImage,
+  onDeleteImage,
+  onSaveCustomTags,
+  onSaveBrands,
+  onSaveCollections,
+  onSaveOutfits,
+  onSetHeaderAction,
+  onOpenStats,
+}) {
   const [activeCategories, setActiveCategories] = useState([]);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
@@ -1549,11 +2384,23 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     const el = addButtonRef.current;
     if (!el || !onSetHeaderAction) return;
     const obs = new IntersectionObserver(
-      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "Add a Piece", tone: "poppy", onClick: () => setAdding(true) }),
-      { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" }
+      ([entry]) =>
+        onSetHeaderAction(
+          entry.isIntersecting
+            ? null
+            : {
+                label: "Add a Piece",
+                tone: "poppy",
+                onClick: () => setAdding(true),
+              },
+        ),
+      { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" },
     );
     obs.observe(el);
-    return () => { obs.disconnect(); onSetHeaderAction(null); };
+    return () => {
+      obs.disconnect();
+      onSetHeaderAction(null);
+    };
   }, []);
   const [viewing, setViewing] = useState(null);
   const [adding, setAdding] = useState(false);
@@ -1564,46 +2411,100 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
   const [dragMode, setDragMode] = useState(false);
   const setActiveCollection = onSetActiveCollection;
 
-  const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+  const toggle = (list, setList, v) =>
+    setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
-  const exitSelectMode = () => { setSelectMode(false); setSelectedIds(new Set()); setBulkSheet(null); };
-  const enterDragMode = () => { setDragMode(true); setSelectMode(false); setSelectedIds(new Set()); setBulkSheet(null); };
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+    setBulkSheet(null);
+  };
+  const enterDragMode = () => {
+    setDragMode(true);
+    setSelectMode(false);
+    setSelectedIds(new Set());
+    setBulkSheet(null);
+  };
   const toggleItemSelect = (id) => {
     const next = new Set(selectedIds);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelectedIds(next);
-    if (next.size === 0) { setSelectMode(false); setBulkSheet(null); }
-    else setSelectMode(true);
+    if (next.size === 0) {
+      setSelectMode(false);
+      setBulkSheet(null);
+    } else setSelectMode(true);
   };
 
-  const activeCollectionObj = activeCollection ? collections.find(c => c.id === activeCollection) : null;
+  const activeCollectionObj = activeCollection
+    ? collections.find((c) => c.id === activeCollection)
+    : null;
 
-  const filtered = useMemo(() => items.filter(it => {
-    if (activeCollectionObj && !activeCollectionObj.itemIds.includes(it.id)) return false;
-    if (activeStatuses.length && !activeStatuses.includes(it.status || "owned")) return false;
-    if (activeBrands.length && !activeBrands.includes(it.brand || "")) return false;
-    if (activeYears.length && !activeYears.includes(it.yearPurchased || "")) return false;
-    if (activeCategories.length && !activeCategories.includes(it.category)) return false;
-    if (activeSeasons.length && !activeSeasons.some(s => it.seasons?.includes(s))) return false;
-    if (activeOccasions.length && !activeOccasions.some(o => it.occasions?.includes(o))) return false;
-    if (activeCustom.length && !activeCustom.some(t => it.custom?.includes(t))) return false;
-    if (search && !it.name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }), [items, activeCollectionObj, activeStatuses, activeBrands, activeYears, activeCategories, activeSeasons, activeOccasions, activeCustom, search]);
+  const filtered = useMemo(
+    () =>
+      items.filter((it) => {
+        if (activeCollectionObj && !activeCollectionObj.itemIds.includes(it.id))
+          return false;
+        if (
+          activeStatuses.length &&
+          !activeStatuses.includes(it.status || "owned")
+        )
+          return false;
+        if (activeBrands.length && !activeBrands.includes(it.brand || ""))
+          return false;
+        if (activeYears.length && !activeYears.includes(it.yearPurchased || ""))
+          return false;
+        if (activeCategories.length && !activeCategories.includes(it.category))
+          return false;
+        if (
+          activeSeasons.length &&
+          !activeSeasons.some((s) => it.seasons?.includes(s))
+        )
+          return false;
+        if (
+          activeOccasions.length &&
+          !activeOccasions.some((o) => it.occasions?.includes(o))
+        )
+          return false;
+        if (
+          activeCustom.length &&
+          !activeCustom.some((t) => it.custom?.includes(t))
+        )
+          return false;
+        if (search && !it.name.toLowerCase().includes(search.toLowerCase()))
+          return false;
+        return true;
+      }),
+    [
+      items,
+      activeCollectionObj,
+      activeStatuses,
+      activeBrands,
+      activeYears,
+      activeCategories,
+      activeSeasons,
+      activeOccasions,
+      activeCustom,
+      search,
+    ],
+  );
 
   // Distinct purchase years present in the closet, most recent first
   const years = useMemo(
-    () => [...new Set(items.map(i => i.yearPurchased).filter(Boolean))].sort((a, b) => b.localeCompare(a)),
-    [items]
+    () =>
+      [...new Set(items.map((i) => i.yearPurchased).filter(Boolean))].sort(
+        (a, b) => b.localeCompare(a),
+      ),
+    [items],
   );
 
   // Custom tags actually applied to at least one item — unused tags don't surface in filters
   const usedCustomTags = useMemo(
-    () => customTags.filter(t => items.some(i => (i.custom || []).includes(t))),
-    [customTags, items]
+    () =>
+      customTags.filter((t) => items.some((i) => (i.custom || []).includes(t))),
+    [customTags, items],
   );
 
-  const selectAll = () => setSelectedIds(new Set(filtered.map(i => i.id)));
+  const selectAll = () => setSelectedIds(new Set(filtered.map((i) => i.id)));
 
   const handleAddItem = async (file) => {
     if (!file) return;
@@ -1611,7 +2512,11 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     const id = `i_${Date.now()}`;
     const newItem = {
       id,
-      name: file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "New Item",
+      name:
+        file.name
+          .replace(/\.[^.]+$/, "")
+          .replace(/[_-]/g, " ")
+          .replace(/\b\w/g, (c) => c.toUpperCase()) || "New Item",
       category: "top",
       seasons: [],
       occasions: [],
@@ -1627,20 +2532,26 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
   };
 
   const handleDelete = (id) => {
-    onSaveItems(items.filter(i => i.id !== id));
+    onSaveItems(items.filter((i) => i.id !== id));
     onDeleteImage(id);
     // Remove the deleted item from any collection it belongs to
-    onSaveCollections((collections || []).map(c => ({ ...c, itemIds: c.itemIds.filter(x => x !== id) })));
+    onSaveCollections(
+      (collections || []).map((c) => ({
+        ...c,
+        itemIds: c.itemIds.filter((x) => x !== id),
+      })),
+    );
     if (editing === id) setEditing(null);
   };
 
-  const handleUpdate = (updated) => onSaveItems(items.map(i => i.id === updated.id ? updated : i));
+  const handleUpdate = (updated) =>
+    onSaveItems(items.map((i) => (i.id === updated.id ? updated : i)));
 
   // Reorder within the visible filtered list. fromVisible/toVisible are indices into `filtered`.
   // We translate them into master-array positions, preserving the position of filtered-out items.
   const handleReorder = (fromVisible, toVisible) => {
     if (fromVisible === toVisible) return;
-    const visibleIds = filtered.map(i => i.id);
+    const visibleIds = filtered.map((i) => i.id);
     const movingId = visibleIds[fromVisible];
     if (!movingId) return;
 
@@ -1648,10 +2559,10 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     // We want it positioned just before the item currently at `toVisible` in the visible list,
     // unless we're moving down past it — in which case, after it.
     const targetVisibleId = visibleIds[toVisible];
-    const masterFromIndex = items.findIndex(i => i.id === movingId);
+    const masterFromIndex = items.findIndex((i) => i.id === movingId);
 
     // Remove the moving item from the master array first
-    const without = items.filter(i => i.id !== movingId);
+    const without = items.filter((i) => i.id !== movingId);
 
     // Find target's index in the new (without) array
     let masterToIndex;
@@ -1659,10 +2570,15 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
       // Should not normally happen, but fall back to original position
       masterToIndex = masterFromIndex;
     } else {
-      const targetIndexInWithout = without.findIndex(i => i.id === targetVisibleId);
+      const targetIndexInWithout = without.findIndex(
+        (i) => i.id === targetVisibleId,
+      );
       // If we moved DOWN (fromVisible < toVisible), the item should appear AFTER the target.
       // If we moved UP, it should appear BEFORE.
-      masterToIndex = fromVisible < toVisible ? targetIndexInWithout + 1 : targetIndexInWithout;
+      masterToIndex =
+        fromVisible < toVisible
+          ? targetIndexInWithout + 1
+          : targetIndexInWithout;
     }
 
     const next = [...without];
@@ -1670,76 +2586,135 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
     onSaveItems(next);
   };
 
-  const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
+  const {
+    register,
+    dragIndex,
+    hoverIndex,
+    ghostRef,
+    startRectRef,
+    grabOffsetRef,
+    lastPointerRef,
+    onHandlePointerDown,
+  } = useDragReorder(handleReorder);
 
   const counts = useMemo(() => {
     const src = filterCount > 0 ? filtered : items;
     const byCat = {};
-    CATEGORY_OPTIONS.forEach(c => { byCat[c] = src.filter(i => i.category === c).length; });
+    CATEGORY_OPTIONS.forEach((c) => {
+      byCat[c] = src.filter((i) => i.category === c).length;
+    });
     return { total: src.length, byCat };
   }, [items, filtered, filterCount]);
 
   const filterCount =
-    activeCategories.length
-    + activeSeasons.length
-    + activeOccasions.length
-    + activeCustom.length
-    + (activeCollection ? 1 : 0)
-    + (activeStatuses.length === 1 && activeStatuses[0] === "owned" ? 0 : 1)
-    + activeBrands.length
-    + activeYears.length;
+    activeCategories.length +
+    activeSeasons.length +
+    activeOccasions.length +
+    activeCustom.length +
+    (activeCollection ? 1 : 0) +
+    (activeStatuses.length === 1 && activeStatuses[0] === "owned" ? 0 : 1) +
+    activeBrands.length +
+    activeYears.length;
 
   return (
     <>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      <div className="fade-up">
-      <div className="mb-6 sm:mb-10">
-        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Your closet,</h2>
-        <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
-        <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-poppy-600">cultivated.</em></h3>
-        {!selectMode && <button
-            ref={addButtonRef}
-            onClick={() => setAdding(true)}
-            style={{flexShrink: 0}}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
-          >
-            <I.plus size={16} /> Add a Piece
-          </button>}
-        </div>
-        <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl flex items-center gap-2">
-          {(() => {
-            const labels = {top:"tops",bottom:"bottoms",dress:"dresses",outerwear:"outerwear",shoes:"shoes",accessory:"accessories"};
-            const visible = ["top","bottom"];
-            return <>
-              <span><span className="font-bold text-ink-800">{counts.total}</span> pieces{visible.map(c => <span key={c}> · <span className="font-bold text-ink-800">{counts.byCat[c]}</span> {labels[c]}</span>)}</span>
-            </>;
-          })()}
-          {onOpenStats && (
-            <button onClick={onOpenStats} aria-label="View stats" className="w-7 h-7 flex items-center justify-center rounded-full text-ink-400 active:bg-poppy-50 active:text-poppy-600 transition-colors">
-              <I.pie size={15} />
-            </button>
-          )}
-        </p>
-      </div>
-
-      {activeCollectionObj && activeCollectionObj.description && (
-        <p className="text-sm italic text-ink-500 mb-4">"{activeCollectionObj.description}"</p>
-      )}
-
-      {/* Add button / select mode bar */}
-      <div className="mb-3">
-        {selectMode  && (
-          <div className="flex items-center gap-3 py-1 bg-poppy-50 px-4 py-2.5 rounded-full">
-            <span className="text-sm font-bold text-poppy-700">{selectedIds.size} selected</span>
-            <button onClick={selectAll} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">All</button>
-            <button onClick={exitSelectMode} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">None</button>
+        <div className="fade-up">
+          <div className="mb-6 sm:mb-10">
+            <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">
+              Your closet,
+            </h2>
+            <div className="mb-6 sm:mb-10 flex items-end justify-between gap-4">
+              <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
+                <em className="text-poppy-600">cultivated.</em>
+              </h3>
+              {!selectMode && (
+                <button
+                  ref={addButtonRef}
+                  onClick={() => setAdding(true)}
+                  style={{ flexShrink: 0 }}
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
+                >
+                  <I.plus size={16} /> Add a Piece
+                </button>
+              )}
+            </div>
+            <p className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base max-w-xl flex items-center gap-2">
+              {(() => {
+                const labels = {
+                  top: "tops",
+                  bottom: "bottoms",
+                  dress: "dresses",
+                  outerwear: "outerwear",
+                  shoes: "shoes",
+                  accessory: "accessories",
+                };
+                const visible = ["top", "bottom"];
+                return (
+                  <>
+                    <span>
+                      <span className="font-bold text-ink-800">
+                        {counts.total}
+                      </span>{" "}
+                      pieces
+                      {visible.map((c) => (
+                        <span key={c}>
+                          {" "}
+                          ·{" "}
+                          <span className="font-bold text-ink-800">
+                            {counts.byCat[c]}
+                          </span>{" "}
+                          {labels[c]}
+                        </span>
+                      ))}
+                    </span>
+                  </>
+                );
+              })()}
+              {onOpenStats && (
+                <button
+                  onClick={onOpenStats}
+                  aria-label="View stats"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-ink-400 active:bg-poppy-50 active:text-poppy-600 transition-colors"
+                >
+                  <I.pie size={15} />
+                </button>
+              )}
+            </p>
           </div>
-        ) }
-      </div>
 
-      {/* Search + filter toggle */}
-      <div className="mb-4 flex gap-2">
-        {/* <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-cream-100 rounded-full min-w-0 shadow-card">
+          {activeCollectionObj && activeCollectionObj.description && (
+            <p className="text-sm italic text-ink-500 mb-4">
+              "{activeCollectionObj.description}"
+            </p>
+          )}
+
+          {/* Add button / select mode bar */}
+          <div className="mb-3">
+            {selectMode && (
+              <div className="flex items-center gap-3 py-1 bg-poppy-50 px-4 py-2.5 rounded-full">
+                <span className="text-sm font-bold text-poppy-700">
+                  {selectedIds.size} selected
+                </span>
+                <button
+                  onClick={selectAll}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700"
+                >
+                  All
+                </button>
+                <button
+                  onClick={exitSelectMode}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700"
+                >
+                  None
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Search + filter toggle */}
+          <div className="mb-4 flex gap-2">
+            {/* <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-cream-100 rounded-full min-w-0 shadow-card">
           <I.search size={15} className="text-poppy-500 shrink-0" />
           <input
             value={search}
@@ -1748,228 +2723,414 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
             className="flex-1 bg-transparent outline-none text-sm placeholder-ink-400 min-w-0 font-medium"
           />
         </div> */}
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
-        >
-          Filters{filterCount > 0 && ` · ${filterCount}`}
-        </button>
-        <button
-          onClick={() => dragMode ? setDragMode(false) : enterDragMode()}
-          aria-label={dragMode ? "Exit reorder mode" : "Reorder items"}
-          className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
-        >
-          {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
-        </button>
-      </div>
-
-      {/* Collapsible filters */}
-      {showFilters && (
-        <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
-          <FilterRow label="Status">
-            {STATUS_OPTIONS.map(s => (
-              <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</Chip>
-            ))}
-          </FilterRow>
-          {collections.length > 0 && (
-            <FilterRow label="Collection">
-              <Chip tone="collection" active={activeCollection === null} onClick={() => setActiveCollection(null)}>Entire Closet</Chip>
-              {collections.map(c => (
-                <Chip key={c.id} tone="collection" active={activeCollection === c.id} onClick={() => setActiveCollection(activeCollection === c.id ? null : c.id)}>
-                  {toTitle(c.name)}
-                </Chip>
-              ))}
-            </FilterRow>
-          )}
-          <FilterRow label="Category">
-            {CATEGORY_OPTIONS.map(c => (
-              <Chip key={c} tone="category" active={activeCategories.includes(c)} onClick={() => toggle(activeCategories, setActiveCategories, c)}>{c}</Chip>
-            ))}
-          </FilterRow>
-          <FilterRow label="Season">
-            {SEASON_OPTIONS.map(s => (
-              <Chip key={s} tone="season" active={activeSeasons.includes(s)} onClick={() => toggle(activeSeasons, setActiveSeasons, s)}>{s}</Chip>
-            ))}
-          </FilterRow>
-          <FilterRow label="Occasion">
-            {OCCASION_OPTIONS.map(o => (
-              <Chip key={o} tone="occasion" active={activeOccasions.includes(o)} onClick={() => toggle(activeOccasions, setActiveOccasions, o)}>{o}</Chip>
-            ))}
-          </FilterRow>
-          {brands.length > 0 && (
-            <FilterRow label="Brand">
-              {brands.slice().sort((a, b) => a.localeCompare(b)).map(b => (
-                <Chip key={b} tone="brand" active={activeBrands.includes(b)} onClick={() => toggle(activeBrands, setActiveBrands, b)}>{b}</Chip>
-              ))}
-            </FilterRow>
-          )}
-          {usedCustomTags.length > 0 && (
-            <FilterRow label="Custom">
-              {usedCustomTags.map(t => (
-                <Chip key={t} tone="custom" active={activeCustom.includes(t)} onClick={() => toggle(activeCustom, setActiveCustom, t)}>{t}</Chip>
-              ))}
-            </FilterRow>
-          )}
-          {years.length > 0 && (
-            <FilterRow label="Year">
-              {years.map(y => (
-                <Chip key={y} tone="year" active={activeYears.includes(y)} onClick={() => toggle(activeYears, setActiveYears, y)}>{y}</Chip>
-              ))}
-            </FilterRow>
-          )}
-          {filterCount > 0 && (
             <button
-              onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); setActiveYears([]); }}
-              className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
             >
-              Clear all
+              Filters{filterCount > 0 && ` · ${filterCount}`}
             </button>
-          )}
-        </div>
-      )}
-
-      {/* Active filters summary — shown when the drawer is closed */}
-      {!showFilters && filterCount > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          {activeCollection && activeCollectionObj && (
-            <RemovableChip tone="collection" onRemove={() => setActiveCollection(null)}>
-              <I.folder size={11} /> {toTitle(activeCollectionObj.name)}
-            </RemovableChip>
-          )}
-          {!(activeStatuses.length === 1 && activeStatuses[0] === "owned") && (
-            activeStatuses.length === 0
-              ? <RemovableChip tone="status" onRemove={() => setActiveStatuses(["owned"])}>All statuses</RemovableChip>
-              : activeStatuses.map(s => (
-                  <RemovableChip key={`st-${s}`} tone="status" onRemove={() => toggle(activeStatuses, setActiveStatuses, s)}>{s}</RemovableChip>
-                ))
-          )}
-          {activeBrands.map(b => (
-            <RemovableChip key={`b-${b}`} tone="brand" onRemove={() => toggle(activeBrands, setActiveBrands, b)}>
-              {b}
-            </RemovableChip>
-          ))}
-          {activeCategories.map(c => (
-            <RemovableChip key={`cat-${c}`} tone="category" onRemove={() => toggle(activeCategories, setActiveCategories, c)}>
-              {c}
-            </RemovableChip>
-          ))}
-          {activeSeasons.map(s => (
-            <RemovableChip key={`s-${s}`} tone="season" onRemove={() => toggle(activeSeasons, setActiveSeasons, s)}>
-              {s}
-            </RemovableChip>
-          ))}
-          {activeOccasions.map(o => (
-            <RemovableChip key={`o-${o}`} tone="occasion" onRemove={() => toggle(activeOccasions, setActiveOccasions, o)}>
-              {o}
-            </RemovableChip>
-          ))}
-          {activeCustom.map(t => (
-            <RemovableChip key={`c-${t}`} tone="custom" onRemove={() => toggle(activeCustom, setActiveCustom, t)}>
-              {t}
-            </RemovableChip>
-          ))}
-          {activeYears.map(y => (
-            <RemovableChip key={`y-${y}`} tone="year" onRemove={() => toggle(activeYears, setActiveYears, y)}>
-              {y}
-            </RemovableChip>
-          ))}
-          <button
-            onClick={() => { setActiveCategories([]); setActiveSeasons([]); setActiveOccasions([]); setActiveCustom([]); setActiveCollection(null); setActiveStatuses(["owned"]); setActiveBrands([]); setActiveYears([]); }}
-            className="text-[10px] tracking-[0.2em] uppercase text-ink-500 underline active:text-poppy-600 ml-1"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
-
-      {filterCount > 0 && (
-        <p className="text-xs text-ink-400 mb-3">Showing <span className="font-bold text-ink-600">{filtered.length}</span> of <span className="font-bold text-ink-600">{items.length}</span> pieces</p>
-      )}
-
-      <div className="flex-1 h-px bg-cream-200 mb-3"></div>
-
-      {filtered.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
-            <I.search size={26} className="text-poppy-500" />
+            <button
+              onClick={() => (dragMode ? setDragMode(false) : enterDragMode())}
+              aria-label={dragMode ? "Exit reorder mode" : "Reorder items"}
+              className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
+            >
+              {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
+            </button>
           </div>
-          <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">Try clearing a filter</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">
-          {filtered.map((item, i) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              image={images[item.id]}
-              onClick={dragMode ? undefined : () => setViewing(item.id)}
-              onSelectToggle={dragMode ? undefined : () => toggleItemSelect(item.id)}
-              isSelected={selectedIds.has(item.id)}
-              delay={Math.min(i, 16) * 25}
-              cardRef={(el) => register(i, el)}
-              reorderHandle={dragMode ? onHandlePointerDown(i) : null}
-              isDragging={dragMode && dragIndex === i}
-              isDropTarget={dragMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
-              compact={dragMode}
-            />
-          ))}
-        </div>
-      )}
 
-      </div>
+          {/* Collapsible filters */}
+          {showFilters && (
+            <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+              <FilterRow label="Status">
+                {STATUS_OPTIONS.map((s) => (
+                  <Chip
+                    key={s}
+                    tone="status"
+                    active={activeStatuses.includes(s)}
+                    onClick={() => toggle(activeStatuses, setActiveStatuses, s)}
+                  >
+                    {s}
+                  </Chip>
+                ))}
+              </FilterRow>
+              {collections.length > 0 && (
+                <FilterRow label="Collection">
+                  <Chip
+                    tone="collection"
+                    active={activeCollection === null}
+                    onClick={() => setActiveCollection(null)}
+                  >
+                    Entire Closet
+                  </Chip>
+                  {collections.map((c) => (
+                    <Chip
+                      key={c.id}
+                      tone="collection"
+                      active={activeCollection === c.id}
+                      onClick={() =>
+                        setActiveCollection(
+                          activeCollection === c.id ? null : c.id,
+                        )
+                      }
+                    >
+                      {toTitle(c.name)}
+                    </Chip>
+                  ))}
+                </FilterRow>
+              )}
+              <FilterRow label="Category">
+                {CATEGORY_OPTIONS.map((c) => (
+                  <Chip
+                    key={c}
+                    tone="category"
+                    active={activeCategories.includes(c)}
+                    onClick={() =>
+                      toggle(activeCategories, setActiveCategories, c)
+                    }
+                  >
+                    {c}
+                  </Chip>
+                ))}
+              </FilterRow>
+              <FilterRow label="Season">
+                {SEASON_OPTIONS.map((s) => (
+                  <Chip
+                    key={s}
+                    tone="season"
+                    active={activeSeasons.includes(s)}
+                    onClick={() => toggle(activeSeasons, setActiveSeasons, s)}
+                  >
+                    {s}
+                  </Chip>
+                ))}
+              </FilterRow>
+              <FilterRow label="Occasion">
+                {OCCASION_OPTIONS.map((o) => (
+                  <Chip
+                    key={o}
+                    tone="occasion"
+                    active={activeOccasions.includes(o)}
+                    onClick={() =>
+                      toggle(activeOccasions, setActiveOccasions, o)
+                    }
+                  >
+                    {o}
+                  </Chip>
+                ))}
+              </FilterRow>
+              {brands.length > 0 && (
+                <FilterRow label="Brand">
+                  {brands
+                    .slice()
+                    .sort((a, b) => a.localeCompare(b))
+                    .map((b) => (
+                      <Chip
+                        key={b}
+                        tone="brand"
+                        active={activeBrands.includes(b)}
+                        onClick={() => toggle(activeBrands, setActiveBrands, b)}
+                      >
+                        {b}
+                      </Chip>
+                    ))}
+                </FilterRow>
+              )}
+              {usedCustomTags.length > 0 && (
+                <FilterRow label="Custom">
+                  {usedCustomTags.map((t) => (
+                    <Chip
+                      key={t}
+                      tone="custom"
+                      active={activeCustom.includes(t)}
+                      onClick={() => toggle(activeCustom, setActiveCustom, t)}
+                    >
+                      {t}
+                    </Chip>
+                  ))}
+                </FilterRow>
+              )}
+              {years.length > 0 && (
+                <FilterRow label="Year">
+                  {years.map((y) => (
+                    <Chip
+                      key={y}
+                      tone="year"
+                      active={activeYears.includes(y)}
+                      onClick={() => toggle(activeYears, setActiveYears, y)}
+                    >
+                      {y}
+                    </Chip>
+                  ))}
+                </FilterRow>
+              )}
+              {filterCount > 0 && (
+                <button
+                  onClick={() => {
+                    setActiveCategories([]);
+                    setActiveSeasons([]);
+                    setActiveOccasions([]);
+                    setActiveCustom([]);
+                    setActiveCollection(null);
+                    setActiveStatuses(["owned"]);
+                    setActiveBrands([]);
+                    setActiveYears([]);
+                  }}
+                  className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Active filters summary — shown when the drawer is closed */}
+          {!showFilters && filterCount > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {activeCollection && activeCollectionObj && (
+                <RemovableChip
+                  tone="collection"
+                  onRemove={() => setActiveCollection(null)}
+                >
+                  <I.folder size={11} /> {toTitle(activeCollectionObj.name)}
+                </RemovableChip>
+              )}
+              {!(
+                activeStatuses.length === 1 && activeStatuses[0] === "owned"
+              ) &&
+                (activeStatuses.length === 0 ? (
+                  <RemovableChip
+                    tone="status"
+                    onRemove={() => setActiveStatuses(["owned"])}
+                  >
+                    All statuses
+                  </RemovableChip>
+                ) : (
+                  activeStatuses.map((s) => (
+                    <RemovableChip
+                      key={`st-${s}`}
+                      tone="status"
+                      onRemove={() =>
+                        toggle(activeStatuses, setActiveStatuses, s)
+                      }
+                    >
+                      {s}
+                    </RemovableChip>
+                  ))
+                ))}
+              {activeBrands.map((b) => (
+                <RemovableChip
+                  key={`b-${b}`}
+                  tone="brand"
+                  onRemove={() => toggle(activeBrands, setActiveBrands, b)}
+                >
+                  {b}
+                </RemovableChip>
+              ))}
+              {activeCategories.map((c) => (
+                <RemovableChip
+                  key={`cat-${c}`}
+                  tone="category"
+                  onRemove={() =>
+                    toggle(activeCategories, setActiveCategories, c)
+                  }
+                >
+                  {c}
+                </RemovableChip>
+              ))}
+              {activeSeasons.map((s) => (
+                <RemovableChip
+                  key={`s-${s}`}
+                  tone="season"
+                  onRemove={() => toggle(activeSeasons, setActiveSeasons, s)}
+                >
+                  {s}
+                </RemovableChip>
+              ))}
+              {activeOccasions.map((o) => (
+                <RemovableChip
+                  key={`o-${o}`}
+                  tone="occasion"
+                  onRemove={() =>
+                    toggle(activeOccasions, setActiveOccasions, o)
+                  }
+                >
+                  {o}
+                </RemovableChip>
+              ))}
+              {activeCustom.map((t) => (
+                <RemovableChip
+                  key={`c-${t}`}
+                  tone="custom"
+                  onRemove={() => toggle(activeCustom, setActiveCustom, t)}
+                >
+                  {t}
+                </RemovableChip>
+              ))}
+              {activeYears.map((y) => (
+                <RemovableChip
+                  key={`y-${y}`}
+                  tone="year"
+                  onRemove={() => toggle(activeYears, setActiveYears, y)}
+                >
+                  {y}
+                </RemovableChip>
+              ))}
+              <button
+                onClick={() => {
+                  setActiveCategories([]);
+                  setActiveSeasons([]);
+                  setActiveOccasions([]);
+                  setActiveCustom([]);
+                  setActiveCollection(null);
+                  setActiveStatuses(["owned"]);
+                  setActiveBrands([]);
+                  setActiveYears([]);
+                }}
+                className="text-[10px] tracking-[0.2em] uppercase text-ink-500 underline active:text-poppy-600 ml-1"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+
+          {filterCount > 0 && (
+            <p className="text-xs text-ink-400 mb-3">
+              Showing{" "}
+              <span className="font-bold text-ink-600">{filtered.length}</span>{" "}
+              of <span className="font-bold text-ink-600">{items.length}</span>{" "}
+              pieces
+            </p>
+          )}
+
+          <div className="flex-1 h-px bg-cream-200 mb-3"></div>
+
+          {filtered.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-poppy-100 flex items-center justify-center">
+                <I.search size={26} className="text-poppy-500" />
+              </div>
+              <p className="font-display font-bold text-xl text-ink-900">
+                Nothing matches.
+              </p>
+              <p className="text-xs font-bold tracking-widest uppercase text-poppy-600 mt-2">
+                Try clearing a filter
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">
+              {filtered.map((item, i) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  image={images[item.id]}
+                  onClick={dragMode ? undefined : () => setViewing(item.id)}
+                  onSelectToggle={
+                    dragMode ? undefined : () => toggleItemSelect(item.id)
+                  }
+                  isSelected={selectedIds.has(item.id)}
+                  delay={Math.min(i, 16) * 25}
+                  cardRef={(el) => register(i, el)}
+                  reorderHandle={dragMode ? onHandlePointerDown(i) : null}
+                  isDragging={dragMode && dragIndex === i}
+                  isDropTarget={
+                    dragMode &&
+                    dragIndex !== null &&
+                    hoverIndex === i &&
+                    dragIndex !== i
+                  }
+                  compact={dragMode}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
-      {dragIndex !== null && filtered[dragIndex] && (() => {
-        const item = filtered[dragIndex];
-        const image = images[item.id];
-        const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
-        const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
-        return (
-          <div
-            ref={(el) => {
-              ghostRef.current = el;
-              if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
-            }}
-            className={`pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-poppy-300 overflow-hidden ${dragMode ? "rounded-2xl" : "rounded-3xl"}`}
-            style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(255, 90, 54, 0.35)' }}
-          >
-            <div className={`${dragMode ? "aspect-square" : "aspect-[3/4]"} bg-gradient-to-br bg-poppy-gradient flex items-center justify-center overflow-hidden`}>
-              {image ? <img src={image} alt={item.name} className="w-full h-full object-contain p-1.5" /> : <I.shirt size={dragMode ? 20 : 32} className="text-poppy-300" />}
+      {dragIndex !== null &&
+        filtered[dragIndex] &&
+        (() => {
+          const item = filtered[dragIndex];
+          const image = images[item.id];
+          const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
+          const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
+          return (
+            <div
+              ref={(el) => {
+                ghostRef.current = el;
+                if (el)
+                  el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
+              }}
+              className={`pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-poppy-300 overflow-hidden ${dragMode ? "rounded-2xl" : "rounded-3xl"}`}
+              style={{
+                width: startRectRef.current?.width,
+                willChange: "transform",
+                boxShadow: "0 22px 60px rgba(255, 90, 54, 0.35)",
+              }}
+            >
+              <div
+                className={`${dragMode ? "aspect-square" : "aspect-[3/4]"} bg-gradient-to-br bg-poppy-gradient flex items-center justify-center overflow-hidden`}
+              >
+                {image ? (
+                  <img
+                    src={image}
+                    alt={item.name}
+                    className="w-full h-full object-contain p-1.5"
+                  />
+                ) : (
+                  <I.shirt
+                    size={dragMode ? 20 : 32}
+                    className="text-poppy-300"
+                  />
+                )}
+              </div>
+              {!dragMode && (
+                <div className="p-3">
+                  <p className="font-display font-semibold text-sm sm:text-base leading-tight truncate text-ink-900">
+                    {toTitle(item.name)}
+                  </p>
+                  <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">
+                    {item.category}
+                  </p>
+                </div>
+              )}
             </div>
-            {!dragMode && <div className="p-3">
-              <p className="font-display font-semibold text-sm sm:text-base leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
-              <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 mt-0.5">{item.category}</p>
-            </div>}
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {dragMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
-            <span className="flex-1 text-sm font-bold text-ink-600">Drag items to reorder</span>
+            <span className="flex-1 text-sm font-bold text-ink-600">
+              Drag items to reorder
+            </span>
             <button
               onClick={() => setDragMode(false)}
               className="px-3.5 py-2 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-poppy-600"
-            >Done</button>
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
 
       {viewing && !editing && (
         <ViewDrawer
-          item={items.find(i => i.id === viewing)}
+          item={items.find((i) => i.id === viewing)}
           image={images[viewing]}
           collections={collections}
           onClose={() => setViewing(null)}
-          onEdit={() => { setEditing(viewing); }}
+          onEdit={() => {
+            setEditing(viewing);
+          }}
         />
       )}
 
       {editing && (
         <EditDrawer
-          item={items.find(i => i.id === editing)}
+          item={items.find((i) => i.id === editing)}
           image={images[editing]}
           customTags={customTags}
           usedCustomTags={usedCustomTags}
@@ -1979,26 +3140,68 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
           onBrandsChange={onSaveBrands}
           onCollectionsChange={onSaveCollections}
           onReplaceImage={(id, blob) => onPutImage(id, blob)}
-          onClose={() => { setEditing(null); setViewing(null); }}
-          onSave={(u) => { handleUpdate(u); setEditing(null); setViewing(null); }}
-          onDelete={() => { handleDelete(editing); setViewing(null); }}
+          onClose={() => {
+            setEditing(null);
+            setViewing(null);
+          }}
+          onSave={(u) => {
+            handleUpdate(u);
+            setEditing(null);
+            setViewing(null);
+          }}
+          onDelete={() => {
+            handleDelete(editing);
+            setViewing(null);
+          }}
         />
       )}
-      {adding && <AddItemModal onClose={() => setAdding(false)} onFile={handleAddItem} />}
+      {adding && (
+        <AddItemModal onClose={() => setAdding(false)} onFile={handleAddItem} />
+      )}
 
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
             <div className="d-flex flex-column flex-grow">
-            <span className="text-sm font-bold text-poppy-700">{selectedIds.size} selected</span>
+              <span className="text-sm font-bold text-poppy-700">
+                {selectedIds.size} selected
+              </span>
               <div>
-                <button onClick={selectAll} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700 mr-2">All</button>
-                <button onClick={exitSelectMode} className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700">None</button>
+                <button
+                  onClick={selectAll}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700 mr-2"
+                >
+                  All
+                </button>
+                <button
+                  onClick={exitSelectMode}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700"
+                >
+                  None
+                </button>
               </div>
             </div>
-            <button onClick={() => setBulkSheet("tags")} className="px-3.5 py-2 bg-plum-50 text-plum-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-plum-100">Tags</button>
-            <button onClick={() => setBulkSheet("outfits")} className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100">Looks</button>
-            <button onClick={() => setBulkSheet("collections")} className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100">Collections</button>
+            <button
+              onClick={() => setBulkSheet("tags")}
+              className="px-3.5 py-2 bg-plum-50 text-plum-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-plum-100"
+            >
+              Tags
+            </button>
+            <button
+              onClick={() => setBulkSheet("outfits")}
+              className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100"
+            >
+              Looks
+            </button>
+            <button
+              onClick={() => setBulkSheet("collections")}
+              className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100"
+            >
+              Collections
+            </button>
           </div>
         </div>
       )}
@@ -2025,23 +3228,47 @@ function ClosetView({ items, images, customTags, brands, collections, outfits, a
 function FilterRow({ label, children }) {
   return (
     <div className="py-2">
-      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">{label}</p>
+      <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">
+        {label}
+      </p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
 }
 
-function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHandle, isDragging, isDropTarget, cardRef, isSelected, compact }) {
+function ItemCard({
+  item,
+  image,
+  onClick,
+  onSelectToggle,
+  delay = 0,
+  reorderHandle,
+  isDragging,
+  isDropTarget,
+  cardRef,
+  isSelected,
+  compact,
+}) {
   return (
     <div
       ref={cardRef}
       onClick={onClick}
       className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl select-none" : "cursor-pointer rounded-2xl active:scale-[0.98]"} overflow-hidden relative transition-colors shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
-      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
+      style={{
+        animationDelay: `${delay}ms`,
+        ...(isDragging && { animation: "none", opacity: 0 }),
+      }}
     >
       <div className="aspect-square flex items-center justify-center overflow-hidden relative">
         {image ? (
-          <img src={image} alt={item.name} draggable={false} loading="lazy" decoding="async" className="w-full h-full object-contain p-1.5 select-none" />
+          <img
+            src={image}
+            alt={item.name}
+            draggable={false}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-contain p-1.5 select-none"
+          />
         ) : (
           <I.shirt size={24} className="text-poppy-300" />
         )}
@@ -2049,7 +3276,7 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
           <div
             aria-hidden="true"
             onPointerDown={reorderHandle}
-            style={{ touchAction: 'none' }}
+            style={{ touchAction: "none" }}
             className="absolute top-1 left-1 p-2.5 bg-white rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
           >
             <I.dots size={18} />
@@ -2057,7 +3284,10 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
         )}
         {onSelectToggle && (
           <button
-            onClick={(e) => { e.stopPropagation(); onSelectToggle(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectToggle();
+            }}
             aria-label={isSelected ? "Deselect item" : "Select item"}
             className={`absolute top-1.5 right-1.5 rounded-full w-6 h-6 flex items-center justify-center transition-colors shadow-card ${isSelected ? "bg-poppy-500 text-white" : "bg-white text-ink-300 border border-cream-200"}`}
           >
@@ -2067,8 +3297,12 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
       </div>
       {!compact && (
         <div className="p-2 border-t-2 border-cream-100">
-          <p className="font-display font-semibold text-xs leading-tight truncate text-ink-900">{toTitle(item.name)}</p>
-          <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-poppy-600 mt-0.5 truncate">{item.category}</p>
+          <p className="font-display font-semibold text-xs leading-tight truncate text-ink-900">
+            {toTitle(item.name)}
+          </p>
+          <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-poppy-600 mt-0.5 truncate">
+            {item.category}
+          </p>
         </div>
       )}
     </div>
@@ -2079,31 +3313,58 @@ function ItemCard({ item, image, onClick, onSelectToggle, delay = 0, reorderHand
 function ViewDrawer({ item, image, collections, onClose, onEdit }) {
   useBodyScrollLock();
   if (!item) return null;
-  const inCollections = (collections || []).filter(c => c.itemIds.includes(item.id));
+  const inCollections = (collections || []).filter((c) =>
+    c.itemIds.includes(item.id),
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex sm:justify-end">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+      <div
+        className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Details</p>
-          <button onClick={onClose} className="text-ink-500 p-2 -m-2" aria-label="Close"><I.x size={20} /></button>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+            Details
+          </p>
+          <button
+            onClick={onClose}
+            className="text-ink-500 p-2 -m-2"
+            aria-label="Close"
+          >
+            <I.x size={20} />
+          </button>
         </div>
 
         <div className="px-4 sm:px-6 pt-6 pb-4 flex flex-col items-center">
           <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden flex items-center justify-center">
-            {image
-              ? <img src={image} alt={item.name} className="w-full h-full object-contain p-4" />
-              : <I.shirt size={48} className="text-ink-400" />
-            }
+            {image ? (
+              <img
+                src={image}
+                alt={item.name}
+                className="w-full h-full object-contain p-4"
+              />
+            ) : (
+              <I.shirt size={48} className="text-ink-400" />
+            )}
           </div>
-          <h3 className="font-display text-3xl mt-5 text-center">{toTitle(item.name)}</h3>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mt-1">{item.category}</p>
+          <h3 className="font-display text-3xl mt-5 text-center">
+            {toTitle(item.name)}
+          </h3>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mt-1">
+            {item.category}
+          </p>
         </div>
 
         <div className="px-4 sm:px-6 pb-6 space-y-5">
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Status
+            </p>
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-ink-500 text-white border-ink-500 shadow-pop">
                 {item.status || "owned"}
@@ -2113,50 +3374,79 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
           {item.brand && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Brand</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                Brand
+              </p>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-600 text-white border-petal-600 shadow-pop">{item.brand}</span>
+                <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-600 text-white border-petal-600 shadow-pop">
+                  {item.brand}
+                </span>
               </div>
             </div>
           )}
 
           {item.yearPurchased && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                Year Purchased
+              </p>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop">{item.yearPurchased}</span>
+                <span className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop">
+                  {item.yearPurchased}
+                </span>
               </div>
             </div>
           )}
 
-          {(item.seasons && item.seasons.length > 0) && (
+          {item.seasons && item.seasons.length > 0 && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                Seasons
+              </p>
               <div className="flex flex-wrap gap-2">
-                {item.seasons.map(s => (
-                  <span key={s} className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-leaf-500 text-white border-leaf-500 shadow-pop">{s}</span>
+                {item.seasons.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-leaf-500 text-white border-leaf-500 shadow-pop"
+                  >
+                    {s}
+                  </span>
                 ))}
               </div>
             </div>
           )}
 
-          {(item.occasions && item.occasions.length > 0) && (
+          {item.occasions && item.occasions.length > 0 && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasions</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                Occasions
+              </p>
               <div className="flex flex-wrap gap-2">
-                {item.occasions.map(o => (
-                  <span key={o} className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-500 text-white border-petal-500 shadow-pop">{o}</span>
+                {item.occasions.map((o) => (
+                  <span
+                    key={o}
+                    className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-500 text-white border-petal-500 shadow-pop"
+                  >
+                    {o}
+                  </span>
                 ))}
               </div>
             </div>
           )}
 
-          {(item.custom && item.custom.length > 0) && (
+          {item.custom && item.custom.length > 0 && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Tags</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                Tags
+              </p>
               <div className="flex flex-wrap gap-2">
-                {item.custom.map(t => (
-                  <span key={t} className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-plum-500 text-white border-plum-500 shadow-pop">{t}</span>
+                {item.custom.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-plum-500 text-white border-plum-500 shadow-pop"
+                  >
+                    {t}
+                  </span>
                 ))}
               </div>
             </div>
@@ -2164,10 +3454,15 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
 
           {inCollections.length > 0 && (
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">In Collections</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                In Collections
+              </p>
               <div className="flex flex-wrap gap-2">
-                {inCollections.map(c => (
-                  <span key={c.id} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-sky2-500 text-white border-sky2-500 shadow-pop">
+                {inCollections.map((c) => (
+                  <span
+                    key={c.id}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-sky2-500 text-white border-sky2-500 shadow-pop"
+                  >
                     <I.folder size={11} /> {toTitle(c.name)}
                   </span>
                 ))}
@@ -2176,12 +3471,14 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
           )}
 
           {/* No tags at all? friendly hint */}
-          {((!item.seasons || item.seasons.length === 0) &&
+          {(!item.seasons || item.seasons.length === 0) &&
             (!item.occasions || item.occasions.length === 0) &&
             (!item.custom || item.custom.length === 0) &&
-            inCollections.length === 0) && (
-            <p className="text-sm italic text-ink-500 text-center">No tags or collections yet — tap Edit to add some.</p>
-          )}
+            inCollections.length === 0 && (
+              <p className="text-sm italic text-ink-500 text-center">
+                No tags or collections yet — tap Edit to add some.
+              </p>
+            )}
 
           <button
             onClick={onEdit}
@@ -2204,21 +3501,32 @@ function BrandCombobox({ value, brands, onChange, onAddBrand }) {
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
-    window.addEventListener('pointerdown', onDown);
-    return () => window.removeEventListener('pointerdown', onDown);
+    const onDown = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target))
+        setOpen(false);
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
   }, [open]);
 
   const all = (brands || []).slice().sort((a, b) => a.localeCompare(b));
   const q = query.trim();
-  const filtered = q ? all.filter(b => b.toLowerCase().includes(q.toLowerCase())) : all;
-  const exact = all.find(b => b.toLowerCase() === q.toLowerCase());
+  const filtered = q
+    ? all.filter((b) => b.toLowerCase().includes(q.toLowerCase()))
+    : all;
+  const exact = all.find((b) => b.toLowerCase() === q.toLowerCase());
   const canAdd = q.length > 0 && !exact;
 
-  const select = (b) => { onChange(b); setQuery(""); setOpen(false); };
+  const select = (b) => {
+    onChange(b);
+    setQuery("");
+    setOpen(false);
+  };
   const addNew = () => {
     if (!q) return;
-    const existing = (brands || []).find(x => x.toLowerCase() === q.toLowerCase());
+    const existing = (brands || []).find(
+      (x) => x.toLowerCase() === q.toLowerCase(),
+    );
     const canonical = existing || q;
     if (!existing && onAddBrand) onAddBrand(canonical);
     select(canonical);
@@ -2228,34 +3536,71 @@ function BrandCombobox({ value, brands, onChange, onAddBrand }) {
     <div ref={wrapRef} className="relative mb-6">
       <div className="flex items-center gap-2 border-b border-cream-200 focus-within:border-poppy-500">
         <input
-          value={open ? query : (value || "")}
-          onChange={(e) => { setQuery(e.target.value); if (!open) setOpen(true); }}
-          onFocus={() => { setOpen(true); setQuery(""); }}
+          value={open ? query : value || ""}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => {
+            setOpen(true);
+            setQuery("");
+          }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); if (canAdd) addNew(); else if (filtered.length === 1) select(filtered[0]); }
-            else if (e.key === "Escape") setOpen(false);
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (canAdd) addNew();
+              else if (filtered.length === 1) select(filtered[0]);
+            } else if (e.key === "Escape") setOpen(false);
           }}
           placeholder={value ? "" : "search or add a brand…"}
           className="flex-1 bg-transparent outline-none text-sm py-1"
         />
         {value && !open && (
-          <button onClick={() => onChange("")} aria-label="Clear brand" className="text-ink-400 p-1 active:scale-90"><I.x size={14} /></button>
+          <button
+            onClick={() => onChange("")}
+            aria-label="Clear brand"
+            className="text-ink-400 p-1 active:scale-90"
+          >
+            <I.x size={14} />
+          </button>
         )}
-        <button onClick={() => setOpen(o => !o)} aria-label="Toggle brand list" className="text-ink-400 p-1">
-          <I.chevron size={14} className={`transition-transform ${open ? "-rotate-90" : "rotate-90"}`} />
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Toggle brand list"
+          className="text-ink-400 p-1"
+        >
+          <I.chevron
+            size={14}
+            className={`transition-transform ${open ? "-rotate-90" : "rotate-90"}`}
+          />
         </button>
       </div>
       {open && (
         <div className="absolute left-0 right-0 top-full mt-1 z-10 bg-white border-2 border-cream-100 rounded-2xl shadow-card max-h-60 overflow-y-auto py-1">
-          {filtered.length === 0 && !canAdd && <p className="px-3 py-2 text-xs text-ink-400 italic">no brands yet — type to add one</p>}
-          {filtered.map(b => (
-            <button key={b} onClick={() => select(b)} className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between active:bg-cream-50 ${value === b ? "text-petal-700 font-semibold" : "text-ink-700"}`}>
+          {filtered.length === 0 && !canAdd && (
+            <p className="px-3 py-2 text-xs text-ink-400 italic">
+              no brands yet — type to add one
+            </p>
+          )}
+          {filtered.map((b) => (
+            <button
+              key={b}
+              onClick={() => select(b)}
+              className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between active:bg-cream-50 ${value === b ? "text-petal-700 font-semibold" : "text-ink-700"}`}
+            >
               <span className="truncate">{b}</span>
-              {value === b && <I.check size={14} className="text-petal-600 shrink-0" />}
+              {value === b && (
+                <I.check size={14} className="text-petal-600 shrink-0" />
+              )}
             </button>
           ))}
           {canAdd && (
-            <button onClick={addNew} className="w-full text-left px-3 py-2 text-sm text-poppy-600 font-semibold active:bg-cream-50">+ Add “{q}”</button>
+            <button
+              onClick={addNew}
+              className="w-full text-left px-3 py-2 text-sm text-poppy-600 font-semibold active:bg-cream-50"
+            >
+              + Add “{q}”
+            </button>
           )}
         </div>
       )}
@@ -2263,7 +3608,21 @@ function BrandCombobox({ value, brands, onChange, onAddBrand }) {
   );
 }
 
-function EditDrawer({ item, image, customTags, usedCustomTags, brands, collections, onCustomTagsChange, onBrandsChange, onCollectionsChange, onReplaceImage, onClose, onSave, onDelete }) {
+function EditDrawer({
+  item,
+  image,
+  customTags,
+  usedCustomTags,
+  brands,
+  collections,
+  onCustomTagsChange,
+  onBrandsChange,
+  onCollectionsChange,
+  onReplaceImage,
+  onClose,
+  onSave,
+  onDelete,
+}) {
   useBodyScrollLock();
   const [draft, setDraft] = useState(item);
   const [newTag, setNewTag] = useState("");
@@ -2273,7 +3632,10 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
   if (!item) return null;
   const toggle = (key, v) => {
     const cur = draft[key] || [];
-    setDraft({ ...draft, [key]: cur.includes(v) ? cur.filter(x => x !== v) : [...cur, v] });
+    setDraft({
+      ...draft,
+      [key]: cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v],
+    });
   };
   const addCustom = () => {
     const t = newTag.trim().toLowerCase();
@@ -2284,10 +3646,15 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
     setNewTag("");
   };
   const toggleCollection = (collectionId) => {
-    const next = (collections || []).map(c => {
+    const next = (collections || []).map((c) => {
       if (c.id !== collectionId) return c;
       const inIt = c.itemIds.includes(item.id);
-      return { ...c, itemIds: inIt ? c.itemIds.filter(x => x !== item.id) : [...c.itemIds, item.id] };
+      return {
+        ...c,
+        itemIds: inIt
+          ? c.itemIds.filter((x) => x !== item.id)
+          : [...c.itemIds, item.id],
+      };
     });
     onCollectionsChange(next);
   };
@@ -2298,7 +3665,7 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
       const blob = await resizeImageToBlob(file, 640, 0.85);
       if (blob) await onReplaceImage(item.id, blob);
     } catch (e) {
-      Log.error('replaceImage.failed', { id: item.id, error: String(e) });
+      Log.error("replaceImage.failed", { id: item.id, error: String(e) });
     } finally {
       setReplacing(false);
     }
@@ -2306,17 +3673,33 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
 
   return (
     <div className="fixed inset-0 z-50 flex sm:justify-end">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+      <div
+        className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white">
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Editing</p>
-          <button onClick={onClose} className="text-ink-500 p-2 -m-2"><I.x size={20} /></button>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+            Editing
+          </p>
+          <button onClick={onClose} className="text-ink-500 p-2 -m-2">
+            <I.x size={20} />
+          </button>
         </div>
 
         <div className="p-4 sm:p-6">
           <div className="flex flex-col items-center">
             <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
-              {image && <img src={image} alt={draft.name} className="w-full h-full object-contain p-4" />}
+              {image && (
+                <img
+                  src={image}
+                  alt={draft.name}
+                  className="w-full h-full object-contain p-4"
+                />
+              )}
               {replacing && (
                 <div className="absolute inset-0 bg-white/85 flex items-center justify-center text-[10px] tracking-[0.3em] uppercase text-ink-600">
                   Updating photo…
@@ -2335,72 +3718,146 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
             ref={imageInputRef}
             type="file"
             accept="image/*"
-            onChange={(e) => { handleReplaceImage(e.target.files?.[0]); e.target.value = ""; }}
+            onChange={(e) => {
+              handleReplaceImage(e.target.files?.[0]);
+              e.target.value = "";
+            }}
             className="hidden"
           />
 
-          <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Name</label>
+          <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
+            Name
+          </label>
           <input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display text-xl py-1 mb-6"
           />
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Category</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Category
+          </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {CATEGORY_OPTIONS.map(c => (
-              <Chip key={c} tone="category" active={draft.category === c} onClick={() => setDraft({ ...draft, category: c })}>{c}</Chip>
+            {CATEGORY_OPTIONS.map((c) => (
+              <Chip
+                key={c}
+                tone="category"
+                active={draft.category === c}
+                onClick={() => setDraft({ ...draft, category: c })}
+              >
+                {c}
+              </Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Status
+          </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {STATUS_OPTIONS.map(s => (
-              <Chip key={s} tone="status" active={(draft.status || "owned") === s} onClick={() => setDraft({ ...draft, status: s })}>{s}</Chip>
+            {STATUS_OPTIONS.map((s) => (
+              <Chip
+                key={s}
+                tone="status"
+                active={(draft.status || "owned") === s}
+                onClick={() => setDraft({ ...draft, status: s })}
+              >
+                {s}
+              </Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Brand</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Brand
+          </p>
           <BrandCombobox
             value={draft.brand || ""}
             brands={brands}
             onChange={(b) => setDraft({ ...draft, brand: b })}
-            onAddBrand={(b) => onBrandsChange && onBrandsChange([...(brands || []), b])}
+            onAddBrand={(b) =>
+              onBrandsChange && onBrandsChange([...(brands || []), b])
+            }
           />
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Year Purchased
+          </p>
           <input
             value={draft.yearPurchased || ""}
-            onChange={(e) => setDraft({ ...draft, yearPurchased: e.target.value.replace(/[^0-9]/g, "").slice(0, 4) })}
+            onChange={(e) =>
+              setDraft({
+                ...draft,
+                yearPurchased: e.target.value
+                  .replace(/[^0-9]/g, "")
+                  .slice(0, 4),
+              })
+            }
             inputMode="numeric"
             placeholder="e.g. 2024"
             className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1 mb-6"
           />
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Seasons
+          </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {SEASON_OPTIONS.map(s => (
-              <Chip key={s} tone="season" active={(draft.seasons || []).includes(s)} onClick={() => toggle("seasons", s)}>{s}</Chip>
+            {SEASON_OPTIONS.map((s) => (
+              <Chip
+                key={s}
+                tone="season"
+                active={(draft.seasons || []).includes(s)}
+                onClick={() => toggle("seasons", s)}
+              >
+                {s}
+              </Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasions</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Occasions
+          </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {OCCASION_OPTIONS.map(o => (
-              <Chip key={o} tone="occasion" active={(draft.occasions || []).includes(o)} onClick={() => toggle("occasions", o)}>{o}</Chip>
+            {OCCASION_OPTIONS.map((o) => (
+              <Chip
+                key={o}
+                tone="occasion"
+                active={(draft.occasions || []).includes(o)}
+                onClick={() => toggle("occasions", o)}
+              >
+                {o}
+              </Chip>
             ))}
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Custom Tags</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Custom Tags
+          </p>
           <div className="flex flex-wrap gap-2 mb-3">
             {(() => {
-              const shownTags = [...new Set([...(usedCustomTags || customTags), ...(draft.custom || [])])];
-              return <>
-                {shownTags.map(t => (
-                  <Chip key={t} tone="custom" active={(draft.custom || []).includes(t)} onClick={() => toggle("custom", t)}>{t}</Chip>
-                ))}
-                {shownTags.length === 0 && <span className="text-xs text-ink-400 italic">none yet — add one below</span>}
-              </>;
+              const shownTags = [
+                ...new Set([
+                  ...(usedCustomTags || customTags),
+                  ...(draft.custom || []),
+                ]),
+              ];
+              return (
+                <>
+                  {shownTags.map((t) => (
+                    <Chip
+                      key={t}
+                      tone="custom"
+                      active={(draft.custom || []).includes(t)}
+                      onClick={() => toggle("custom", t)}
+                    >
+                      {t}
+                    </Chip>
+                  ))}
+                  {shownTags.length === 0 && (
+                    <span className="text-xs text-ink-400 italic">
+                      none yet — add one below
+                    </span>
+                  )}
+                </>
+              );
             })()}
           </div>
           <div className="flex gap-2 mb-8">
@@ -2411,15 +3868,24 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
               placeholder="new tag…"
               className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
             />
-            <button onClick={addCustom} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
+            <button
+              onClick={addCustom}
+              className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            >
+              Add
+            </button>
           </div>
 
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Collections</p>
+          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+            Collections
+          </p>
           <div className="flex flex-wrap gap-2 mb-8">
             {(collections || []).length === 0 && (
-              <span className="text-xs text-ink-400 italic">no collections yet — create one from the Closet</span>
+              <span className="text-xs text-ink-400 italic">
+                no collections yet — create one from the Closet
+              </span>
             )}
-            {(collections || []).map(c => {
+            {(collections || []).map((c) => {
               const inIt = c.itemIds.includes(item.id);
               return (
                 <button
@@ -2442,7 +3908,9 @@ function EditDrawer({ item, image, customTags, usedCustomTags, brands, collectio
               <I.check size={14} /> Save
             </button>
             <button
-              onClick={() => { if (confirm(`Remove "${draft.name}"?`)) onDelete(); }}
+              onClick={() => {
+                if (confirm(`Remove "${draft.name}"?`)) onDelete();
+              }}
               className="px-5 py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-600 rounded-full active:scale-95"
               aria-label="Delete piece"
             >
@@ -2460,15 +3928,30 @@ function AddItemModal({ onClose, onFile }) {
   const inputRef = useRef();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
       <div className="relative bg-white max-w-md w-full p-6 sm:p-8 rounded-2xl shadow-2xl fade-up">
-        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-ink-500 p-2"
+        >
+          <I.x size={18} />
+        </button>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
           <I.plus size={12} className="text-poppy-500" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">New Piece</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">
+            New Piece
+          </p>
         </div>
-        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-3 sm:mb-4 text-ink-900">Add to your closet</h3>
-        <p className="text-sm text-ink-600 mb-6">Pick from your gallery or snap a new photo. We'll resize it to save space.</p>
+        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-3 sm:mb-4 text-ink-900">
+          Add to your closet
+        </h3>
+        <p className="text-sm text-ink-600 mb-6">
+          Pick from your gallery or snap a new photo. We'll resize it to save
+          space.
+        </p>
         <button
           onClick={() => inputRef.current?.click()}
           className="w-full border-2 border-dashed border-poppy-200 bg-poppy-50/50 active:border-poppy-500 active:bg-poppy-50 transition-colors rounded-3xl py-8 sm:py-10 flex flex-col items-center gap-3 text-poppy-600"
@@ -2476,7 +3959,9 @@ function AddItemModal({ onClose, onFile }) {
           <div className="w-12 h-12 rounded-full bg-poppy-100 flex items-center justify-center">
             <I.upload size={22} />
           </div>
-          <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Choose a photo</span>
+          <span className="text-[11px] font-bold tracking-[0.2em] uppercase">
+            Choose a photo
+          </span>
         </button>
         <input
           ref={inputRef}
@@ -2491,7 +3976,19 @@ function AddItemModal({ onClose, onFile }) {
 }
 
 // --- BULK ACTION SHEET ----------------------------------------------------
-function BulkSheet({ type, selectedIds, items, customTags, collections, outfits, onSaveItems, onSaveCustomTags, onSaveCollections, onSaveOutfits, onClose }) {
+function BulkSheet({
+  type,
+  selectedIds,
+  items,
+  customTags,
+  collections,
+  outfits,
+  onSaveItems,
+  onSaveCustomTags,
+  onSaveCollections,
+  onSaveOutfits,
+  onClose,
+}) {
   useBodyScrollLock();
   const count = selectedIds.size;
 
@@ -2503,13 +4000,16 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
   const [addCustom, setAddCustom] = useState([]);
   const [newTag, setNewTag] = useState("");
 
-  const toggleTag = (list, setList, v) => setList(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
+  const toggleTag = (list, setList, v) =>
+    setList((prev) =>
+      prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v],
+    );
 
   const addNewTag = () => {
     const t = newTag.trim().toLowerCase();
     if (!t) return;
     if (!customTags.includes(t)) onSaveCustomTags([...customTags, t]);
-    if (!addCustom.includes(t)) setAddCustom(prev => [...prev, t]);
+    if (!addCustom.includes(t)) setAddCustom((prev) => [...prev, t]);
     setNewTag("");
   };
 
@@ -2517,161 +4017,322 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
   const [collState, setCollState] = useState(() => {
     const ids = [...selectedIds];
     const m = {};
-    (collections || []).forEach(c => {
-      const allIn = ids.every(id => c.itemIds.includes(id));
-      m[c.id] = allIn ? "all" : ids.some(id => c.itemIds.includes(id)) ? "some" : "none";
+    (collections || []).forEach((c) => {
+      const allIn = ids.every((id) => c.itemIds.includes(id));
+      m[c.id] = allIn
+        ? "all"
+        : ids.some((id) => c.itemIds.includes(id))
+          ? "some"
+          : "none";
     });
     return m;
   });
   const [outfitState, setOutfitState] = useState(() => {
     const ids = [...selectedIds];
     const m = {};
-    (outfits || []).forEach(o => {
-      const allIn = ids.every(id => o.itemIds.includes(id));
-      m[o.id] = allIn ? "all" : ids.some(id => o.itemIds.includes(id)) ? "some" : "none";
+    (outfits || []).forEach((o) => {
+      const allIn = ids.every((id) => o.itemIds.includes(id));
+      m[o.id] = allIn
+        ? "all"
+        : ids.some((id) => o.itemIds.includes(id))
+          ? "some"
+          : "none";
     });
     return m;
   });
 
-  const toggleColl = (id) => setCollState(prev => ({ ...prev, [id]: prev[id] === "all" ? "none" : "all" }));
-  const toggleOutfit = (id) => setOutfitState(prev => ({ ...prev, [id]: prev[id] === "all" ? "none" : "all" }));
+  const toggleColl = (id) =>
+    setCollState((prev) => ({
+      ...prev,
+      [id]: prev[id] === "all" ? "none" : "all",
+    }));
+  const toggleOutfit = (id) =>
+    setOutfitState((prev) => ({
+      ...prev,
+      [id]: prev[id] === "all" ? "none" : "all",
+    }));
 
   const apply = () => {
     const arr = [...selectedIds];
     if (type === "tags") {
-      onSaveItems(items.map(it => {
-        if (!selectedIds.has(it.id)) return it;
-        return {
-          ...it,
-          ...(applyStatus ? { status: applyStatus } : {}),
-          ...(applyYear ? { yearPurchased: applyYear } : {}),
-          seasons: [...new Set([...(it.seasons || []), ...addSeasons])],
-          occasions: [...new Set([...(it.occasions || []), ...addOccasions])],
-          custom: [...new Set([...(it.custom || []), ...addCustom])],
-        };
-      }));
+      onSaveItems(
+        items.map((it) => {
+          if (!selectedIds.has(it.id)) return it;
+          return {
+            ...it,
+            ...(applyStatus ? { status: applyStatus } : {}),
+            ...(applyYear ? { yearPurchased: applyYear } : {}),
+            seasons: [...new Set([...(it.seasons || []), ...addSeasons])],
+            occasions: [...new Set([...(it.occasions || []), ...addOccasions])],
+            custom: [...new Set([...(it.custom || []), ...addCustom])],
+          };
+        }),
+      );
     } else if (type === "collections") {
-      onSaveCollections((collections || []).map(c => {
-        const d = collState[c.id];
-        if (d === "all") return { ...c, itemIds: [...new Set([...c.itemIds, ...arr])] };
-        if (d === "none") return { ...c, itemIds: c.itemIds.filter(id => !selectedIds.has(id)) };
-        return c;
-      }));
+      onSaveCollections(
+        (collections || []).map((c) => {
+          const d = collState[c.id];
+          if (d === "all")
+            return { ...c, itemIds: [...new Set([...c.itemIds, ...arr])] };
+          if (d === "none")
+            return {
+              ...c,
+              itemIds: c.itemIds.filter((id) => !selectedIds.has(id)),
+            };
+          return c;
+        }),
+      );
     } else if (type === "outfits") {
-      onSaveOutfits((outfits || []).map(o => {
-        const d = outfitState[o.id];
-        if (d === "all") return { ...o, itemIds: [...new Set([...o.itemIds, ...arr])] };
-        if (d === "none") return { ...o, itemIds: o.itemIds.filter(id => !selectedIds.has(id)) };
-        return o;
-      }));
+      onSaveOutfits(
+        (outfits || []).map((o) => {
+          const d = outfitState[o.id];
+          if (d === "all")
+            return { ...o, itemIds: [...new Set([...o.itemIds, ...arr])] };
+          if (d === "none")
+            return {
+              ...o,
+              itemIds: o.itemIds.filter((id) => !selectedIds.has(id)),
+            };
+          return o;
+        }),
+      );
     }
     onClose();
   };
 
-  const titles = { tags: "Apply Tags", collections: "Collections", outfits: "Outfits" };
+  const titles = {
+    tags: "Apply Tags",
+    collections: "Collections",
+    outfits: "Outfits",
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex sm:justify-end">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
       <div className="relative w-full sm:max-w-md bg-white shadow-2xl fade-up flex flex-col h-full">
         <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white shrink-0">
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">{count} item{count !== 1 ? "s" : ""} selected</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+              {count} item{count !== 1 ? "s" : ""} selected
+            </p>
             <h3 className="font-display text-2xl">{titles[type]}</h3>
           </div>
-          <button onClick={onClose} className="text-ink-500 p-2 -m-2"><I.x size={20} /></button>
+          <button onClick={onClose} className="text-ink-500 p-2 -m-2">
+            <I.x size={20} />
+          </button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6">
           {type === "tags" && (
             <>
-              <p className="text-sm text-ink-600">Selected tags will be added to all {count} items. Existing tags are preserved.</p>
+              <p className="text-sm text-ink-600">
+                Selected tags will be added to all {count} items. Existing tags
+                are preserved.
+              </p>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Status</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Status
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {STATUS_OPTIONS.map(s => <Chip key={s} tone="status" active={applyStatus === s} onClick={() => setApplyStatus(prev => prev === s ? null : s)}>{s}</Chip>)}
+                  {STATUS_OPTIONS.map((s) => (
+                    <Chip
+                      key={s}
+                      tone="status"
+                      active={applyStatus === s}
+                      onClick={() =>
+                        setApplyStatus((prev) => (prev === s ? null : s))
+                      }
+                    >
+                      {s}
+                    </Chip>
+                  ))}
                 </div>
-                {applyStatus && <p className="text-[10px] text-ink-400 mt-1.5">Status will be set to "{applyStatus}" on all selected items.</p>}
+                {applyStatus && (
+                  <p className="text-[10px] text-ink-400 mt-1.5">
+                    Status will be set to "{applyStatus}" on all selected items.
+                  </p>
+                )}
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Year Purchased</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Year Purchased
+                </p>
                 <input
                   value={applyYear}
-                  onChange={(e) => setApplyYear(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))}
+                  onChange={(e) =>
+                    setApplyYear(
+                      e.target.value.replace(/[^0-9]/g, "").slice(0, 4),
+                    )
+                  }
                   inputMode="numeric"
                   placeholder="e.g. 2024"
                   className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
                 />
-                {applyYear && <p className="text-[10px] text-ink-400 mt-1.5">Year purchased will be set to "{applyYear}" on all selected items.</p>}
+                {applyYear && (
+                  <p className="text-[10px] text-ink-400 mt-1.5">
+                    Year purchased will be set to "{applyYear}" on all selected
+                    items.
+                  </p>
+                )}
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Seasons</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Seasons
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {SEASON_OPTIONS.map(s => <Chip key={s} tone="season" active={addSeasons.includes(s)} onClick={() => toggleTag(addSeasons, setAddSeasons, s)}>{s}</Chip>)}
+                  {SEASON_OPTIONS.map((s) => (
+                    <Chip
+                      key={s}
+                      tone="season"
+                      active={addSeasons.includes(s)}
+                      onClick={() => toggleTag(addSeasons, setAddSeasons, s)}
+                    >
+                      {s}
+                    </Chip>
+                  ))}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasions</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Occasions
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {OCCASION_OPTIONS.map(o => <Chip key={o} tone="occasion" active={addOccasions.includes(o)} onClick={() => toggleTag(addOccasions, setAddOccasions, o)}>{o}</Chip>)}
+                  {OCCASION_OPTIONS.map((o) => (
+                    <Chip
+                      key={o}
+                      tone="occasion"
+                      active={addOccasions.includes(o)}
+                      onClick={() =>
+                        toggleTag(addOccasions, setAddOccasions, o)
+                      }
+                    >
+                      {o}
+                    </Chip>
+                  ))}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Custom Tags</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Custom Tags
+                </p>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {(() => {
-                    const shownTags = customTags.filter(t => addCustom.includes(t) || items.some(i => (i.custom || []).includes(t)));
-                    if (shownTags.length === 0) return <span className="text-xs text-ink-400 italic">none yet — add one below</span>;
-                    return shownTags.map(t => <Chip key={t} tone="custom" active={addCustom.includes(t)} onClick={() => toggleTag(addCustom, setAddCustom, t)}>{t}</Chip>);
+                    const shownTags = customTags.filter(
+                      (t) =>
+                        addCustom.includes(t) ||
+                        items.some((i) => (i.custom || []).includes(t)),
+                    );
+                    if (shownTags.length === 0)
+                      return (
+                        <span className="text-xs text-ink-400 italic">
+                          none yet — add one below
+                        </span>
+                      );
+                    return shownTags.map((t) => (
+                      <Chip
+                        key={t}
+                        tone="custom"
+                        active={addCustom.includes(t)}
+                        onClick={() => toggleTag(addCustom, setAddCustom, t)}
+                      >
+                        {t}
+                      </Chip>
+                    ));
                   })()}
                 </div>
                 <div className="flex gap-2">
-                  <input value={newTag} onChange={(e) => setNewTag(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNewTag()} placeholder="new tag…" className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1" />
-                  <button onClick={addNewTag} className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop">Add</button>
+                  <input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addNewTag()}
+                    placeholder="new tag…"
+                    className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
+                  />
+                  <button
+                    onClick={addNewTag}
+                    className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
             </>
           )}
 
-          {type === "collections" && (
-            (collections || []).length === 0
-              ? <p className="text-sm text-ink-500 italic">No collections yet.</p>
-              : <div className="space-y-2">
-                  {(collections || []).map(c => {
-                    const st = collState[c.id] || "none";
-                    return (
-                      <button key={c.id} onClick={() => toggleColl(c.id)} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-sky2-200"}`}>
-                        <I.suitcase size={16} className="shrink-0" />
-                        <span className="flex-1 font-display font-bold text-lg truncate">{toTitle(c.name)}</span>
-                        {st === "some" && <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">partial</span>}
-                        {st === "all" && <I.check size={16} className="shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-          )}
+          {type === "collections" &&
+            ((collections || []).length === 0 ? (
+              <p className="text-sm text-ink-500 italic">No collections yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {(collections || []).map((c) => {
+                  const st = collState[c.id] || "none";
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => toggleColl(c.id)}
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-sky2-200"}`}
+                    >
+                      <I.suitcase size={16} className="shrink-0" />
+                      <span className="flex-1 font-display font-bold text-lg truncate">
+                        {toTitle(c.name)}
+                      </span>
+                      {st === "some" && (
+                        <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">
+                          partial
+                        </span>
+                      )}
+                      {st === "all" && (
+                        <I.check size={16} className="shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
 
-          {type === "outfits" && (
-            (outfits || []).length === 0
-              ? <p className="text-sm text-ink-500 italic">No outfits yet.</p>
-              : <div className="space-y-2">
-                  {(outfits || []).map(o => {
-                    const st = outfitState[o.id] || "none";
-                    return (
-                      <button key={o.id} onClick={() => toggleOutfit(o.id)} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-petal-200"}`}>
-                        <I.sunglasses size={16} className="shrink-0" />
-                        <span className="flex-1 font-display font-bold text-lg truncate">{toTitle(o.name)}</span>
-                        {st === "some" && <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">partial</span>}
-                        {st === "all" && <I.check size={16} className="shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-          )}
+          {type === "outfits" &&
+            ((outfits || []).length === 0 ? (
+              <p className="text-sm text-ink-500 italic">No outfits yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {(outfits || []).map((o) => {
+                  const st = outfitState[o.id] || "none";
+                  return (
+                    <button
+                      key={o.id}
+                      onClick={() => toggleOutfit(o.id)}
+                      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-petal-200"}`}
+                    >
+                      <I.sunglasses size={16} className="shrink-0" />
+                      <span className="flex-1 font-display font-bold text-lg truncate">
+                        {toTitle(o.name)}
+                      </span>
+                      {st === "some" && (
+                        <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">
+                          partial
+                        </span>
+                      )}
+                      {st === "all" && (
+                        <I.check size={16} className="shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
         </div>
 
-        <div className="p-4 sm:p-6 border-t border-cream-100 bg-white shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)' }}>
-          <button onClick={apply} className="w-full flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy">
+        <div
+          className="p-4 sm:p-6 border-t border-cream-100 bg-white shrink-0"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+        >
+          <button
+            onClick={apply}
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
+          >
             <I.check size={14} /> Apply to {count} item{count !== 1 ? "s" : ""}
           </button>
         </div>
@@ -2681,15 +4342,29 @@ function BulkSheet({ type, selectedIds, items, customTags, collections, outfits,
 }
 
 // --- MANAGE COLLECTIONS ---------------------------------------------------
-function ManageCollectionsModal({ collections, items, images, onSave, onClose, initialEditingId }) {
+function ManageCollectionsModal({
+  collections,
+  items,
+  images,
+  onSave,
+  onClose,
+  initialEditingId,
+}) {
   useBodyScrollLock();
   // If we opened straight into an edit/new flow, remember that — Cancel should close instead of returning to the list
   const directEdit = !!initialEditingId;
 
   const initialDraft = () => {
-    if (initialEditingId === "new" || !initialEditingId) return { name: "", description: "", itemIds: [] };
-    const c = collections.find(x => x.id === initialEditingId);
-    return c ? { name: c.name, description: c.description || "", itemIds: [...c.itemIds] } : { name: "", description: "", itemIds: [] };
+    if (initialEditingId === "new" || !initialEditingId)
+      return { name: "", description: "", itemIds: [] };
+    const c = collections.find((x) => x.id === initialEditingId);
+    return c
+      ? {
+          name: c.name,
+          description: c.description || "",
+          itemIds: [...c.itemIds],
+        }
+      : { name: "", description: "", itemIds: [] };
   };
 
   const [editingId, setEditingId] = useState(initialEditingId || null);
@@ -2697,15 +4372,30 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
   const [filterStatus, setFilterStatus] = useState("owned");
 
   const startNew = () => {
-    setDraft({ name: "", description: "", itemIds: [], seasons: [], occasions: [] });
+    setDraft({
+      name: "",
+      description: "",
+      itemIds: [],
+      seasons: [],
+      occasions: [],
+    });
     setEditingId("new");
   };
   const startEdit = (c) => {
-    setDraft({ name: c.name, description: c.description || "", itemIds: [...c.itemIds], seasons: c.seasons || [], occasions: c.occasions || [] });
+    setDraft({
+      name: c.name,
+      description: c.description || "",
+      itemIds: [...c.itemIds],
+      seasons: c.seasons || [],
+      occasions: c.occasions || [],
+    });
     setEditingId(c.id);
   };
   const cancelEdit = () => {
-    if (directEdit) { onClose(); return; }
+    if (directEdit) {
+      onClose();
+      return;
+    }
     setEditingId(null);
     setDraft({ name: "", description: "", itemIds: [] });
   };
@@ -2714,24 +4404,56 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
     let next;
     if (editingId === "new") {
       const id = `c_${Date.now()}`;
-      next = [...collections, { id, name: draft.name.trim(), description: draft.description.trim(), itemIds: draft.itemIds, seasons: draft.seasons, occasions: draft.occasions, createdAt: Date.now() }];
+      next = [
+        ...collections,
+        {
+          id,
+          name: draft.name.trim(),
+          description: draft.description.trim(),
+          itemIds: draft.itemIds,
+          seasons: draft.seasons,
+          occasions: draft.occasions,
+          createdAt: Date.now(),
+        },
+      ];
     } else {
-      next = collections.map(c => c.id === editingId ? { ...c, name: draft.name.trim(), description: draft.description.trim(), itemIds: draft.itemIds, seasons: draft.seasons, occasions: draft.occasions } : c);
+      next = collections.map((c) =>
+        c.id === editingId
+          ? {
+              ...c,
+              name: draft.name.trim(),
+              description: draft.description.trim(),
+              itemIds: draft.itemIds,
+              seasons: draft.seasons,
+              occasions: draft.occasions,
+            }
+          : c,
+      );
     }
     onSave(next);
-    if (directEdit) { onClose(); return; }
+    if (directEdit) {
+      onClose();
+      return;
+    }
     setEditingId(null);
     setDraft({ name: "", description: "", itemIds: [] });
   };
   const deleteCollection = (id) => {
-    if (!confirm("Delete this collection? The items themselves stay in your closet.")) return;
-    onSave(collections.filter(c => c.id !== id));
+    if (
+      !confirm(
+        "Delete this collection? The items themselves stay in your closet.",
+      )
+    )
+      return;
+    onSave(collections.filter((c) => c.id !== id));
     if (editingId === id) cancelEdit();
   };
   const toggleItem = (itemId) => {
     setDraft({
       ...draft,
-      itemIds: draft.itemIds.includes(itemId) ? draft.itemIds.filter(x => x !== itemId) : [...draft.itemIds, itemId]
+      itemIds: draft.itemIds.includes(itemId)
+        ? draft.itemIds.filter((x) => x !== itemId)
+        : [...draft.itemIds, itemId],
     });
   };
 
@@ -2739,44 +4461,87 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
       <div
         className="relative bg-white w-full sm:max-w-2xl sm:max-h-[85vh] sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
-        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        style={{ height: "100dvh", maxHeight: "100dvh" }}
       >
         <div
           className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
+          style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
         >
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Collections</p>
-            <h3 className="font-display text-2xl sm:text-3xl">{isEditing ? (editingId === "new" ? "New Collection" : "Edit Collection") : "Your Collections"}</h3>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+              Collections
+            </p>
+            <h3 className="font-display text-2xl sm:text-3xl">
+              {isEditing
+                ? editingId === "new"
+                  ? "New Collection"
+                  : "Edit Collection"
+                : "Your Collections"}
+            </h3>
           </div>
-          <button onClick={onClose} className="text-ink-500 p-2"><I.x size={18} /></button>
+          <button onClick={onClose} className="text-ink-500 p-2">
+            <I.x size={18} />
+          </button>
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
           {!isEditing && (
             <div className="space-y-3">
-              <p className="text-sm text-ink-600">Group items into themed collections — a packing list for a trip, a capsule, a season's rotation. Pieces can live in multiple collections.</p>
+              <p className="text-sm text-ink-600">
+                Group items into themed collections — a packing list for a trip,
+                a capsule, a season's rotation. Pieces can live in multiple
+                collections.
+              </p>
               {collections.length === 0 ? (
                 <div className="py-10 text-center border-2 border-dashed border-cream-200 rounded-3xl bg-cream-50/50">
-                  <p className="font-display italic text-ink-500 text-lg mb-2">No collections yet.</p>
+                  <p className="font-display italic text-ink-500 text-lg mb-2">
+                    No collections yet.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {collections.map(c => (
-                    <div key={c.id} className="flex items-center gap-3 p-3.5 bg-cream-50 border-2 border-cream-100 rounded-2xl">
+                  {collections.map((c) => (
+                    <div
+                      key={c.id}
+                      className="flex items-center gap-3 p-3.5 bg-cream-50 border-2 border-cream-100 rounded-2xl"
+                    >
                       <div className="w-9 h-9 rounded-full bg-sky2-100 flex items-center justify-center shrink-0">
                         <I.suitcase size={15} className="text-sky2-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-display font-bold text-lg leading-tight truncate text-ink-900">{toTitle(c.name)}</p>
-                        <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-600">{c.itemIds.length} {c.itemIds.length === 1 ? "piece" : "pieces"}</p>
-                        {c.description && <p className="text-xs italic text-ink-500 mt-1 truncate">"{c.description}"</p>}
+                        <p className="font-display font-bold text-lg leading-tight truncate text-ink-900">
+                          {toTitle(c.name)}
+                        </p>
+                        <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-600">
+                          {c.itemIds.length}{" "}
+                          {c.itemIds.length === 1 ? "piece" : "pieces"}
+                        </p>
+                        {c.description && (
+                          <p className="text-xs italic text-ink-500 mt-1 truncate">
+                            "{c.description}"
+                          </p>
+                        )}
                       </div>
-                      <button onClick={() => startEdit(c)} className="w-8 h-8 flex items-center justify-center rounded-full text-ink-600 active:bg-poppy-100 active:text-poppy-600 transition-colors" aria-label="Edit"><I.pencil size={14} /></button>
-                      <button onClick={() => deleteCollection(c.id)} className="w-8 h-8 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-100 active:text-petal-600 transition-colors" aria-label="Delete"><I.trash size={14} /></button>
+                      <button
+                        onClick={() => startEdit(c)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-ink-600 active:bg-poppy-100 active:text-poppy-600 transition-colors"
+                        aria-label="Edit"
+                      >
+                        <I.pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => deleteCollection(c.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-100 active:text-petal-600 transition-colors"
+                        aria-label="Delete"
+                      >
+                        <I.trash size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -2793,7 +4558,9 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
           {isEditing && (
             <div className="space-y-5">
               <div>
-                <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Name</label>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
+                  Name
+                </label>
                 <input
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
@@ -2802,62 +4569,131 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
                 />
               </div>
               <div>
-                <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Description (optional)</label>
+                <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
+                  Description (optional)
+                </label>
                 <input
                   value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                  onChange={(e) =>
+                    setDraft({ ...draft, description: e.target.value })
+                  }
                   placeholder="A short note about this collection"
                   className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
                 />
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Season</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Season
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {SEASON_OPTIONS.map(s => (
-                    <Chip key={s} tone="season" active={(draft.seasons || []).includes(s)} onClick={() => setDraft({ ...draft, seasons: (draft.seasons || []).includes(s) ? (draft.seasons || []).filter(x => x !== s) : [...(draft.seasons || []), s] })}>{s}</Chip>
+                  {SEASON_OPTIONS.map((s) => (
+                    <Chip
+                      key={s}
+                      tone="season"
+                      active={(draft.seasons || []).includes(s)}
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          seasons: (draft.seasons || []).includes(s)
+                            ? (draft.seasons || []).filter((x) => x !== s)
+                            : [...(draft.seasons || []), s],
+                        })
+                      }
+                    >
+                      {s}
+                    </Chip>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasion</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Occasion
+                </p>
                 <div className="flex flex-wrap gap-2">
-                  {OCCASION_OPTIONS.map(o => (
-                    <Chip key={o} tone="occasion" active={(draft.occasions || []).includes(o)} onClick={() => setDraft({ ...draft, occasions: (draft.occasions || []).includes(o) ? (draft.occasions || []).filter(x => x !== o) : [...(draft.occasions || []), o] })}>{o}</Chip>
+                  {OCCASION_OPTIONS.map((o) => (
+                    <Chip
+                      key={o}
+                      tone="occasion"
+                      active={(draft.occasions || []).includes(o)}
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          occasions: (draft.occasions || []).includes(o)
+                            ? (draft.occasions || []).filter((x) => x !== o)
+                            : [...(draft.occasions || []), o],
+                        })
+                      }
+                    >
+                      {o}
+                    </Chip>
                   ))}
                 </div>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Pieces ({draft.itemIds.length})</p>
+                <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                  Pieces ({draft.itemIds.length})
+                </p>
                 <div className="flex gap-2 flex-wrap mb-3">
-                  <Chip tone="status" active={!filterStatus} onClick={() => setFilterStatus(null)}>All</Chip>
-                  {STATUS_OPTIONS.map(s => (
-                    <Chip key={s} tone="status" active={filterStatus === s} onClick={() => setFilterStatus(filterStatus === s ? null : s)}>{s}</Chip>
+                  <Chip
+                    tone="status"
+                    active={!filterStatus}
+                    onClick={() => setFilterStatus(null)}
+                  >
+                    All
+                  </Chip>
+                  {STATUS_OPTIONS.map((s) => (
+                    <Chip
+                      key={s}
+                      tone="status"
+                      active={filterStatus === s}
+                      onClick={() =>
+                        setFilterStatus(filterStatus === s ? null : s)
+                      }
+                    >
+                      {s}
+                    </Chip>
                   ))}
                 </div>
                 {items.length === 0 ? (
-                  <p className="text-sm text-ink-500 italic">No items in your closet yet.</p>
+                  <p className="text-sm text-ink-500 italic">
+                    No items in your closet yet.
+                  </p>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {items.filter(it => !filterStatus || (it.status || "owned") === filterStatus).map(it => {
-                      const active = draft.itemIds.includes(it.id);
-                      return (
-                        <button
-                          key={it.id}
-                          onClick={() => toggleItem(it.id)}
-                          className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
-                        >
-                          <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center">
-                            {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-2" />}
-                            {active && (
-                              <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
-                                <I.check size={10} />
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-[10px] font-bold font-display text-ink-800 truncate px-1.5 py-1">{toTitle(it.name)}</p>
-                        </button>
-                      );
-                    })}
+                    {items
+                      .filter(
+                        (it) =>
+                          !filterStatus ||
+                          (it.status || "owned") === filterStatus,
+                      )
+                      .map((it) => {
+                        const active = draft.itemIds.includes(it.id);
+                        return (
+                          <button
+                            key={it.id}
+                            onClick={() => toggleItem(it.id)}
+                            className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
+                          >
+                            <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center">
+                              {images[it.id] && (
+                                <img
+                                  src={images[it.id]}
+                                  alt={it.name}
+                                  className="w-full h-full object-contain p-2"
+                                />
+                              )}
+                              {active && (
+                                <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
+                                  <I.check size={10} />
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-[10px] font-bold font-display text-ink-800 truncate px-1.5 py-1">
+                              {toTitle(it.name)}
+                            </p>
+                          </button>
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -2868,15 +4704,21 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
         {isEditing && (
           <div
             className="p-4 sm:p-6 border-t-2 border-cream-100 bg-white flex gap-2 shrink-0"
-            style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+            style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
           >
-            <button onClick={cancelEdit} className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95">Cancel</button>
+            <button
+              onClick={cancelEdit}
+              className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
+            >
+              Cancel
+            </button>
             <button
               onClick={saveDraft}
               disabled={!draft.name.trim()}
               className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-40 shadow-pop"
             >
-              <I.check size={14} /> {editingId === "new" ? "Create Collection" : "Save Collection"}
+              <I.check size={14} />{" "}
+              {editingId === "new" ? "Create Collection" : "Save Collection"}
             </button>
           </div>
         )}
@@ -2886,7 +4728,19 @@ function ManageCollectionsModal({ collections, items, images, onSave, onClose, i
 }
 
 // --- OUTFITS VIEW ----------------------------------------------------------
-function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit, onPutImage, onDeleteImage, scrollToId, onScrolled, onSetHeaderAction }) {
+function OutfitsView({
+  outfits,
+  items,
+  images,
+  onSave,
+  onNewOutfit,
+  onEditOutfit,
+  onPutImage,
+  onDeleteImage,
+  scrollToId,
+  onScrolled,
+  onSetHeaderAction,
+}) {
   const [selfieModal, setSelfieModal] = useState(null);
   const [viewingId, setViewingId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -2895,31 +4749,49 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
   const [activeOccasions, setActiveOccasions] = useState([]);
   const newLookButtonRef = useRef(null);
 
-  const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+  const toggle = (list, setList, v) =>
+    setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const filterCount = activeSeasons.length + activeOccasions.length;
 
-  const filteredOutfits = outfits.filter(o =>
-    (activeSeasons.length === 0 || activeSeasons.some(s => (o.seasons || []).includes(s))) &&
-    (activeOccasions.length === 0 || activeOccasions.some(oc => (o.occasions || []).includes(oc)))
+  const filteredOutfits = outfits.filter(
+    (o) =>
+      (activeSeasons.length === 0 ||
+        activeSeasons.some((s) => (o.seasons || []).includes(s))) &&
+      (activeOccasions.length === 0 ||
+        activeOccasions.some((oc) => (o.occasions || []).includes(oc))),
   );
 
   const handleReorder = (from, to) => {
-    const next = reorderByVisible(outfits, filteredOutfits.map(o => o.id), from, to);
+    const next = reorderByVisible(
+      outfits,
+      filteredOutfits.map((o) => o.id),
+      from,
+      to,
+    );
     if (next !== outfits) onSave(next);
   };
-  const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
+  const {
+    register,
+    dragIndex,
+    hoverIndex,
+    ghostRef,
+    startRectRef,
+    grabOffsetRef,
+    lastPointerRef,
+    onHandlePointerDown,
+  } = useDragReorder(handleReorder);
 
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
     onDeleteImage(`selfie_${id}`);
-    onSave(outfits.filter(o => o.id !== id));
+    onSave(outfits.filter((o) => o.id !== id));
   };
 
   useEffect(() => {
     if (!scrollToId) return;
     const el = document.getElementById(`outfit-${scrollToId}`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (outfits.some(o => o.id === scrollToId)) setViewingId(scrollToId);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (outfits.some((o) => o.id === scrollToId)) setViewingId(scrollToId);
     onScrolled?.();
   }, [scrollToId]);
 
@@ -2927,156 +4799,245 @@ function OutfitsView({ outfits, items, images, onSave, onNewOutfit, onEditOutfit
     const el = newLookButtonRef.current;
     if (!el || !onSetHeaderAction) return;
     const obs = new IntersectionObserver(
-      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "New Look", tone: "petal", onClick: onNewOutfit }),
-      { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" }
+      ([entry]) =>
+        onSetHeaderAction(
+          entry.isIntersecting
+            ? null
+            : { label: "New Look", tone: "petal", onClick: onNewOutfit },
+        ),
+      { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" },
     );
     obs.observe(el);
-    return () => { obs.disconnect(); onSetHeaderAction?.(null); };
+    return () => {
+      obs.disconnect();
+      onSetHeaderAction?.(null);
+    };
   }, []);
 
   return (
     <>
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-    <div className="fade-up">
-      <div className="mb-6 sm:mb-10">
-        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Looks</h2>
-        <div className="flex items-end justify-between gap-4">
-          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-petal-600">worth keeping.</em></h3>
-          <button
-            ref={newLookButtonRef}
-            onClick={onNewOutfit}
-            style={{flexShrink: 0}}
-            className="flex items-center gap-2 px-5 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
-          >
-            <I.plus size={16} /> New Look
-          </button>
-        </div>
-      </div>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="fade-up">
+          <div className="mb-6 sm:mb-10">
+            <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">
+              Looks
+            </h2>
+            <div className="flex items-end justify-between gap-4">
+              <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
+                <em className="text-petal-600">worth keeping.</em>
+              </h3>
+              <button
+                ref={newLookButtonRef}
+                onClick={onNewOutfit}
+                style={{ flexShrink: 0 }}
+                className="flex items-center gap-2 px-5 py-3 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+              >
+                <I.plus size={16} /> New Look
+              </button>
+            </div>
+          </div>
 
-      <div className="mb-4 flex gap-2">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
-        >
-          Filters{filterCount > 0 && ` · ${filterCount}`}
-        </button>
-        {filteredOutfits.length > 1 && (
-          <button
-            onClick={() => setDragMode(!dragMode)}
-            aria-label={dragMode ? "Exit reorder mode" : "Reorder looks"}
-            className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
-          >
-            {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
-          </button>
-        )}
-      </div>
+          <div className="mb-4 flex gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+            >
+              Filters{filterCount > 0 && ` · ${filterCount}`}
+            </button>
+            {filteredOutfits.length > 1 && (
+              <button
+                onClick={() => setDragMode(!dragMode)}
+                aria-label={dragMode ? "Exit reorder mode" : "Reorder looks"}
+                className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
+              >
+                {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
+              </button>
+            )}
+          </div>
 
-      {showFilters && (
-        <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
-          <FilterRow label="Season">
-            {SEASON_OPTIONS.map(s => (
-              <Chip key={s} tone="season" active={activeSeasons.includes(s)} onClick={() => toggle(activeSeasons, setActiveSeasons, s)}>{s}</Chip>
-            ))}
-          </FilterRow>
-          <FilterRow label="Occasion">
-            {OCCASION_OPTIONS.map(o => (
-              <Chip key={o} tone="occasion" active={activeOccasions.includes(o)} onClick={() => toggle(activeOccasions, setActiveOccasions, o)}>{o}</Chip>
-            ))}
-          </FilterRow>
-          {filterCount > 0 && (
-            <button onClick={() => { setActiveSeasons([]); setActiveOccasions([]); }} className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline">Clear all</button>
+          {showFilters && (
+            <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+              <FilterRow label="Season">
+                {SEASON_OPTIONS.map((s) => (
+                  <Chip
+                    key={s}
+                    tone="season"
+                    active={activeSeasons.includes(s)}
+                    onClick={() => toggle(activeSeasons, setActiveSeasons, s)}
+                  >
+                    {s}
+                  </Chip>
+                ))}
+              </FilterRow>
+              <FilterRow label="Occasion">
+                {OCCASION_OPTIONS.map((o) => (
+                  <Chip
+                    key={o}
+                    tone="occasion"
+                    active={activeOccasions.includes(o)}
+                    onClick={() =>
+                      toggle(activeOccasions, setActiveOccasions, o)
+                    }
+                  >
+                    {o}
+                  </Chip>
+                ))}
+              </FilterRow>
+              {filterCount > 0 && (
+                <button
+                  onClick={() => {
+                    setActiveSeasons([]);
+                    setActiveOccasions([]);
+                  }}
+                  className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {outfits.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-petal-200 bg-petal-50/40 rounded-3xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
+                <I.sunglasses size={28} className="text-petal-500" />
+              </div>
+              <p className="font-display font-bold text-2xl mb-2 text-ink-900">
+                No looks yet.
+              </p>
+              <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mb-6">
+                Compose your first one
+              </p>
+              <button
+                onClick={onNewOutfit}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95"
+              >
+                Open Builder <I.chevron size={14} />
+              </button>
+            </div>
+          ) : filteredOutfits.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
+                <I.search size={26} className="text-petal-500" />
+              </div>
+              <p className="font-display font-bold text-xl text-ink-900">
+                Nothing matches.
+              </p>
+              <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mt-2">
+                Try clearing a filter
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {filteredOutfits.map((o, i) => (
+                <OutfitCard
+                  key={o.id}
+                  id={`outfit-${o.id}`}
+                  outfit={o}
+                  items={items}
+                  images={images}
+                  onOpen={dragMode ? undefined : () => setViewingId(o.id)}
+                  delay={i * 40}
+                  cardRef={(el) => register(i, el)}
+                  reorderHandle={dragMode ? onHandlePointerDown(i) : null}
+                  isDragging={dragMode && dragIndex === i}
+                  isDropTarget={
+                    dragMode &&
+                    dragIndex !== null &&
+                    hoverIndex === i &&
+                    dragIndex !== i
+                  }
+                />
+              ))}
+            </div>
           )}
         </div>
-      )}
+      </main>
 
-      {outfits.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-petal-200 bg-petal-50/40 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
-            <I.sunglasses size={28} className="text-petal-500" />
-          </div>
-          <p className="font-display font-bold text-2xl mb-2 text-ink-900">No looks yet.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mb-6">Compose your first one</p>
-          <button onClick={onNewOutfit} className="inline-flex items-center gap-2 px-5 py-2.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
-            Open Builder <I.chevron size={14} />
-          </button>
-        </div>
-      ) : filteredOutfits.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-petal-100 flex items-center justify-center">
-            <I.search size={26} className="text-petal-500" />
-          </div>
-          <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-petal-600 mt-2">Try clearing a filter</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {filteredOutfits.map((o, i) => (
-            <OutfitCard
-              key={o.id}
-              id={`outfit-${o.id}`}
-              outfit={o}
-              items={items}
-              images={images}
-              onOpen={dragMode ? undefined : () => setViewingId(o.id)}
-              delay={i * 40}
-              cardRef={(el) => register(i, el)}
-              reorderHandle={dragMode ? onHandlePointerDown(i) : null}
-              isDragging={dragMode && dragIndex === i}
-              isDropTarget={dragMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-    </main>
+      {dragIndex !== null &&
+        filteredOutfits[dragIndex] &&
+        (() => {
+          const o = filteredOutfits[dragIndex];
+          const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
+          const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
+          return (
+            <div
+              ref={(el) => {
+                ghostRef.current = el;
+                if (el)
+                  el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
+              }}
+              className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-petal-300 rounded-2xl overflow-hidden"
+              style={{
+                width: startRectRef.current?.width,
+                willChange: "transform",
+                boxShadow: "0 22px 60px rgba(236, 71, 120, 0.35)",
+              }}
+            >
+              <OutfitCardPreview outfit={o} items={items} images={images} />
+            </div>
+          );
+        })()}
 
-    {dragIndex !== null && filteredOutfits[dragIndex] && (() => {
-      const o = filteredOutfits[dragIndex];
-      const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
-      const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
-      return (
+      {dragMode && (
         <div
-          ref={(el) => { ghostRef.current = el; if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`; }}
-          className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-petal-300 rounded-2xl overflow-hidden"
-          style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(236, 71, 120, 0.35)' }}
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <OutfitCardPreview outfit={o} items={items} images={images} />
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
+            <span className="flex-1 text-sm font-bold text-ink-600">
+              Drag looks to reorder
+            </span>
+            <button
+              onClick={() => setDragMode(false)}
+              className="px-3.5 py-2 bg-petal-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-600"
+            >
+              Done
+            </button>
+          </div>
         </div>
-      );
-    })()}
-
-    {dragMode && (
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
-          <span className="flex-1 text-sm font-bold text-ink-600">Drag looks to reorder</span>
-          <button onClick={() => setDragMode(false)} className="px-3.5 py-2 bg-petal-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-600">Done</button>
-        </div>
-      </div>
-    )}
-    {viewingId && outfits.find(o => o.id === viewingId) && (
-      <OutfitDetailModal
-        outfit={outfits.find(o => o.id === viewingId)}
-        items={items}
-        images={images}
-        onClose={() => setViewingId(null)}
-        onEdit={onEditOutfit ? () => { const o = outfits.find(x => x.id === viewingId); setViewingId(null); onEditOutfit(o); } : undefined}
-        onDelete={() => handleDelete(viewingId)}
-        onOpenSelfie={() => { const o = outfits.find(x => x.id === viewingId); setSelfieModal({ outfitId: o.id, outfitName: o.name }); }}
-      />
-    )}
-    {selfieModal && (
-      <SelfieModal
-        outfitName={selfieModal.outfitName}
-        selfieUrl={images[`selfie_${selfieModal.outfitId}`]}
-        onFile={async (file) => {
-          if (!file) return;
-          const blob = await resizeImageToBlob(file, 1200, 0.88);
-          if (blob) { onPutImage(`selfie_${selfieModal.outfitId}`, blob); setSelfieModal(null); }
-        }}
-        onRemove={() => { onDeleteImage(`selfie_${selfieModal.outfitId}`); setSelfieModal(null); }}
-        onClose={() => setSelfieModal(null)}
-      />
-    )}
+      )}
+      {viewingId && outfits.find((o) => o.id === viewingId) && (
+        <OutfitDetailModal
+          outfit={outfits.find((o) => o.id === viewingId)}
+          items={items}
+          images={images}
+          onClose={() => setViewingId(null)}
+          onEdit={
+            onEditOutfit
+              ? () => {
+                  const o = outfits.find((x) => x.id === viewingId);
+                  setViewingId(null);
+                  onEditOutfit(o);
+                }
+              : undefined
+          }
+          onDelete={() => handleDelete(viewingId)}
+          onOpenSelfie={() => {
+            const o = outfits.find((x) => x.id === viewingId);
+            setSelfieModal({ outfitId: o.id, outfitName: o.name });
+          }}
+        />
+      )}
+      {selfieModal && (
+        <SelfieModal
+          outfitName={selfieModal.outfitName}
+          selfieUrl={images[`selfie_${selfieModal.outfitId}`]}
+          onFile={async (file) => {
+            if (!file) return;
+            const blob = await resizeImageToBlob(file, 1200, 0.88);
+            if (blob) {
+              onPutImage(`selfie_${selfieModal.outfitId}`, blob);
+              setSelfieModal(null);
+            }
+          }}
+          onRemove={() => {
+            onDeleteImage(`selfie_${selfieModal.outfitId}`);
+            setSelfieModal(null);
+          }}
+          onClose={() => setSelfieModal(null)}
+        />
+      )}
     </>
   );
 }
@@ -3086,18 +5047,34 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
   const inputRef = useRef(null);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-white max-w-sm w-full p-6 sm:p-8 rounded-3xl shadow-2xl fade-up">
-        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-ink-500 p-2"
+        >
+          <I.x size={18} />
+        </button>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-buttercup-50 rounded-full mb-3">
           <I.camera size={12} className="text-buttercup-600" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700">Look selfie</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700">
+            Look selfie
+          </p>
         </div>
-        <h3 className="font-display font-bold text-2xl mb-5 text-ink-900">{toTitle(outfitName)}</h3>
+        <h3 className="font-display font-bold text-2xl mb-5 text-ink-900">
+          {toTitle(outfitName)}
+        </h3>
         {selfieUrl ? (
           <div className="mb-5">
             <div className="relative inline-block w-full">
-              <img src={selfieUrl} alt="Outfit selfie" className="w-full max-h-64 object-contain rounded-2xl bg-cream-50" />
+              <img
+                src={selfieUrl}
+                alt="Outfit selfie"
+                className="w-full max-h-64 object-contain rounded-2xl bg-cream-50"
+              />
             </div>
             <div className="flex gap-3 mt-3">
               <button
@@ -3122,10 +5099,21 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
             <div className="w-12 h-12 rounded-full bg-buttercup-100 flex items-center justify-center">
               <I.camera size={22} />
             </div>
-            <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Choose a photo</span>
+            <span className="text-[11px] font-bold tracking-[0.2em] uppercase">
+              Choose a photo
+            </span>
           </button>
         )}
-        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            onFile(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
       </div>
     </div>
   );
@@ -3133,43 +5121,78 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
 
 // The thumbnail + label block of a look tile — shared by the card and the drag ghost.
 function OutfitCardPreview({ outfit, items, images }) {
-  const pieces = items.filter(i => outfit.itemIds.includes(i.id));
+  const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
   const selfieUrl = images[`selfie_${outfit.id}`];
-  const thumbs = selfieUrl ? [{ id: 'selfie', url: selfieUrl }] : pieces.slice(0, 4).map(p => ({ id: p.id, url: images[p.id] }));
+  const thumbs = selfieUrl
+    ? [{ id: "selfie", url: selfieUrl }]
+    : pieces.slice(0, 4).map((p) => ({ id: p.id, url: images[p.id] }));
   return (
     <>
-      <div className={`aspect-square bg-petal-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}>
+      <div
+        className={`aspect-square bg-petal-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}
+      >
         {thumbs.length === 0 ? (
-          <div className="flex items-center justify-center text-petal-300"><I.sunglasses size={28} /></div>
-        ) : thumbs.map(t => (
-          <div key={t.id} className="bg-white rounded-lg overflow-hidden flex items-center justify-center">
-            {t.url && <img src={t.url} alt="" className="w-full h-full object-contain p-1" />}
+          <div className="flex items-center justify-center text-petal-300">
+            <I.sunglasses size={28} />
           </div>
-        ))}
+        ) : (
+          thumbs.map((t) => (
+            <div
+              key={t.id}
+              className="bg-white rounded-lg overflow-hidden flex items-center justify-center"
+            >
+              {t.url && (
+                <img
+                  src={t.url}
+                  alt=""
+                  className="w-full h-full object-contain p-1"
+                />
+              )}
+            </div>
+          ))
+        )}
       </div>
       <div className="p-2">
-        <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">{toTitle(outfit.name)}</h3>
-        <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-petal-600 mt-0.5">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
+        <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">
+          {toTitle(outfit.name)}
+        </h3>
+        <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-petal-600 mt-0.5">
+          {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
+        </p>
       </div>
     </>
   );
 }
 
-function OutfitCard({ outfit, items, images, onOpen, delay = 0, id, cardRef, reorderHandle, isDragging, isDropTarget }) {
+function OutfitCard({
+  outfit,
+  items,
+  images,
+  onOpen,
+  delay = 0,
+  id,
+  cardRef,
+  reorderHandle,
+  isDragging,
+  isDropTarget,
+}) {
   return (
     <div
       id={id}
       ref={cardRef}
       onClick={onOpen}
       className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-petal-500 ring-4 ring-petal-500/25" : "border-cream-200"}`}
-      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
+      style={{
+        animationDelay: `${delay}ms`,
+        ...(isDragging && { animation: "none", opacity: 0 }),
+      }}
     >
       <OutfitCardPreview outfit={outfit} items={items} images={images} />
       {reorderHandle && (
         <div
           aria-hidden="true"
           onPointerDown={reorderHandle}
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: "none" }}
           className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
         >
           <I.dots size={18} />
@@ -3179,9 +5202,17 @@ function OutfitCard({ outfit, items, images, onOpen, delay = 0, id, cardRef, reo
   );
 }
 
-function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, onOpenSelfie }) {
+function OutfitDetailModal({
+  outfit,
+  items,
+  images,
+  onClose,
+  onEdit,
+  onDelete,
+  onOpenSelfie,
+}) {
   useBodyScrollLock();
-  const pieces = items.filter(i => outfit.itemIds.includes(i.id));
+  const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
   const selfieUrl = images[`selfie_${outfit.id}`];
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
@@ -3194,11 +5225,11 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, o
         items: pieces,
         images,
         selfieUrl,
-        accent: '#EC4778',
-        kindLabel: 'Look',
+        accent: "#EC4778",
+        kindLabel: "Look",
       });
     } catch (e) {
-      Log.warn('share.failed', e);
+      Log.warn("share.failed", e);
       alert("Sorry — couldn't create the share image.");
     } finally {
       setSharing(false);
@@ -3207,41 +5238,71 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div
         className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
-        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        style={{ height: "100dvh", maxHeight: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="p-4 sm:p-6 border-b-2 border-petal-50 bg-white shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
+          style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
         >
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="w-8 h-8 rounded-full bg-petal-100 flex items-center justify-center">
               <I.sunglasses size={14} className="text-petal-600" />
             </div>
             <div className="flex gap-1 shrink-0">
-              <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40" aria-label="Share outfit">
+              <button
+                onClick={handleShare}
+                disabled={sharing || pieces.length === 0}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40"
+                aria-label="Share outfit"
+              >
                 <I.share size={15} />
               </button>
-              <button onClick={onOpenSelfie} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors" aria-label="Outfit selfie">
+              <button
+                onClick={onOpenSelfie}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors"
+                aria-label="Outfit selfie"
+              >
                 <I.camera size={15} />
               </button>
               {onEdit && (
-                <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Edit outfit">
+                <button
+                  onClick={onEdit}
+                  className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors"
+                  aria-label="Edit outfit"
+                >
                   <I.pencil size={15} />
                 </button>
               )}
-              <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete outfit">
+              <button
+                onClick={onDelete}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors"
+                aria-label="Delete outfit"
+              >
                 <I.trash size={15} />
               </button>
-              <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors" aria-label="Close"><I.x size={18} /></button>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors"
+                aria-label="Close"
+              >
+                <I.x size={18} />
+              </button>
             </div>
           </div>
-          <h3 className="font-display font-bold text-2xl sm:text-3xl truncate text-ink-900">{toTitle(outfit.name)}</h3>
-          {outfit.note && <p className="text-sm italic text-ink-500 mt-1">"{outfit.note}"</p>}
+          <h3 className="font-display font-bold text-2xl sm:text-3xl truncate text-ink-900">
+            {toTitle(outfit.name)}
+          </h3>
+          {outfit.note && (
+            <p className="text-sm italic text-ink-500 mt-1">"{outfit.note}"</p>
+          )}
         </div>
 
         {/* Scrollable content */}
@@ -3249,24 +5310,52 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, o
           <div className="p-4 bg-petal-50 grid grid-cols-3 gap-2 min-h-[200px]">
             {selfieUrl && (
               <div className="row-span-2 overflow-hidden rounded-2xl relative bg-white">
-                <img src={selfieUrl} alt="Outfit selfie" className="absolute inset-0 w-full h-full object-contain" />
+                <img
+                  src={selfieUrl}
+                  alt="Outfit selfie"
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
               </div>
             )}
-            {pieces.map(p => (
-              <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
-                {images[p.id] && <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />}
+            {pieces.map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card"
+              >
+                {images[p.id] && (
+                  <img
+                    src={images[p.id]}
+                    alt={p.name}
+                    className="w-full h-full object-contain p-2"
+                  />
+                )}
               </div>
             ))}
           </div>
           <div className="p-4 sm:p-6 flex flex-wrap gap-1.5">
-            {(outfit.seasons || []).map(s => (
-              <span key={`s-${s}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full">{s}</span>
+            {(outfit.seasons || []).map((s) => (
+              <span
+                key={`s-${s}`}
+                className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full"
+              >
+                {s}
+              </span>
             ))}
-            {(outfit.occasions || []).map(o => (
-              <span key={`o-${o}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full">{o}</span>
+            {(outfit.occasions || []).map((o) => (
+              <span
+                key={`o-${o}`}
+                className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full"
+              >
+                {o}
+              </span>
             ))}
-            {pieces.map(p => (
-              <span key={p.id} className="text-[10px] font-bold tracking-[0.1em] uppercase text-ink-700 bg-cream-50 px-2.5 py-1 rounded-full">{toTitle(p.name)}</span>
+            {pieces.map((p) => (
+              <span
+                key={p.id}
+                className="text-[10px] font-bold tracking-[0.1em] uppercase text-ink-700 bg-cream-50 px-2.5 py-1 rounded-full"
+              >
+                {toTitle(p.name)}
+              </span>
             ))}
           </div>
         </div>
@@ -3276,7 +5365,16 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete, o
 }
 
 // --- COLLECTIONS VIEW -----------------------------------------------------
-function CollectionsView({ collections, items, images, outfits, onSave, onViewCollection, onOpenOutfit, onSetHeaderAction }) {
+function CollectionsView({
+  collections,
+  items,
+  images,
+  outfits,
+  onSave,
+  onViewCollection,
+  onOpenOutfit,
+  onSetHeaderAction,
+}) {
   const [editingId, setEditingId] = useState(null);
   const [showManager, setShowManager] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -3285,172 +5383,286 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
 
-  const toggle = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+  const toggle = (list, setList, v) =>
+    setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const filterCount = activeSeasons.length + activeOccasions.length;
 
-  const filteredCollections = collections.filter(c =>
-    (activeSeasons.length === 0 || activeSeasons.some(s => (c.seasons || []).includes(s))) &&
-    (activeOccasions.length === 0 || activeOccasions.some(o => (c.occasions || []).includes(o)))
+  const filteredCollections = collections.filter(
+    (c) =>
+      (activeSeasons.length === 0 ||
+        activeSeasons.some((s) => (c.seasons || []).includes(s))) &&
+      (activeOccasions.length === 0 ||
+        activeOccasions.some((o) => (c.occasions || []).includes(o))),
   );
 
   const handleReorder = (from, to) => {
-    const next = reorderByVisible(collections, filteredCollections.map(c => c.id), from, to);
+    const next = reorderByVisible(
+      collections,
+      filteredCollections.map((c) => c.id),
+      from,
+      to,
+    );
     if (next !== collections) onSave(next);
   };
-  const { register, dragIndex, hoverIndex, ghostRef, startRectRef, grabOffsetRef, lastPointerRef, onHandlePointerDown } = useDragReorder(handleReorder);
+  const {
+    register,
+    dragIndex,
+    hoverIndex,
+    ghostRef,
+    startRectRef,
+    grabOffsetRef,
+    lastPointerRef,
+    onHandlePointerDown,
+  } = useDragReorder(handleReorder);
 
-  const startNew = () => { setEditingId("new"); setShowManager(true); };
+  const startNew = () => {
+    setEditingId("new");
+    setShowManager(true);
+  };
   const addButtonRef = useRef(null);
   useEffect(() => {
     const el = addButtonRef.current;
     if (!el || !onSetHeaderAction) return;
     const obs = new IntersectionObserver(
-      ([entry]) => onSetHeaderAction(entry.isIntersecting ? null : { label: "New Collection", tone: "sky2", onClick: startNew }),
-      { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" }
+      ([entry]) =>
+        onSetHeaderAction(
+          entry.isIntersecting
+            ? null
+            : { label: "New Collection", tone: "sky2", onClick: startNew },
+        ),
+      { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" },
     );
     obs.observe(el);
-    return () => { obs.disconnect(); onSetHeaderAction(null); };
+    return () => {
+      obs.disconnect();
+      onSetHeaderAction(null);
+    };
   }, []);
-  const startEdit = (id) => { setEditingId(id); setShowManager(true); };
+  const startEdit = (id) => {
+    setEditingId(id);
+    setShowManager(true);
+  };
   const handleDelete = (id) => {
-    if (!confirm("Delete this collection? The items themselves stay in your closet.")) return;
-    onSave(collections.filter(c => c.id !== id));
+    if (
+      !confirm(
+        "Delete this collection? The items themselves stay in your closet.",
+      )
+    )
+      return;
+    onSave(collections.filter((c) => c.id !== id));
   };
 
   return (
     <>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      <div className="fade-up">
-      <div className="mb-6 sm:mb-10">
-        <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">Collections</h2>
-        <div className="flex items-end justify-between gap-4">
-          <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900"><em className="text-sky2-600">you've curated.</em></h3>
-          <button
-            ref={addButtonRef}
-            onClick={startNew}
-            style={{flexShrink: 0}}
-            className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
-          >
-            <I.plus size={16} /> New Collection
-          </button>
-        </div>
-      </div>
+        <div className="fade-up">
+          <div className="mb-6 sm:mb-10">
+            <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">
+              Collections
+            </h2>
+            <div className="flex items-end justify-between gap-4">
+              <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
+                <em className="text-sky2-600">you've curated.</em>
+              </h3>
+              <button
+                ref={addButtonRef}
+                onClick={startNew}
+                style={{ flexShrink: 0 }}
+                className="flex items-center gap-2 px-5 py-3 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+              >
+                <I.plus size={16} /> New Collection
+              </button>
+            </div>
+          </div>
 
-      <div className="mb-4 flex gap-2">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
-        >
-          Filters{filterCount > 0 && ` · ${filterCount}`}
-        </button>
-        {filteredCollections.length > 1 && (
-          <button
-            onClick={() => setDragMode(!dragMode)}
-            aria-label={dragMode ? "Exit reorder mode" : "Reorder collections"}
-            className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
-          >
-            {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
-          </button>
-        )}
-      </div>
+          <div className="mb-4 flex gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+            >
+              Filters{filterCount > 0 && ` · ${filterCount}`}
+            </button>
+            {filteredCollections.length > 1 && (
+              <button
+                onClick={() => setDragMode(!dragMode)}
+                aria-label={
+                  dragMode ? "Exit reorder mode" : "Reorder collections"
+                }
+                className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
+              >
+                {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
+              </button>
+            )}
+          </div>
 
-      {showFilters && (
-        <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
-          <FilterRow label="Season">
-            {SEASON_OPTIONS.map(s => (
-              <Chip key={s} tone="season" active={activeSeasons.includes(s)} onClick={() => toggle(activeSeasons, setActiveSeasons, s)}>{s}</Chip>
-            ))}
-          </FilterRow>
-          <FilterRow label="Occasion">
-            {OCCASION_OPTIONS.map(o => (
-              <Chip key={o} tone="occasion" active={activeOccasions.includes(o)} onClick={() => toggle(activeOccasions, setActiveOccasions, o)}>{o}</Chip>
-            ))}
-          </FilterRow>
-          {filterCount > 0 && (
-            <button onClick={() => { setActiveSeasons([]); setActiveOccasions([]); }} className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline">Clear all</button>
+          {showFilters && (
+            <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+              <FilterRow label="Season">
+                {SEASON_OPTIONS.map((s) => (
+                  <Chip
+                    key={s}
+                    tone="season"
+                    active={activeSeasons.includes(s)}
+                    onClick={() => toggle(activeSeasons, setActiveSeasons, s)}
+                  >
+                    {s}
+                  </Chip>
+                ))}
+              </FilterRow>
+              <FilterRow label="Occasion">
+                {OCCASION_OPTIONS.map((o) => (
+                  <Chip
+                    key={o}
+                    tone="occasion"
+                    active={activeOccasions.includes(o)}
+                    onClick={() =>
+                      toggle(activeOccasions, setActiveOccasions, o)
+                    }
+                  >
+                    {o}
+                  </Chip>
+                ))}
+              </FilterRow>
+              {filterCount > 0 && (
+                <button
+                  onClick={() => {
+                    setActiveSeasons([]);
+                    setActiveOccasions([]);
+                  }}
+                  className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {collections.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-sky2-200 bg-sky2-50/40 rounded-3xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
+                <I.suitcase size={28} className="text-sky2-500" />
+              </div>
+              <p className="font-display font-bold text-2xl mb-2 text-ink-900">
+                No collections yet.
+              </p>
+              <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mb-6 px-4">
+                Group pieces — a packing list, a capsule, a season
+              </p>
+              <button
+                onClick={startNew}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95"
+              >
+                Create your first <I.chevron size={14} />
+              </button>
+            </div>
+          ) : filteredCollections.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
+                <I.search size={26} className="text-sky2-500" />
+              </div>
+              <p className="font-display font-bold text-xl text-ink-900">
+                Nothing matches.
+              </p>
+              <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mt-2">
+                Try clearing a filter
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {filteredCollections.map((c, i) => (
+                <CollectionCard
+                  key={c.id}
+                  id={`collection-${c.id}`}
+                  collection={c}
+                  items={items}
+                  images={images}
+                  onOpen={dragMode ? undefined : () => setViewingId(c.id)}
+                  delay={i * 40}
+                  cardRef={(el) => register(i, el)}
+                  reorderHandle={dragMode ? onHandlePointerDown(i) : null}
+                  isDragging={dragMode && dragIndex === i}
+                  isDropTarget={
+                    dragMode &&
+                    dragIndex !== null &&
+                    hoverIndex === i &&
+                    dragIndex !== i
+                  }
+                />
+              ))}
+            </div>
           )}
         </div>
-      )}
-
-      {collections.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-sky2-200 bg-sky2-50/40 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
-            <I.suitcase size={28} className="text-sky2-500" />
-          </div>
-          <p className="font-display font-bold text-2xl mb-2 text-ink-900">No collections yet.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mb-6 px-4">
-            Group pieces — a packing list, a capsule, a season
-          </p>
-          <button onClick={startNew} className="inline-flex items-center gap-2 px-5 py-2.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full shadow-pop active:scale-95">
-            Create your first <I.chevron size={14} />
-          </button>
-        </div>
-      ) : filteredCollections.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky2-100 flex items-center justify-center">
-            <I.search size={26} className="text-sky2-500" />
-          </div>
-          <p className="font-display font-bold text-xl text-ink-900">Nothing matches.</p>
-          <p className="text-xs font-bold tracking-widest uppercase text-sky2-600 mt-2">Try clearing a filter</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-          {filteredCollections.map((c, i) => (
-            <CollectionCard
-              key={c.id}
-              id={`collection-${c.id}`}
-              collection={c}
-              items={items}
-              images={images}
-              onOpen={dragMode ? undefined : () => setViewingId(c.id)}
-              delay={i * 40}
-              cardRef={(el) => register(i, el)}
-              reorderHandle={dragMode ? onHandlePointerDown(i) : null}
-              isDragging={dragMode && dragIndex === i}
-              isDropTarget={dragMode && dragIndex !== null && hoverIndex === i && dragIndex !== i}
-            />
-          ))}
-        </div>
-      )}
-
-      </div>
       </main>
 
-      {dragIndex !== null && filteredCollections[dragIndex] && (() => {
-        const c = filteredCollections[dragIndex];
-        const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
-        const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
-        return (
-          <div
-            ref={(el) => { ghostRef.current = el; if (el) el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`; }}
-            className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-sky2-300 rounded-2xl overflow-hidden"
-            style={{ width: startRectRef.current?.width, willChange: 'transform', boxShadow: '0 22px 60px rgba(40, 130, 183, 0.35)' }}
-          >
-            <CollectionCardPreview collection={c} items={items} images={images} />
-          </div>
-        );
-      })()}
+      {dragIndex !== null &&
+        filteredCollections[dragIndex] &&
+        (() => {
+          const c = filteredCollections[dragIndex];
+          const tx = lastPointerRef.current.x - grabOffsetRef.current.x;
+          const ty = lastPointerRef.current.y - grabOffsetRef.current.y;
+          return (
+            <div
+              ref={(el) => {
+                ghostRef.current = el;
+                if (el)
+                  el.style.transform = `translate(${tx}px, ${ty}px) rotate(1.5deg) scale(1.05)`;
+              }}
+              className="pointer-events-none fixed left-0 top-0 z-50 bg-white border-2 border-sky2-300 rounded-2xl overflow-hidden"
+              style={{
+                width: startRectRef.current?.width,
+                willChange: "transform",
+                boxShadow: "0 22px 60px rgba(40, 130, 183, 0.35)",
+              }}
+            >
+              <CollectionCardPreview
+                collection={c}
+                items={items}
+                images={images}
+              />
+            </div>
+          );
+        })()}
 
       {dragMode && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-t-2 border-cream-100 shadow-card-hi"
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
-            <span className="flex-1 text-sm font-bold text-ink-600">Drag collections to reorder</span>
-            <button onClick={() => setDragMode(false)} className="px-3.5 py-2 bg-sky2-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-600">Done</button>
+            <span className="flex-1 text-sm font-bold text-ink-600">
+              Drag collections to reorder
+            </span>
+            <button
+              onClick={() => setDragMode(false)}
+              className="px-3.5 py-2 bg-sky2-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-600"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
 
-      {viewingId && collections.find(c => c.id === viewingId) && (
+      {viewingId && collections.find((c) => c.id === viewingId) && (
         <CollectionDetailModal
-          collection={collections.find(c => c.id === viewingId)}
+          collection={collections.find((c) => c.id === viewingId)}
           items={items}
           images={images}
           outfits={outfits}
           onClose={() => setViewingId(null)}
-          onEdit={() => { startEdit(viewingId); setViewingId(null); }}
+          onEdit={() => {
+            startEdit(viewingId);
+            setViewingId(null);
+          }}
           onDelete={() => handleDelete(viewingId)}
-          onOpenOutfit={(oid) => { setViewingId(null); onOpenOutfit?.(oid); }}
-          onOpenInCloset={() => { const id = viewingId; setViewingId(null); onViewCollection(id); }}
+          onOpenOutfit={(oid) => {
+            setViewingId(null);
+            onOpenOutfit?.(oid);
+          }}
+          onOpenInCloset={() => {
+            const id = viewingId;
+            setViewingId(null);
+            onViewCollection(id);
+          }}
         />
       )}
 
@@ -3461,7 +5673,10 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
           images={images}
           initialEditingId={editingId}
           onSave={onSave}
-          onClose={() => { setShowManager(false); setEditingId(null); }}
+          onClose={() => {
+            setShowManager(false);
+            setEditingId(null);
+          }}
         />
       )}
     </>
@@ -3470,42 +5685,79 @@ function CollectionsView({ collections, items, images, outfits, onSave, onViewCo
 
 // Compact thumbnail + label block for a collection — used by reorder tiles and the drag ghost.
 function CollectionCardPreview({ collection, items, images }) {
-  const pieces = items.filter(i => collection.itemIds.includes(i.id));
+  const pieces = items.filter((i) => collection.itemIds.includes(i.id));
   const thumbs = pieces.slice(0, 4);
   return (
     <>
-      <div className={`aspect-square bg-sky2-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}>
+      <div
+        className={`aspect-square bg-sky2-50 p-1.5 grid gap-1 ${thumbs.length <= 1 ? "grid-cols-1" : "grid-cols-2 grid-rows-2"}`}
+      >
         {thumbs.length === 0 ? (
-          <div className="flex items-center justify-center text-sky2-300"><I.suitcase size={28} /></div>
-        ) : thumbs.map(p => (
-          <div key={p.id} className="bg-white rounded-lg overflow-hidden flex items-center justify-center">
-            {images[p.id] && <img src={images[p.id]} alt="" className="w-full h-full object-contain p-1" />}
+          <div className="flex items-center justify-center text-sky2-300">
+            <I.suitcase size={28} />
           </div>
-        ))}
+        ) : (
+          thumbs.map((p) => (
+            <div
+              key={p.id}
+              className="bg-white rounded-lg overflow-hidden flex items-center justify-center"
+            >
+              {images[p.id] && (
+                <img
+                  src={images[p.id]}
+                  alt=""
+                  className="w-full h-full object-contain p-1"
+                />
+              )}
+            </div>
+          ))
+        )}
       </div>
       <div className="p-2">
-        <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">{toTitle(collection.name)}</h3>
-        <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-sky2-600 mt-0.5">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
+        <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">
+          {toTitle(collection.name)}
+        </h3>
+        <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-sky2-600 mt-0.5">
+          {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
+        </p>
       </div>
     </>
   );
 }
 
-function CollectionCard({ collection, items, images, onOpen, delay = 0, id, cardRef, reorderHandle, isDragging, isDropTarget }) {
+function CollectionCard({
+  collection,
+  items,
+  images,
+  onOpen,
+  delay = 0,
+  id,
+  cardRef,
+  reorderHandle,
+  isDragging,
+  isDropTarget,
+}) {
   return (
     <div
       id={id}
       ref={cardRef}
       onClick={onOpen}
       className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-sky2-500 ring-4 ring-sky2-500/25" : "border-cream-200"}`}
-      style={{ animationDelay: `${delay}ms`, ...(isDragging && { animation: 'none', opacity: 0 }) }}
+      style={{
+        animationDelay: `${delay}ms`,
+        ...(isDragging && { animation: "none", opacity: 0 }),
+      }}
     >
-      <CollectionCardPreview collection={collection} items={items} images={images} />
+      <CollectionCardPreview
+        collection={collection}
+        items={items}
+        images={images}
+      />
       {reorderHandle && (
         <div
           aria-hidden="true"
           onPointerDown={reorderHandle}
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: "none" }}
           className="absolute top-1 left-1 p-2.5 bg-white/95 backdrop-blur rounded-full text-ink-600 shadow-card cursor-grab active:cursor-grabbing"
         >
           <I.dots size={18} />
@@ -3515,11 +5767,23 @@ function CollectionCard({ collection, items, images, onOpen, delay = 0, id, card
   );
 }
 
-function CollectionDetailModal({ collection, items, images, outfits, onClose, onEdit, onDelete, onOpenOutfit, onOpenInCloset }) {
+function CollectionDetailModal({
+  collection,
+  items,
+  images,
+  outfits,
+  onClose,
+  onEdit,
+  onDelete,
+  onOpenOutfit,
+  onOpenInCloset,
+}) {
   useBodyScrollLock();
-  const pieces = items.filter(i => collection.itemIds.includes(i.id));
-  const collectionOutfits = (outfits || []).filter(o =>
-    o.itemIds.length > 0 && o.itemIds.every(id => collection.itemIds.includes(id))
+  const pieces = items.filter((i) => collection.itemIds.includes(i.id));
+  const collectionOutfits = (outfits || []).filter(
+    (o) =>
+      o.itemIds.length > 0 &&
+      o.itemIds.every((id) => collection.itemIds.includes(id)),
   );
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
@@ -3531,12 +5795,12 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
         subtitle: collection.description,
         items: pieces,
         images,
-        accent: '#2882B7',
-        kindLabel: 'Collection',
+        accent: "#2882B7",
+        kindLabel: "Collection",
         maxCols: 6,
       });
     } catch (e) {
-      Log.warn('share.failed', e);
+      Log.warn("share.failed", e);
       alert("Sorry — couldn't create the share image.");
     } finally {
       setSharing(false);
@@ -3545,60 +5809,106 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div
         className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
-        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        style={{ height: "100dvh", maxHeight: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="p-4 sm:p-6 border-b-2 border-sky2-50 bg-white shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
+          style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
         >
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="w-8 h-8 rounded-full bg-sky2-100 flex items-center justify-center">
               <I.suitcase size={14} className="text-sky2-600" />
             </div>
             <div className="flex gap-1 shrink-0">
-              <button onClick={handleShare} disabled={sharing || pieces.length === 0} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40" aria-label="Share collection">
+              <button
+                onClick={handleShare}
+                disabled={sharing || pieces.length === 0}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40"
+                aria-label="Share collection"
+              >
                 <I.share size={15} />
               </button>
-              <button onClick={onEdit} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors" aria-label="Edit collection">
+              <button
+                onClick={onEdit}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors"
+                aria-label="Edit collection"
+              >
                 <I.pencil size={15} />
               </button>
-              <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors" aria-label="Delete collection">
+              <button
+                onClick={onDelete}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors"
+                aria-label="Delete collection"
+              >
                 <I.trash size={15} />
               </button>
-              <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors" aria-label="Close"><I.x size={18} /></button>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors"
+                aria-label="Close"
+              >
+                <I.x size={18} />
+              </button>
             </div>
           </div>
-          <h3 className="font-display font-bold text-2xl sm:text-3xl truncate text-ink-900">{toTitle(collection.name)}</h3>
-          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1">{pieces.length} {pieces.length === 1 ? "piece" : "pieces"}</p>
-          {collection.description && <p className="text-sm italic text-ink-500 mt-1">"{collection.description}"</p>}
+          <h3 className="font-display font-bold text-2xl sm:text-3xl truncate text-ink-900">
+            {toTitle(collection.name)}
+          </h3>
+          <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-sky2-700 mt-1">
+            {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
+          </p>
+          {collection.description && (
+            <p className="text-sm italic text-ink-500 mt-1">
+              "{collection.description}"
+            </p>
+          )}
         </div>
 
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {pieces.length === 0 ? (
             <div className="p-4 bg-sky2-50 min-h-[120px] flex items-center justify-center">
-              <p className="font-display italic text-ink-500 text-sm">no pieces yet</p>
+              <p className="font-display italic text-ink-500 text-sm">
+                no pieces yet
+              </p>
             </div>
           ) : (
             <div className="p-4 bg-sky2-50 grid grid-cols-3 gap-2 min-h-[200px]">
-              {pieces.map(p => (
-                <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card">
-                  {images[p.id] && <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-2" />}
+              {pieces.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-2xl overflow-hidden flex items-center justify-center aspect-square shadow-card"
+                >
+                  {images[p.id] && (
+                    <img
+                      src={images[p.id]}
+                      alt={p.name}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  )}
                 </div>
               ))}
             </div>
           )}
           {collectionOutfits.length > 0 && (
             <div className="px-4 py-3 border-t-2 border-sky2-50">
-              <p className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2"><span className="inline-flex items-center justify-center bg-petal-500 text-white rounded-full w-5 h-5 text-[10px] font-bold tracking-normal normal-case">{collectionOutfits.length}</span> Look{collectionOutfits.length > 1 ? 's' : ''} in this collection</p>
+              <p className="flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-petal-600 mb-2">
+                <span className="inline-flex items-center justify-center bg-petal-500 text-white rounded-full w-5 h-5 text-[10px] font-bold tracking-normal normal-case">
+                  {collectionOutfits.length}
+                </span>{" "}
+                Look{collectionOutfits.length > 1 ? "s" : ""} in this collection
+              </p>
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
-                {collectionOutfits.map(o => {
-                  const opieces = items.filter(i => o.itemIds.includes(i.id));
+                {collectionOutfits.map((o) => {
+                  const opieces = items.filter((i) => o.itemIds.includes(i.id));
                   return (
                     <button
                       key={o.id}
@@ -3606,13 +5916,22 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
                       className="shrink-0 w-28 border-2 border-cream-100 rounded-2xl p-1.5 text-left active:scale-95 active:border-petal-200 transition-all bg-white"
                     >
                       <div className="grid grid-cols-3 gap-0.5 rounded-xl overflow-hidden mb-1 bg-cream-50">
-                        {opieces.slice(0, 3).map(p => (
-                          <div key={p.id} className="bg-cream-50 aspect-square flex items-center justify-center overflow-hidden">
-                            <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-0.5" />
+                        {opieces.slice(0, 3).map((p) => (
+                          <div
+                            key={p.id}
+                            className="bg-cream-50 aspect-square flex items-center justify-center overflow-hidden"
+                          >
+                            <img
+                              src={images[p.id]}
+                              alt={p.name}
+                              className="w-full h-full object-contain p-0.5"
+                            />
                           </div>
                         ))}
                       </div>
-                      <p className="text-[10px] font-bold tracking-[0.05em] uppercase text-ink-700 truncate">{toTitle(o.name)}</p>
+                      <p className="text-[10px] font-bold tracking-[0.05em] uppercase text-ink-700 truncate">
+                        {toTitle(o.name)}
+                      </p>
                     </button>
                   );
                 })}
@@ -3620,13 +5939,24 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
             </div>
           )}
           <div className="p-4 sm:p-6 border-t-2 border-cream-100">
-            {((collection.seasons || []).length > 0 || (collection.occasions || []).length > 0) && (
+            {((collection.seasons || []).length > 0 ||
+              (collection.occasions || []).length > 0) && (
               <div className="flex flex-wrap gap-1.5 mb-4">
-                {(collection.seasons || []).map(s => (
-                  <span key={`s-${s}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full">{s}</span>
+                {(collection.seasons || []).map((s) => (
+                  <span
+                    key={`s-${s}`}
+                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full"
+                  >
+                    {s}
+                  </span>
                 ))}
-                {(collection.occasions || []).map(o => (
-                  <span key={`o-${o}`} className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full">{o}</span>
+                {(collection.occasions || []).map((o) => (
+                  <span
+                    key={`o-${o}`}
+                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full"
+                  >
+                    {o}
+                  </span>
                 ))}
               </div>
             )}
@@ -3644,67 +5974,124 @@ function CollectionDetailModal({ collection, items, images, outfits, onClose, on
 }
 
 // --- BUILDER VIEW ----------------------------------------------------------
-function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCancel }) {
+function BuilderView({
+  items,
+  images,
+  collections,
+  outfit,
+  onSaveOutfit,
+  onCancel,
+}) {
   useBodyScrollLock();
   const isEdit = !!outfit;
   const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
   const [name, setName] = useState(outfit ? outfit.name : "");
   const [note, setNote] = useState(outfit ? outfit.note || "" : "");
   const [seasons, setSeasons] = useState(outfit ? outfit.seasons || [] : []);
-  const [occasions, setOccasions] = useState(outfit ? outfit.occasions || [] : []);
-  const toggleTag = (list, setList, v) => setList(list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
+  const [occasions, setOccasions] = useState(
+    outfit ? outfit.occasions || [] : [],
+  );
+  const toggleTag = (list, setList, v) =>
+    setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [activeStatuses, setActiveStatuses] = useState(["owned"]);
   const [scopeCollection, setScopeCollection] = useState(null);
-  const toggleSelect = (id) => setSelected(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id]);
-  const scopeObj = scopeCollection ? (collections || []).find(c => c.id === scopeCollection) : null;
-  const scopedItems = scopeObj ? items.filter(i => scopeObj.itemIds.includes(i.id)) : items;
-  const filtered = scopedItems.filter(i =>
-    (!categoryFilter || i.category === categoryFilter) &&
-    (activeStatuses.length === 0 || activeStatuses.includes(i.status || "owned"))
+  const toggleSelect = (id) =>
+    setSelected(
+      selected.includes(id)
+        ? selected.filter((s) => s !== id)
+        : [...selected, id],
+    );
+  const scopeObj = scopeCollection
+    ? (collections || []).find((c) => c.id === scopeCollection)
+    : null;
+  const scopedItems = scopeObj
+    ? items.filter((i) => scopeObj.itemIds.includes(i.id))
+    : items;
+  const filtered = scopedItems.filter(
+    (i) =>
+      (!categoryFilter || i.category === categoryFilter) &&
+      (activeStatuses.length === 0 ||
+        activeStatuses.includes(i.status || "owned")),
   );
-  const chosenItems = selected.map(id => items.find(i => i.id === id)).filter(Boolean);
+  const chosenItems = selected
+    .map((id) => items.find((i) => i.id === id))
+    .filter(Boolean);
   const canSave = selected.length > 0 && name.trim();
   const handleSave = () => {
     if (!canSave) return;
     if (isEdit) {
-      onSaveOutfit({ ...outfit, name: name.trim(), note: note.trim(), itemIds: selected, seasons, occasions });
+      onSaveOutfit({
+        ...outfit,
+        name: name.trim(),
+        note: note.trim(),
+        itemIds: selected,
+        seasons,
+        occasions,
+      });
     } else {
-      onSaveOutfit({ name: name.trim(), note: note.trim(), itemIds: selected, seasons, occasions });
+      onSaveOutfit({
+        name: name.trim(),
+        note: note.trim(),
+        itemIds: selected,
+        seasons,
+        occasions,
+      });
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch sm:items-center justify-center sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onCancel} />
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onCancel}
+      />
       <div
         className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
-        style={{ height: '100dvh', maxHeight: '100dvh' }}
+        style={{ height: "100dvh", maxHeight: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
           className="p-4 sm:p-6 border-b border-cream-100 bg-white shrink-0"
-          style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}
+          style={{ paddingTop: "max(env(safe-area-inset-top), 1rem)" }}
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">Look Builder</p>
-              <h3 className="font-display text-2xl sm:text-3xl">{isEdit ? "Edit Look" : "New Look"}</h3>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+                Look Builder
+              </p>
+              <h3 className="font-display text-2xl sm:text-3xl">
+                {isEdit ? "Edit Look" : "New Look"}
+              </h3>
             </div>
-            <button onClick={onCancel} className="text-ink-500 p-2"><I.x size={18} /></button>
+            <button onClick={onCancel} className="text-ink-500 p-2">
+              <I.x size={18} />
+            </button>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto py-1">
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 shrink-0">
               {selected.length} {selected.length === 1 ? "piece" : "pieces"}
             </p>
             {chosenItems.length === 0 ? (
-              <span className="text-xs italic text-ink-400 font-display">nothing selected yet…</span>
+              <span className="text-xs italic text-ink-400 font-display">
+                nothing selected yet…
+              </span>
             ) : (
-              chosenItems.map(p => (
-                <div key={p.id} className="bg-white border-2 border-buttercup-100 rounded-2xl shrink-0 w-12 h-12 flex items-center justify-center relative shadow-card">
-                  <img src={images[p.id]} alt={p.name} className="w-full h-full object-contain p-1" />
-                  <button onClick={() => toggleSelect(p.id)} className="absolute -top-1.5 -right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop">
+              chosenItems.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-white border-2 border-buttercup-100 rounded-2xl shrink-0 w-12 h-12 flex items-center justify-center relative shadow-card"
+                >
+                  <img
+                    src={images[p.id]}
+                    alt={p.name}
+                    className="w-full h-full object-contain p-1"
+                  />
+                  <button
+                    onClick={() => toggleSelect(p.id)}
+                    className="absolute -top-1.5 -right-1.5 bg-poppy-500 text-white rounded-full p-1 shadow-pop"
+                  >
                     <I.x size={9} />
                   </button>
                 </div>
@@ -3716,7 +6103,9 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5">
           <div>
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Name</label>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
+              Name
+            </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -3725,7 +6114,9 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
             />
           </div>
           <div>
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">Note (optional)</label>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
+              Note (optional)
+            </label>
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -3734,25 +6125,45 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
             />
           </div>
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Season</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Season
+            </p>
             <div className="flex gap-2 flex-wrap">
-              {SEASON_OPTIONS.map(s => (
-                <Chip key={s} tone="season" active={seasons.includes(s)} onClick={() => toggleTag(seasons, setSeasons, s)}>{s}</Chip>
+              {SEASON_OPTIONS.map((s) => (
+                <Chip
+                  key={s}
+                  tone="season"
+                  active={seasons.includes(s)}
+                  onClick={() => toggleTag(seasons, setSeasons, s)}
+                >
+                  {s}
+                </Chip>
               ))}
             </div>
           </div>
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Occasion</p>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Occasion
+            </p>
             <div className="flex gap-2 flex-wrap">
-              {OCCASION_OPTIONS.map(o => (
-                <Chip key={o} tone="occasion" active={occasions.includes(o)} onClick={() => toggleTag(occasions, setOccasions, o)}>{o}</Chip>
+              {OCCASION_OPTIONS.map((o) => (
+                <Chip
+                  key={o}
+                  tone="occasion"
+                  active={occasions.includes(o)}
+                  onClick={() => toggleTag(occasions, setOccasions, o)}
+                >
+                  {o}
+                </Chip>
               ))}
             </div>
           </div>
 
           {(collections || []).length > 0 && (
             <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700 mb-2">Choose from</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700 mb-2">
+                Choose from
+              </p>
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
                 <button
                   onClick={() => setScopeCollection(null)}
@@ -3760,7 +6171,7 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
                 >
                   Entire Closet
                 </button>
-                {collections.map(c => (
+                {collections.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => setScopeCollection(c.id)}
@@ -3776,60 +6187,105 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
           )}
 
           <div>
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">Status</p>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">
+              Status
+            </p>
             <div className="flex gap-2 flex-wrap">
-              {STATUS_OPTIONS.map(s => (
-                <Chip key={s} tone="status" active={activeStatuses.includes(s)} onClick={() =>
-                  setActiveStatuses(activeStatuses.includes(s) ? activeStatuses.filter(x => x !== s) : [...activeStatuses, s])
-                }>{s}</Chip>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">Category</p>
-            <div className="flex flex-wrap gap-2">
-              <Chip tone="category" active={!categoryFilter} onClick={() => setCategoryFilter(null)}>All</Chip>
-              {CATEGORY_OPTIONS.map(c => (
-                <Chip key={c} tone="category" active={categoryFilter === c} onClick={() => setCategoryFilter(categoryFilter === c ? null : c)}>{c}</Chip>
-              ))}
-            </div>
-          </div>
-
-          <div>
-          <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">Pieces ({selected.length})</p>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {filtered.map((it, i) => {
-              const active = selected.includes(it.id);
-              return (
-                <div
-                  key={it.id}
-                  onClick={() => toggleSelect(it.id)}
-                  className={`cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
-                  style={{ animationDelay: `${i * 20}ms` }}
+              {STATUS_OPTIONS.map((s) => (
+                <Chip
+                  key={s}
+                  tone="status"
+                  active={activeStatuses.includes(s)}
+                  onClick={() =>
+                    setActiveStatuses(
+                      activeStatuses.includes(s)
+                        ? activeStatuses.filter((x) => x !== s)
+                        : [...activeStatuses, s],
+                    )
+                  }
                 >
-                  <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center relative">
-                    {images[it.id] && <img src={images[it.id]} alt={it.name} className="w-full h-full object-contain p-1.5" />}
-                    {active && (
-                      <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-pop">
-                        <I.check size={11} />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-[9px] font-bold font-display text-ink-800 truncate px-1.5 py-1">{toTitle(it.name)}</p>
-                </div>
-              );
-            })}
+                  {s}
+                </Chip>
+              ))}
+            </div>
           </div>
+
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">
+              Category
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Chip
+                tone="category"
+                active={!categoryFilter}
+                onClick={() => setCategoryFilter(null)}
+              >
+                All
+              </Chip>
+              {CATEGORY_OPTIONS.map((c) => (
+                <Chip
+                  key={c}
+                  tone="category"
+                  active={categoryFilter === c}
+                  onClick={() =>
+                    setCategoryFilter(categoryFilter === c ? null : c)
+                  }
+                >
+                  {c}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Pieces ({selected.length})
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {filtered.map((it, i) => {
+                const active = selected.includes(it.id);
+                return (
+                  <div
+                    key={it.id}
+                    onClick={() => toggleSelect(it.id)}
+                    className={`cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
+                    style={{ animationDelay: `${i * 20}ms` }}
+                  >
+                    <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center relative">
+                      {images[it.id] && (
+                        <img
+                          src={images[it.id]}
+                          alt={it.name}
+                          className="w-full h-full object-contain p-1.5"
+                        />
+                      )}
+                      {active && (
+                        <div className="absolute top-1.5 right-1.5 bg-poppy-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-pop">
+                          <I.check size={11} />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[9px] font-bold font-display text-ink-800 truncate px-1.5 py-1">
+                      {toTitle(it.name)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
         {/* Footer */}
         <div
           className="p-4 sm:p-6 border-t-2 border-cream-100 bg-white shrink-0 flex gap-2"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
         >
-          <button onClick={onCancel} className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95">Cancel</button>
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
+          >
+            Cancel
+          </button>
           <button
             onClick={handleSave}
             disabled={!canSave}
@@ -3844,63 +6300,93 @@ function BuilderView({ items, images, collections, outfit, onSaveOutfit, onCance
 }
 
 // --- Backup Modal ---------------------------------------------------------
-function StatsModal({ items, outfits, collections, customTags, brands, onClose }) {
+function StatsModal({
+  items,
+  outfits,
+  collections,
+  customTags,
+  brands,
+  onClose,
+}) {
   useBodyScrollLock();
   const [tagsExpanded, setTagsExpanded] = useState(false);
-  const [tagSort, setTagSort] = useState('count');
+  const [tagSort, setTagSort] = useState("count");
 
   const stats = useMemo(() => {
-    const owned = items.filter(i => (i.status || 'owned') === 'owned');
+    const owned = items.filter((i) => (i.status || "owned") === "owned");
 
     const byCat = {};
-    CATEGORY_OPTIONS.forEach(c => { byCat[c] = owned.filter(i => i.category === c).length; });
+    CATEGORY_OPTIONS.forEach((c) => {
+      byCat[c] = owned.filter((i) => i.category === c).length;
+    });
 
     const byStatus = {};
-    STATUS_OPTIONS.forEach(s => { byStatus[s] = items.filter(i => (i.status || 'owned') === s).length; });
+    STATUS_OPTIONS.forEach((s) => {
+      byStatus[s] = items.filter((i) => (i.status || "owned") === s).length;
+    });
 
     const bySeason = {};
-    SEASON_OPTIONS.forEach(s => { bySeason[s] = owned.filter(i => i.seasons?.includes(s)).length; });
+    SEASON_OPTIONS.forEach((s) => {
+      bySeason[s] = owned.filter((i) => i.seasons?.includes(s)).length;
+    });
 
     const byOccasion = {};
-    OCCASION_OPTIONS.forEach(o => { byOccasion[o] = owned.filter(i => i.occasions?.includes(o)).length; });
+    OCCASION_OPTIONS.forEach((o) => {
+      byOccasion[o] = owned.filter((i) => i.occasions?.includes(o)).length;
+    });
 
     const brandCount = {};
-    owned.forEach(i => {
-      const b = (i.brand || '').trim();
+    owned.forEach((i) => {
+      const b = (i.brand || "").trim();
       if (b) brandCount[b] = (brandCount[b] || 0) + 1;
     });
-    const topBrands = Object.entries(brandCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const topBrands = Object.entries(brandCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
 
     const yearCount = {};
-    owned.forEach(i => {
+    owned.forEach((i) => {
       const y = i.yearPurchased;
       if (y) yearCount[y] = (yearCount[y] || 0) + 1;
     });
-    const byYear = Object.entries(yearCount).sort((a, b) => b[0].localeCompare(a[0]));
+    const byYear = Object.entries(yearCount).sort((a, b) =>
+      b[0].localeCompare(a[0]),
+    );
 
     const tagCount = {};
     const tagSet = new Set(customTags);
-    owned.forEach(i => {
-      (i.custom || []).forEach(t => { if (tagSet.has(t)) tagCount[t] = (tagCount[t] || 0) + 1; });
+    owned.forEach((i) => {
+      (i.custom || []).forEach((t) => {
+        if (tagSet.has(t)) tagCount[t] = (tagCount[t] || 0) + 1;
+      });
     });
     const allTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
 
     // Closet utilization — owned items appearing in ≥1 outfit
     const lookCount = {};
-    outfits.forEach(o => (o.itemIds || []).forEach(id => { lookCount[id] = (lookCount[id] || 0) + 1; }));
-    const usedCount = owned.filter(i => lookCount[i.id]).length;
-    const utilizationPct = owned.length ? Math.round((usedCount / owned.length) * 100) : 0;
+    outfits.forEach((o) =>
+      (o.itemIds || []).forEach((id) => {
+        lookCount[id] = (lookCount[id] || 0) + 1;
+      }),
+    );
+    const usedCount = owned.filter((i) => lookCount[i.id]).length;
+    const utilizationPct = owned.length
+      ? Math.round((usedCount / owned.length) * 100)
+      : 0;
 
     // Most-worn pieces — owned items ranked by number of looks they appear in
     const topItems = owned
-      .map(i => ({ id: i.id, name: i.name, count: lookCount[i.id] || 0 }))
-      .filter(x => x.count > 0)
+      .map((i) => ({ id: i.id, name: i.name, count: lookCount[i.id] || 0 }))
+      .filter((x) => x.count > 0)
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
     const avgItemsPerLook = outfits.length
-      ? (outfits.reduce((s, o) => s + (o.itemIds?.length || 0), 0) / outfits.length).toFixed(1)
-      : '0';
+      ? (
+          outfits.reduce((s, o) => s + (o.itemIds?.length || 0), 0) /
+          outfits.length
+        ).toFixed(1)
+      : "0";
 
     return {
       totalItems: items.length,
@@ -3909,8 +6395,17 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       collectionCount: collections.length,
       brandTotal: Object.keys(brandCount).length,
       tagTotal: Object.keys(tagCount).length,
-      byCat, byStatus, bySeason, byOccasion, topBrands, topItems, byYear, allTags,
-      usedCount, utilizationPct, avgItemsPerLook,
+      byCat,
+      byStatus,
+      bySeason,
+      byOccasion,
+      topBrands,
+      topItems,
+      byYear,
+      allTags,
+      usedCount,
+      utilizationPct,
+      avgItemsPerLook,
     };
   }, [items, outfits, collections, customTags]);
 
@@ -3918,46 +6413,121 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
     const pct = max > 0 ? (count / max) * 100 : 0;
     return (
       <div className="flex items-center gap-3">
-        <div className="w-20 sm:w-24 text-[11px] font-bold text-ink-600 capitalize truncate">{label}</div>
-        <div className="flex-1 h-5 bg-cream-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%`, transition: 'width 0.6s cubic-bezier(.34,1.56,.64,1)' }} />
+        <div className="w-20 sm:w-24 text-[11px] font-bold text-ink-600 capitalize truncate">
+          {label}
         </div>
-        <div className="w-10 text-right text-sm font-bold text-ink-800">{count}</div>
+        <div className="flex-1 h-5 bg-cream-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full ${color}`}
+            style={{
+              width: `${pct}%`,
+              transition: "width 0.6s cubic-bezier(.34,1.56,.64,1)",
+            }}
+          />
+        </div>
+        <div className="w-10 text-right text-sm font-bold text-ink-800">
+          {count}
+        </div>
       </div>
     );
   };
 
   const StatusDonut = () => {
     const total = stats.totalItems || 1;
-    const r = 56, c = 2 * Math.PI * r;
+    const r = 56,
+      c = 2 * Math.PI * r;
     const segs = [
-      { label: 'owned',   count: stats.byStatus.owned,   color: 'var(--poppy-500)',     swatch: 'bg-poppy-500' },
-      { label: 'planned', count: stats.byStatus.planned, color: 'var(--buttercup-400)', swatch: 'bg-buttercup-400' },
-      { label: 'donated', count: stats.byStatus.donated, color: 'var(--cream-400)',     swatch: 'bg-cream-400' },
+      {
+        label: "owned",
+        count: stats.byStatus.owned,
+        color: "var(--poppy-500)",
+        swatch: "bg-poppy-500",
+      },
+      {
+        label: "planned",
+        count: stats.byStatus.planned,
+        color: "var(--buttercup-400)",
+        swatch: "bg-buttercup-400",
+      },
+      {
+        label: "donated",
+        count: stats.byStatus.donated,
+        color: "var(--cream-400)",
+        swatch: "bg-cream-400",
+      },
     ];
     let offset = 0;
     return (
       <div className="flex items-center gap-5">
-        <svg width="140" height="140" viewBox="0 0 140 140" className="shrink-0">
-          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--cream-100)" strokeWidth="16" />
-          {segs.filter(s => s.count > 0).map(s => {
-            const len = (s.count / total) * c;
-            const node = (
-              <circle key={s.label} cx="70" cy="70" r={r} fill="none" stroke={s.color} strokeWidth="16"
-                strokeDasharray={`${len} ${c - len}`} strokeDashoffset={-offset}
-                transform="rotate(-90 70 70)" />
-            );
-            offset += len;
-            return node;
-          })}
-          <text x="70" y="68" textAnchor="middle" className="font-display" style={{ fontSize: '28px', fill: 'var(--ink-900)', fontWeight: 700 }}>{stats.totalItems}</text>
-          <text x="70" y="86" textAnchor="middle" style={{ fontSize: '9px', fill: 'var(--ink-500)', letterSpacing: '0.15em', fontWeight: 700 }}>PIECES</text>
+        <svg
+          width="140"
+          height="140"
+          viewBox="0 0 140 140"
+          className="shrink-0"
+        >
+          <circle
+            cx="70"
+            cy="70"
+            r={r}
+            fill="none"
+            stroke="var(--cream-100)"
+            strokeWidth="16"
+          />
+          {segs
+            .filter((s) => s.count > 0)
+            .map((s) => {
+              const len = (s.count / total) * c;
+              const node = (
+                <circle
+                  key={s.label}
+                  cx="70"
+                  cy="70"
+                  r={r}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth="16"
+                  strokeDasharray={`${len} ${c - len}`}
+                  strokeDashoffset={-offset}
+                  transform="rotate(-90 70 70)"
+                />
+              );
+              offset += len;
+              return node;
+            })}
+          <text
+            x="70"
+            y="68"
+            textAnchor="middle"
+            className="font-display"
+            style={{
+              fontSize: "28px",
+              fill: "var(--ink-900)",
+              fontWeight: 700,
+            }}
+          >
+            {stats.totalItems}
+          </text>
+          <text
+            x="70"
+            y="86"
+            textAnchor="middle"
+            style={{
+              fontSize: "9px",
+              fill: "var(--ink-500)",
+              letterSpacing: "0.15em",
+              fontWeight: 700,
+            }}
+          >
+            PIECES
+          </text>
         </svg>
         <div className="flex flex-col gap-2 text-sm">
-          {segs.map(s => (
+          {segs.map((s) => (
             <div key={s.label} className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${s.swatch}`} />
-              <span className="font-bold text-ink-700 capitalize">{s.label}</span>
+              <span className="font-bold text-ink-700 capitalize">
+                {s.label}
+              </span>
               <span className="text-ink-500">{s.count}</span>
             </div>
           ))}
@@ -3966,14 +6536,36 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
     );
   };
 
-  const categoryLabels = { top: 'tops', bottom: 'bottoms', dress: 'dresses', outerwear: 'outerwear', shoes: 'shoes', accessory: 'accessories' };
-  const categoryColors = { top: 'bg-poppy-400', bottom: 'bg-sky2-400', dress: 'bg-petal-400', outerwear: 'bg-plum-400', shoes: 'bg-buttercup-400', accessory: 'bg-leaf-400' };
-  const categoryStroke = { top: 'var(--poppy-400)', bottom: 'var(--sky2-400)', dress: 'var(--petal-400)', outerwear: 'var(--plum-400)', shoes: 'var(--buttercup-400)', accessory: 'var(--leaf-400)' };
+  const categoryLabels = {
+    top: "tops",
+    bottom: "bottoms",
+    dress: "dresses",
+    outerwear: "outerwear",
+    shoes: "shoes",
+    accessory: "accessories",
+  };
+  const categoryColors = {
+    top: "bg-poppy-400",
+    bottom: "bg-sky2-400",
+    dress: "bg-petal-400",
+    outerwear: "bg-plum-400",
+    shoes: "bg-buttercup-400",
+    accessory: "bg-leaf-400",
+  };
+  const categoryStroke = {
+    top: "var(--poppy-400)",
+    bottom: "var(--sky2-400)",
+    dress: "var(--petal-400)",
+    outerwear: "var(--plum-400)",
+    shoes: "var(--buttercup-400)",
+    accessory: "var(--leaf-400)",
+  };
 
   const CategoryDonut = () => {
     const ownedCount = Math.max(1, stats.ownedCount || 1);
-    const r = 56, circ = 2 * Math.PI * r;
-    const segs = CATEGORY_OPTIONS.map(cat => ({
+    const r = 56,
+      circ = 2 * Math.PI * r;
+    const segs = CATEGORY_OPTIONS.map((cat) => ({
       label: categoryLabels[cat],
       count: stats.byCat[cat],
       color: categoryStroke[cat],
@@ -3982,26 +6574,74 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
     let offset = 0;
     return (
       <div className="flex items-center gap-5">
-        <svg width="140" height="140" viewBox="0 0 140 140" className="shrink-0">
-          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--cream-100)" strokeWidth="16" />
-          {segs.filter(s => s.count > 0).map(s => {
-            const len = (s.count / ownedCount) * circ;
-            const node = (
-              <circle key={s.label} cx="70" cy="70" r={r} fill="none" stroke={s.color} strokeWidth="16"
-                strokeDasharray={`${len} ${circ - len}`} strokeDashoffset={-offset}
-                transform="rotate(-90 70 70)" />
-            );
-            offset += len;
-            return node;
-          })}
-          <text x="70" y="68" textAnchor="middle" style={{ fontSize: '28px', fill: 'var(--ink-900)', fontWeight: 700 }}>{stats.ownedCount}</text>
-          <text x="70" y="86" textAnchor="middle" style={{ fontSize: '9px', fill: 'var(--ink-500)', letterSpacing: '0.15em', fontWeight: 700 }}>OWNED</text>
+        <svg
+          width="140"
+          height="140"
+          viewBox="0 0 140 140"
+          className="shrink-0"
+        >
+          <circle
+            cx="70"
+            cy="70"
+            r={r}
+            fill="none"
+            stroke="var(--cream-100)"
+            strokeWidth="16"
+          />
+          {segs
+            .filter((s) => s.count > 0)
+            .map((s) => {
+              const len = (s.count / ownedCount) * circ;
+              const node = (
+                <circle
+                  key={s.label}
+                  cx="70"
+                  cy="70"
+                  r={r}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth="16"
+                  strokeDasharray={`${len} ${circ - len}`}
+                  strokeDashoffset={-offset}
+                  transform="rotate(-90 70 70)"
+                />
+              );
+              offset += len;
+              return node;
+            })}
+          <text
+            x="70"
+            y="68"
+            textAnchor="middle"
+            style={{
+              fontSize: "28px",
+              fill: "var(--ink-900)",
+              fontWeight: 700,
+            }}
+          >
+            {stats.ownedCount}
+          </text>
+          <text
+            x="70"
+            y="86"
+            textAnchor="middle"
+            style={{
+              fontSize: "9px",
+              fill: "var(--ink-500)",
+              letterSpacing: "0.15em",
+              fontWeight: 700,
+            }}
+          >
+            OWNED
+          </text>
         </svg>
         <div className="flex flex-col gap-2 text-sm">
-          {segs.map(s => (
+          {segs.map((s) => (
             <div key={s.label} className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${s.swatch}`} />
-              <span className="font-bold text-ink-700 capitalize">{s.label}</span>
+              <span className="font-bold text-ink-700 capitalize">
+                {s.label}
+              </span>
               <span className="text-ink-500">{s.count}</span>
             </div>
           ))}
@@ -4009,7 +6649,12 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
       </div>
     );
   };
-  const seasonColors = { spring: 'bg-leaf-400', summer: 'bg-buttercup-400', fall: 'bg-poppy-400', winter: 'bg-sky2-400' };
+  const seasonColors = {
+    spring: "bg-leaf-400",
+    summer: "bg-buttercup-400",
+    fall: "bg-poppy-400",
+    winter: "bg-sky2-400",
+  };
 
   const ownedTotal = Math.max(1, stats.ownedCount);
 
@@ -4017,78 +6662,156 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={22} /></button>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+      <div
+        className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up"
+        style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-ink-500 p-2"
+        >
+          <I.x size={22} />
+        </button>
 
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
           <I.pie size={12} className="text-poppy-600" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Closet stats</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">
+            Closet stats
+          </p>
         </div>
-        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-6 text-ink-900">Your closet,<br/><em className="text-poppy-600">by the numbers.</em></h3>
+        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-6 text-ink-900">
+          Your closet,
+          <br />
+          <em className="text-poppy-600">by the numbers.</em>
+        </h3>
 
         {empty ? (
           <div className="p-6 bg-cream-50 border-2 border-cream-100 rounded-2xl text-center text-ink-600">
-            <p className="text-sm">Add a few pieces to your closet and the numbers will start to bloom here.</p>
+            <p className="text-sm">
+              Add a few pieces to your closet and the numbers will start to
+              bloom here.
+            </p>
           </div>
         ) : (
           <>
             {/* Hero numbers */}
             <div className="grid grid-cols-3 gap-3 mb-8">
               {[
-                { n: stats.ownedCount, label: 'pieces', color: 'text-poppy-600' },
-                { n: stats.outfitCount, label: 'looks', color: 'text-petal-500' },
-                { n: stats.collectionCount, label: 'collections', color: 'text-sky2-500' },
-              ].map(s => (
-                <div key={s.label} className="p-4 bg-cream-50 border-2 border-cream-100 rounded-2xl text-center">
-                  <div className={`font-display font-bold text-3xl sm:text-4xl ${s.color}`}>{s.n}</div>
-                  <div className="text-[10px] font-bold tracking-wide uppercase text-ink-500 mt-1">{s.label}</div>
+                {
+                  n: stats.ownedCount,
+                  label: "pieces",
+                  color: "text-poppy-600",
+                },
+                {
+                  n: stats.outfitCount,
+                  label: "looks",
+                  color: "text-petal-500",
+                },
+                {
+                  n: stats.collectionCount,
+                  label: "collections",
+                  color: "text-sky2-500",
+                },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="p-4 bg-cream-50 border-2 border-cream-100 rounded-2xl text-center"
+                >
+                  <div
+                    className={`font-display font-bold text-3xl sm:text-4xl ${s.color}`}
+                  >
+                    {s.n}
+                  </div>
+                  <div className="text-[10px] font-bold tracking-wide uppercase text-ink-500 mt-1">
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* By category */}
             <div className="mb-8">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">By category</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">
+                By category
+              </p>
               <CategoryDonut />
             </div>
 
             {/* By status — donut */}
             <div className="mb-8">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">By status</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">
+                By status
+              </p>
               <StatusDonut />
             </div>
 
             {/* Utilization */}
             <div className="mb-8 p-4 bg-leaf-50 border-2 border-leaf-100 rounded-2xl">
               <div className="flex items-baseline justify-between mb-2">
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700">Closet utilization</p>
-                <span className="font-display font-bold text-2xl text-leaf-700">{stats.utilizationPct}%</span>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700">
+                  Closet utilization
+                </p>
+                <span className="font-display font-bold text-2xl text-leaf-700">
+                  {stats.utilizationPct}%
+                </span>
               </div>
               <div className="h-3 bg-white rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-leaf-500 rounded-full" style={{ width: `${stats.utilizationPct}%`, transition: 'width 0.6s cubic-bezier(.34,1.56,.64,1)' }} />
+                <div
+                  className="h-full bg-leaf-500 rounded-full"
+                  style={{
+                    width: `${stats.utilizationPct}%`,
+                    transition: "width 0.6s cubic-bezier(.34,1.56,.64,1)",
+                  }}
+                />
               </div>
               <p className="text-xs text-ink-600">
-                <span className="font-bold text-ink-800">{stats.usedCount}</span> of {stats.ownedCount} pieces appear in at least one look · avg <span className="font-bold text-ink-800">{stats.avgItemsPerLook}</span> pieces per look
+                <span className="font-bold text-ink-800">
+                  {stats.usedCount}
+                </span>{" "}
+                of {stats.ownedCount} pieces appear in at least one look · avg{" "}
+                <span className="font-bold text-ink-800">
+                  {stats.avgItemsPerLook}
+                </span>{" "}
+                pieces per look
               </p>
             </div>
 
             {/* By season */}
             <div className="mb-8">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">By season</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">
+                By season
+              </p>
               <div className="flex flex-col gap-2">
-                {SEASON_OPTIONS.map(s => (
-                  <Bar key={s} label={s} count={stats.bySeason[s]} max={ownedTotal} color={seasonColors[s]} />
+                {SEASON_OPTIONS.map((s) => (
+                  <Bar
+                    key={s}
+                    label={s}
+                    count={stats.bySeason[s]}
+                    max={ownedTotal}
+                    color={seasonColors[s]}
+                  />
                 ))}
               </div>
             </div>
 
             {/* By occasion */}
             <div className="mb-8">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">By occasion</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">
+                By occasion
+              </p>
               <div className="flex flex-col gap-2">
-                {OCCASION_OPTIONS.map(o => (
-                  <Bar key={o} label={o} count={stats.byOccasion[o]} max={ownedTotal} color="bg-plum-400" />
+                {OCCASION_OPTIONS.map((o) => (
+                  <Bar
+                    key={o}
+                    label={o}
+                    count={stats.byOccasion[o]}
+                    max={ownedTotal}
+                    color="bg-plum-400"
+                  />
                 ))}
               </div>
             </div>
@@ -4096,10 +6819,18 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
             {/* By year purchased */}
             {stats.byYear.length > 0 && (
               <div className="mb-8">
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 mb-3">By year purchased</p>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700 mb-3">
+                  By year purchased
+                </p>
                 <div className="flex flex-col gap-2">
                   {stats.byYear.map(([y, n]) => (
-                    <Bar key={y} label={y} count={n} max={ownedTotal} color="bg-buttercup-400" />
+                    <Bar
+                      key={y}
+                      label={y}
+                      count={n}
+                      max={ownedTotal}
+                      color="bg-buttercup-400"
+                    />
                   ))}
                 </div>
               </div>
@@ -4108,13 +6839,24 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
             {/* Most worn */}
             {stats.topItems.length > 0 && (
               <div className="mb-8">
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">Most versatile items</p>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">
+                  Most versatile items
+                </p>
                 <div className="flex flex-col gap-2">
                   {stats.topItems.map(({ id, name, count }, idx) => (
-                    <div key={id} className="flex items-center gap-3 p-2.5 bg-cream-50 border-2 border-cream-100 rounded-2xl">
-                      <div className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-poppy-100 text-poppy-700 font-display font-bold text-[12px]">{idx + 1}</div>
-                      <span className="flex-1 text-[13px] font-bold text-ink-800 capitalize truncate">{toTitle(name)}</span>
-                      <span className="shrink-0 text-[11px] font-bold bg-petal-100 text-petal-700 rounded-full px-2 py-0.5">{count} {count === 1 ? 'look' : 'looks'}</span>
+                    <div
+                      key={id}
+                      className="flex items-center gap-3 p-2.5 bg-cream-50 border-2 border-cream-100 rounded-2xl"
+                    >
+                      <div className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-poppy-100 text-poppy-700 font-display font-bold text-[12px]">
+                        {idx + 1}
+                      </div>
+                      <span className="flex-1 text-[13px] font-bold text-ink-800 capitalize truncate">
+                        {toTitle(name)}
+                      </span>
+                      <span className="shrink-0 text-[11px] font-bold bg-petal-100 text-petal-700 rounded-full px-2 py-0.5">
+                        {count} {count === 1 ? "look" : "looks"}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -4125,14 +6867,25 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
             {stats.topBrands.length > 0 && (
               <div className="mb-8">
                 <div className="flex items-baseline justify-between mb-3">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Top brands</p>
-                  <p className="text-[12px] text-ink-500">{stats.brandTotal} total</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">
+                    Top brands
+                  </p>
+                  <p className="text-[12px] text-ink-500">
+                    {stats.brandTotal} total
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {stats.topBrands.map(([b, n]) => (
-                    <div key={b} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-sky2-50 border-2 border-sky2-100 rounded-full">
-                      <span className="text-[12px] font-bold text-ink-800">{b}</span>
-                      <span className="text-[11px] font-bold bg-sky2-200 text-sky2-800 rounded-full px-1.5 min-w-[20px] text-center leading-5">{n}</span>
+                    <div
+                      key={b}
+                      className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-sky2-50 border-2 border-sky2-100 rounded-full"
+                    >
+                      <span className="text-[12px] font-bold text-ink-800">
+                        {b}
+                      </span>
+                      <span className="text-[11px] font-bold bg-sky2-200 text-sky2-800 rounded-full px-1.5 min-w-[20px] text-center leading-5">
+                        {n}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -4143,34 +6896,56 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
             {stats.allTags.length > 0 && (
               <div className="mb-2">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">Tags</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">
+                    Tags
+                  </p>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setTagSort(s => s === 'count' ? 'alpha' : 'count')}
+                      onClick={() =>
+                        setTagSort((s) => (s === "count" ? "alpha" : "count"))
+                      }
                       className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-500 px-2 py-0.5 rounded-full border-2 border-ink-200 active:bg-cream-100 transition-colors"
-                    >{tagSort === 'count' ? 'A–Z' : '#'}</button>
-                    <p className="text-[12px] text-ink-500">{stats.tagTotal} total</p>
+                    >
+                      {tagSort === "count" ? "A–Z" : "#"}
+                    </button>
+                    <p className="text-[12px] text-ink-500">
+                      {stats.tagTotal} total
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(() => {
-                    let tags = tagSort === 'alpha'
-                      ? [...stats.allTags].sort((a, b) => a[0].localeCompare(b[0]))
-                      : stats.allTags;
+                    let tags =
+                      tagSort === "alpha"
+                        ? [...stats.allTags].sort((a, b) =>
+                            a[0].localeCompare(b[0]),
+                          )
+                        : stats.allTags;
                     if (!tagsExpanded) tags = tags.slice(0, 10);
                     return tags.map(([t, n]) => (
-                      <div key={t} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-buttercup-50 border-2 border-buttercup-100 rounded-full">
-                        <span className="text-[12px] font-bold text-ink-800">{t}</span>
-                        <span className="text-[11px] font-bold bg-buttercup-200 text-ink-700 rounded-full px-1.5 min-w-[20px] text-center leading-5">{n}</span>
+                      <div
+                        key={t}
+                        className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-buttercup-50 border-2 border-buttercup-100 rounded-full"
+                      >
+                        <span className="text-[12px] font-bold text-ink-800">
+                          {t}
+                        </span>
+                        <span className="text-[11px] font-bold bg-buttercup-200 text-ink-700 rounded-full px-1.5 min-w-[20px] text-center leading-5">
+                          {n}
+                        </span>
                       </div>
                     ));
                   })()}
                 </div>
                 {stats.tagTotal > 10 && (
                   <button
-                    onClick={() => setTagsExpanded(e => !e)}
+                    onClick={() => setTagsExpanded((e) => !e)}
                     className="mt-3 text-[11px] font-bold text-ink-500 active:text-ink-800"
-                  >{tagsExpanded ? 'Show less' : `Show all ${stats.tagTotal} tags`}</button>
+                  >
+                    {tagsExpanded
+                      ? "Show less"
+                      : `Show all ${stats.tagTotal} tags`}
+                  </button>
                 )}
               </div>
             )}
@@ -4181,7 +6956,16 @@ function StatsModal({ items, outfits, collections, customTags, brands, onClose }
   );
 }
 
-function BackupModal({ items, images, outfits, customTags, brands, collections, onClose, onImport }) {
+function BackupModal({
+  items,
+  images,
+  outfits,
+  customTags,
+  brands,
+  collections,
+  onClose,
+  onImport,
+}) {
   useBodyScrollLock();
   const fileRef = useRef();
   const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'warn'|'success', message}
@@ -4192,10 +6976,16 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
 
   useEffect(() => {
     if (navigator.storage && navigator.storage.estimate) {
-      navigator.storage.estimate().then(setStorageEstimate).catch(() => {});
+      navigator.storage
+        .estimate()
+        .then(setStorageEstimate)
+        .catch(() => {});
     }
     if (navigator.storage && navigator.storage.persisted) {
-      navigator.storage.persisted().then(setPersisted).catch(() => {});
+      navigator.storage
+        .persisted()
+        .then(setPersisted)
+        .catch(() => {});
     }
   }, [images]);
 
@@ -4204,43 +6994,61 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
   // on disk, not just what's in memory.
   const buildDiagnostics = async () => {
     let idbCount = null;
-    try { idbCount = (await IDB.keys()).length; } catch { /* leave null */ }
+    try {
+      idbCount = (await IDB.keys()).length;
+    } catch {
+      /* leave null */
+    }
     const lines = [
       `Poppy diagnostics — ${new Date().toISOString()}`,
       `User agent: ${navigator.userAgent}`,
-      `Standalone (installed): ${window.matchMedia && window.matchMedia('(display-mode: standalone)').matches}`,
-      `Persistent storage: ${persisted === null ? 'unknown' : persisted}`,
+      `Standalone (installed): ${window.matchMedia && window.matchMedia("(display-mode: standalone)").matches}`,
+      `Persistent storage: ${persisted === null ? "unknown" : persisted}`,
       storageEstimate && storageEstimate.quota
         ? `Storage: ${formatBytes(storageEstimate.usage || 0)} used of ${formatBytes(storageEstimate.quota)}`
         : `Storage: estimate unavailable`,
-      `Items: ${items.length} · Outfits: ${outfits.length} · Photos in IndexedDB: ${idbCount === null ? '?' : idbCount} · Photos in memory: ${Object.keys(images).length}`,
+      `Items: ${items.length} · Outfits: ${outfits.length} · Photos in IndexedDB: ${idbCount === null ? "?" : idbCount} · Photos in memory: ${Object.keys(images).length}`,
       ``,
       `Recent events (newest last):`,
-      ...Log.entries().map(e => `${e.t} [${e.level}] ${e.event}${e.data !== undefined ? ' ' + JSON.stringify(e.data) : ''}`),
+      ...Log.entries().map(
+        (e) =>
+          `${e.t} [${e.level}] ${e.event}${e.data !== undefined ? " " + JSON.stringify(e.data) : ""}`,
+      ),
     ];
-    return lines.join('\n');
+    return lines.join("\n");
   };
 
   const handleCopyDiagnostics = async () => {
     const report = await buildDiagnostics();
     try {
       await navigator.clipboard.writeText(report);
-      setStatus({ kind: 'success', message: 'Diagnostics copied to clipboard. Paste them anywhere to share.' });
+      setStatus({
+        kind: "success",
+        message:
+          "Diagnostics copied to clipboard. Paste them anywhere to share.",
+      });
     } catch {
       // Clipboard is often blocked on mobile — fall back to a downloaded file.
       try {
-        const blob = new Blob([report], { type: 'text/plain' });
+        const blob = new Blob([report], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = `poppy-diagnostics-${new Date().toISOString().slice(0, 10)}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 1000);
-        setStatus({ kind: 'info', message: 'Clipboard was blocked — diagnostics downloaded as a file instead.' });
+        setStatus({
+          kind: "info",
+          message:
+            "Clipboard was blocked — diagnostics downloaded as a file instead.",
+        });
       } catch (e) {
-        setStatus({ kind: 'error', message: 'Could not copy diagnostics: ' + (e.message || e) });
+        setStatus({
+          kind: "error",
+          message: "Could not copy diagnostics: " + (e.message || e),
+        });
       }
     }
   };
@@ -4255,22 +7063,40 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
       let missing = 0;
       try {
         const keys = new Set(await IDB.keys());
-        missing = items.filter(it => !keys.has(it.id)).length;
-      } catch { /* if we can't check, don't block the export */ }
+        missing = items.filter((it) => !keys.has(it.id)).length;
+      } catch {
+        /* if we can't check, don't block the export */
+      }
       if (missing > 0) {
         const proceed = confirm(
           `Heads up: ${missing} of your ${items.length} items ${missing === 1 ? "has" : "have"} no photo in storage right now, so this backup won't include ${missing === 1 ? "it" : "them"}. ` +
-          `This usually means the browser cleared your photos. Export anyway?`
+            `This usually means the browser cleared your photos. Export anyway?`,
         );
         if (!proceed) {
-          setStatus({ kind: 'warn', message: "Export cancelled. If a photo backup exists, restore it first — then export a fresh backup." });
+          setStatus({
+            kind: "warn",
+            message:
+              "Export cancelled. If a photo backup exists, restore it first — then export a fresh backup.",
+          });
           return;
         }
       }
-      const { sizeBytes } = await exportBackup({ items, outfits, customTags, brands, collections });
-      setStatus({ kind: 'success', message: `Backup saved (${formatBytes(sizeBytes)}). Check your Downloads folder.` });
+      const { sizeBytes } = await exportBackup({
+        items,
+        outfits,
+        customTags,
+        brands,
+        collections,
+      });
+      setStatus({
+        kind: "success",
+        message: `Backup saved (${formatBytes(sizeBytes)}). Check your Downloads folder.`,
+      });
     } catch (e) {
-      setStatus({ kind: 'error', message: "Could not create the backup file: " + (e.message || e) });
+      setStatus({
+        kind: "error",
+        message: "Could not create the backup file: " + (e.message || e),
+      });
     } finally {
       setBusy(false);
     }
@@ -4283,58 +7109,99 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
     try {
       const text = await readFileAsText(file);
       let parsed;
-      try { parsed = JSON.parse(text); }
-      catch { setStatus({ kind: 'error', message: "That file isn't valid JSON." }); return; }
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        setStatus({ kind: "error", message: "That file isn't valid JSON." });
+        return;
+      }
       const result = validateBackup(parsed);
-      if (!result.ok) { setStatus({ kind: 'error', message: result.error }); return; }
+      if (!result.ok) {
+        setStatus({ kind: "error", message: result.error });
+        return;
+      }
       const itemCount = result.data.items.length;
       // Count photos that belong to items (ignore outfit selfies) so we can warn
       // if this backup can't fully restore the closet's pictures.
       const imgIds = new Set(Object.keys(result.data.images || {}));
-      const itemsWithPhoto = result.data.items.filter(it => imgIds.has(it.id)).length;
+      const itemsWithPhoto = result.data.items.filter((it) =>
+        imgIds.has(it.id),
+      ).length;
       const photoCount = imgIds.size;
       const missing = itemCount - itemsWithPhoto;
-      setPending({ filename: file.name, data: result.data, counts: parsed.counts || {}, exportedAt: parsed.exportedAt, photoCount, missing });
+      setPending({
+        filename: file.name,
+        data: result.data,
+        counts: parsed.counts || {},
+        exportedAt: parsed.exportedAt,
+        photoCount,
+        missing,
+      });
       const colsCount = result.data.collections?.length || 0;
       const found = `Found ${itemCount} items, ${result.data.outfits.length} outfits${colsCount ? `, ${colsCount} collections` : ""}, ${photoCount} photos.`;
       if (missing > 0) {
         setStatus({
-          kind: 'warn',
-          message: `${found} ⚠ ${missing} item${missing === 1 ? "" : "s"} in this backup ${missing === 1 ? "has" : "have"} no photo — restoring won't bring ${missing === 1 ? "that picture" : "those pictures"} back. Choose how to apply it.`
+          kind: "warn",
+          message: `${found} ⚠ ${missing} item${missing === 1 ? "" : "s"} in this backup ${missing === 1 ? "has" : "have"} no photo — restoring won't bring ${missing === 1 ? "that picture" : "those pictures"} back. Choose how to apply it.`,
         });
       } else {
-        setStatus({ kind: 'info', message: `${found} Choose how to apply it.` });
+        setStatus({
+          kind: "info",
+          message: `${found} Choose how to apply it.`,
+        });
       }
     } catch (e) {
-      setStatus({ kind: 'error', message: "Could not read the file: " + (e.message || e) });
+      setStatus({
+        kind: "error",
+        message: "Could not read the file: " + (e.message || e),
+      });
     }
   };
 
   const applyStrategy = async (strategy) => {
     if (!pending || busy) return;
     // Build a `current` snapshot without the images map — images live in IDB now.
-    const current = { items, outfits, customTags, brands: brands || [], collections: collections || [] };
-    const next = strategy === 'replace' ? pending.data : mergeBackup(current, pending.data);
+    const current = {
+      items,
+      outfits,
+      customTags,
+      brands: brands || [],
+      collections: collections || [],
+    };
+    const next =
+      strategy === "replace"
+        ? pending.data
+        : mergeBackup(current, pending.data);
     setBusy(true);
-    setStatus({ kind: 'info', message: strategy === 'replace' ? "Replacing your closet…" : "Merging backup…" });
+    setStatus({
+      kind: "info",
+      message:
+        strategy === "replace" ? "Replacing your closet…" : "Merging backup…",
+    });
     let result;
     try {
       result = await onImport(next, strategy);
     } catch (e) {
       setBusy(false);
-      setStatus({ kind: 'error', message: "Import failed: " + (e.message || e) });
+      setStatus({
+        kind: "error",
+        message: "Import failed: " + (e.message || e),
+      });
       return;
     }
     setPending(null);
     setBusy(false);
-    const base = strategy === 'replace' ? "Closet replaced with the backup." : "Backup merged into your closet.";
+    const base =
+      strategy === "replace"
+        ? "Closet replaced with the backup."
+        : "Backup merged into your closet.";
     if (result && result.failed && result.failed.length) {
       setStatus({
-        kind: 'error',
-        message: `${base} But ${result.failed.length} of ${result.total} photos could not be saved — you may be out of device storage. Free some space and re-import to recover them.`
+        kind: "error",
+        message: `${base} But ${result.failed.length} of ${result.total} photos could not be saved — you may be out of device storage. Free some space and re-import to recover them.`,
       });
     } else {
-      setStatus({ kind: 'success', message: base });
+      setStatus({ kind: "success", message: base });
     }
   };
 
@@ -4350,23 +7217,48 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="relative bg-white max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-2xl shadow-2xl fade-up" style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-ink-500 p-2"><I.x size={18} /></button>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
+      <div
+        className="relative bg-white max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-2xl shadow-2xl fade-up"
+        style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-ink-500 p-2"
+        >
+          <I.x size={18} />
+        </button>
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-leaf-50 rounded-full mb-3">
           <I.archive size={12} className="text-leaf-600" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700">Save & Restore</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700">
+            Save & Restore
+          </p>
         </div>
-        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-4 text-ink-900">Keep your closet<br/><em className="text-leaf-600">safe and sound.</em></h3>
+        <h3 className="font-display font-bold text-2xl sm:text-3xl mb-4 text-ink-900">
+          Keep your closet
+          <br />
+          <em className="text-leaf-600">safe and sound.</em>
+        </h3>
 
         <div className="mb-6 p-3 bg-cream-50 border-2 border-cream-100 rounded-2xl text-xs text-ink-600 leading-relaxed">
-          <span className="font-bold text-ink-800">{items.length}</span> pieces · <span className="font-bold text-ink-800">{outfits.length}</span> outfits · <span className="font-bold text-ink-800">{photoCount}</span> photos{storageLine ? ` · ${storageLine}` : ""}
+          <span className="font-bold text-ink-800">{items.length}</span> pieces
+          · <span className="font-bold text-ink-800">{outfits.length}</span>{" "}
+          outfits · <span className="font-bold text-ink-800">{photoCount}</span>{" "}
+          photos{storageLine ? ` · ${storageLine}` : ""}
         </div>
 
         {/* EXPORT */}
         <div className="mb-8">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Export</p>
-          <p className="text-sm text-ink-600 mb-3">Download everything as a single JSON file. Keep it somewhere safe — Google Drive, email to yourself, anywhere.</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">
+            Export
+          </p>
+          <p className="text-sm text-ink-600 mb-3">
+            Download everything as a single JSON file. Keep it somewhere safe
+            like Google Drive, or email it to yourself.
+          </p>
           <button
             onClick={handleExport}
             disabled={busy}
@@ -4378,41 +7270,60 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
 
         {/* IMPORT */}
         <div className="mb-2">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Import</p>
-          <p className="text-sm text-ink-600 mb-3">Restore from a backup file. You'll be asked whether to merge or replace.</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">
+            Import
+          </p>
+          <p className="text-sm text-ink-600 mb-3">
+            Restore from a backup file. You'll be asked whether to merge or
+            replace.
+          </p>
           {!pending && (
             <button
               onClick={() => fileRef.current?.click()}
               className="w-full border-2 border-dashed border-leaf-200 bg-leaf-50/50 active:border-leaf-500 active:bg-leaf-50 transition-colors rounded-3xl py-6 flex flex-col items-center gap-2 text-leaf-700"
             >
               <I.upload size={20} />
-              <span className="text-[11px] font-bold tracking-[0.2em] uppercase">Choose backup file</span>
+              <span className="text-[11px] font-bold tracking-[0.2em] uppercase">
+                Choose backup file
+              </span>
             </button>
           )}
           <input
             ref={fileRef}
             type="file"
             accept="application/json,.json"
-            onChange={(e) => { handlePickFile(e.target.files?.[0]); e.target.value = ""; }}
+            onChange={(e) => {
+              handlePickFile(e.target.files?.[0]);
+              e.target.value = "";
+            }}
             className="hidden"
           />
 
           {pending && (
             <div className="border-2 border-cream-100 rounded-3xl p-4 mb-3 bg-white">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-1">From file</p>
-              <p className="font-display font-bold text-base truncate text-ink-900">{pending.filename}</p>
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-1">
+                From file
+              </p>
+              <p className="font-display font-bold text-base truncate text-ink-900">
+                {pending.filename}
+              </p>
               {pending.exportedAt && (
-                <p className="text-[10px] text-ink-500 mt-1">Exported {new Date(pending.exportedAt).toLocaleString()}</p>
+                <p className="text-[10px] text-ink-500 mt-1">
+                  Exported {new Date(pending.exportedAt).toLocaleString()}
+                </p>
               )}
               <p className="text-[11px] text-ink-600 mt-2">
                 {pending.data.items.length} items · {pending.photoCount} photos
                 {pending.missing > 0 && (
-                  <span className="text-petal-700 font-bold"> · {pending.missing} without a photo</span>
+                  <span className="text-petal-700 font-bold">
+                    {" "}
+                    · {pending.missing} without a photo
+                  </span>
                 )}
               </p>
               <div className="mt-4 flex flex-col gap-2">
                 <button
-                  onClick={() => applyStrategy('merge')}
+                  onClick={() => applyStrategy("merge")}
                   disabled={busy}
                   className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
                 >
@@ -4420,8 +7331,12 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm("Replace your entire closet with this backup? Your current items and outfits will be deleted.")) {
-                      applyStrategy('replace');
+                    if (
+                      confirm(
+                        "Replace your entire closet with this backup? Your current items and outfits will be deleted.",
+                      )
+                    ) {
+                      applyStrategy("replace");
                     }
                   }}
                   disabled={busy}
@@ -4430,7 +7345,10 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
                   Replace everything
                 </button>
                 <button
-                  onClick={() => { setPending(null); setStatus(null); }}
+                  onClick={() => {
+                    setPending(null);
+                    setStatus(null);
+                  }}
                   disabled={busy}
                   className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-500 underline pt-1 disabled:opacity-50"
                 >
@@ -4443,20 +7361,31 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
 
         {/* DIAGNOSTICS */}
         <div className="mt-8 pt-6 border-t border-cream-100">
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">Diagnostics</p>
-          <div className={`flex items-start gap-2 text-xs mb-3 p-2.5 rounded-2xl border-2 ${
-            persisted === true  ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
-            persisted === false ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700" :
-                                  "bg-cream-50 border-cream-100 text-ink-600"
-          }`}>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">
+            Diagnostics
+          </p>
+          <div
+            className={`flex items-start gap-2 text-xs mb-3 p-2.5 rounded-2xl border-2 ${
+              persisted === true
+                ? "bg-leaf-50 border-leaf-200 text-leaf-700"
+                : persisted === false
+                  ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700"
+                  : "bg-cream-50 border-cream-100 text-ink-600"
+            }`}
+          >
             <I.alert size={14} className="shrink-0 mt-0.5" />
             <span>
-              {persisted === true  ? "Photo storage is protected — the browser won't evict your photos." :
-               persisted === false ? "Photo storage is not protected yet — the browser may still clear photos. Installing to your home screen usually fixes this." :
-                                     "Checking storage protection…"}
+              {persisted === true
+                ? "Photo storage is protected — the browser won't evict your photos."
+                : persisted === false
+                  ? "Photo storage is not protected yet — the browser may still clear photos. Installing to your home screen usually fixes this."
+                  : "Checking storage protection…"}
             </span>
           </div>
-          <p className="text-sm text-ink-600 mb-3">If something looks wrong, copy the diagnostics log — it records recent events and storage health so an issue can be traced.</p>
+          <p className="text-sm text-ink-600 mb-3">
+            If something looks wrong, copy the diagnostics log — it records
+            recent events and storage health so an issue can be traced.
+          </p>
           <button
             onClick={handleCopyDiagnostics}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-cream-200 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
@@ -4466,12 +7395,17 @@ function BackupModal({ items, images, outfits, customTags, brands, collections, 
         </div>
 
         {status && (
-          <div className={`mt-3 p-3.5 rounded-2xl border-2 text-sm flex items-start gap-2 ${
-            status.kind === 'error'   ? "bg-petal-50 border-petal-200 text-petal-700" :
-            status.kind === 'warn'    ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700" :
-            status.kind === 'success' ? "bg-leaf-50 border-leaf-200 text-leaf-700" :
-                                        "bg-cream-50 border-cream-100 text-ink-700"
-          }`}>
+          <div
+            className={`mt-3 p-3.5 rounded-2xl border-2 text-sm flex items-start gap-2 ${
+              status.kind === "error"
+                ? "bg-petal-50 border-petal-200 text-petal-700"
+                : status.kind === "warn"
+                  ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700"
+                  : status.kind === "success"
+                    ? "bg-leaf-50 border-leaf-200 text-leaf-700"
+                    : "bg-cream-50 border-cream-100 text-ink-700"
+            }`}
+          >
             <I.alert size={14} className="shrink-0 mt-0.5" />
             <span>{status.message}</span>
           </div>
@@ -4486,14 +7420,30 @@ function AboutModal({ onClose }) {
   useBodyScrollLock();
 
   // A section with an icon chip, heading, and free-form body
-  const Section = ({ icon: IconC, tone = 'poppy', eyebrow, title, children }) => (
+  const Section = ({
+    icon: IconC,
+    tone = "poppy",
+    eyebrow,
+    title,
+    children,
+  }) => (
     <div className="mb-8">
-      <div className={`inline-flex items-center gap-2 px-3 py-1 bg-${tone}-50 rounded-full mb-3`}>
+      <div
+        className={`inline-flex items-center gap-2 px-3 py-1 bg-${tone}-50 rounded-full mb-3`}
+      >
         <IconC size={12} className={`text-${tone}-600`} />
-        <p className={`text-[10px] font-bold tracking-[0.2em] uppercase text-${tone}-700`}>{eyebrow}</p>
+        <p
+          className={`text-[10px] font-bold tracking-[0.2em] uppercase text-${tone}-700`}
+        >
+          {eyebrow}
+        </p>
       </div>
-      <h4 className="font-display font-bold text-xl text-ink-900 mb-2">{title}</h4>
-      <div className="text-sm text-ink-700 leading-relaxed space-y-3">{children}</div>
+      <h4 className="font-display font-bold text-xl text-ink-900 mb-2">
+        {title}
+      </h4>
+      <div className="text-sm text-ink-700 leading-relaxed space-y-3">
+        {children}
+      </div>
     </div>
   );
 
@@ -4520,116 +7470,207 @@ function AboutModal({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6">
-      <div className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm" onClick={onClose}></div>
+      <div
+        className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
+        onClick={onClose}
+      ></div>
 
       <div className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up">
-        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 text-ink-500 p-2 active:scale-90">
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 text-ink-500 p-2 active:scale-90"
+        >
           <I.x size={22} />
         </button>
 
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
           <I.help size={12} className="text-poppy-600" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">About</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">
+            About
+          </p>
         </div>
 
         <h3 className="font-display font-bold text-2xl sm:text-3xl mb-6 text-ink-900">
           Hello, and welcome to <em className="text-poppy-600">Poppy.</em>
         </h3>
 
-        <Section icon={I.heart} tone="petal" eyebrow="About me" title="About the app creator">
+        <Section
+          icon={I.heart}
+          tone="petal"
+          eyebrow="About me"
+          title="About the app creator"
+        >
           <p>
-            Hi, I'm Robyn — a software engineer, a mom, and a stereotypically unfashionable Seattleite.
+            Hi, I'm Robyn — a software engineer, a mom, and a stereotypically
+            unfashionable Seattleite.
           </p>
           <p>
-            After my daughter was born I hit a bit of an aesthetic identity crisis and started spending way too
-            much time thinking about clothes.
+            After my daughter was born I hit a bit of an aesthetic identity
+            crisis and started spending way too much time thinking about
+            clothes.
           </p>
           <p>
-            Poppy is what I've built, in bits of free time, to make sense of it all: a way to track what's
-            actually in my closet, plan packing lists and seasonal rotations, and add a little creativity to my
-            everyday outfits.
+            Poppy is what I've built, in bits of free time, to make sense of it
+            all: a way to track what's actually in my closet, plan packing lists
+            and seasonal rotations, and add a little creativity to my everyday
+            outfits.
           </p>
           <p>
-            It's my roadmap through the maze of personal-style vocabulary, color seasons, image identities, and more.
+            It's my roadmap through the maze of personal-style vocabulary, color
+            seasons, image identities, and more.
           </p>
           <p>
-            If you're on a similar journey, give it a try — and please reach out. I'd love to hear from you.
+            If you're on a similar journey, give it a try — and please reach
+            out. I'd love to hear from you.
           </p>
         </Section>
 
-        <Section icon={I.sparkles} tone="buttercup" eyebrow="Why Poppy" title="Why I created this app">
+        <Section
+          icon={I.sparkles}
+          tone="buttercup"
+          eyebrow="Why Poppy"
+          title="Why I created this app"
+        >
           <p>
-            At its heart, Poppy is a tool for appreciating what you already have. My hope is to make spending
-            time with your existing wardrobe as engaging and beautiful as shopping for the next new thing.
+            At its heart, Poppy is a tool for appreciating what you already
+            have. My hope is to make spending time with your existing wardrobe
+            as engaging and beautiful as shopping for the next new thing.
           </p>
           <p>
-            What if we saw the clothes we already own in the same aspirational light as the ads all around us?
-            Instead of always chasing something new, let's sell ourselves on what's already hanging in the closet.
+            What if we saw the clothes we already own in the same aspirational
+            light as the ads all around us? Instead of always chasing something
+            new, let's sell ourselves on what's already hanging in the closet.
           </p>
         </Section>
 
-        <Section icon={I.camera} tone="sky2" eyebrow="Photo tips" title="Tips for cataloging your clothes">
-          <p>Good photos are what make your closet feel aspirational instead of utilitarian. A few ways to get them:</p>
+        <Section
+          icon={I.camera}
+          tone="sky2"
+          eyebrow="Photo tips"
+          title="Tips for cataloging your clothes"
+        >
+          <p>
+            Good photos are what make your closet feel aspirational instead of
+            utilitarian. A few ways to get them:
+          </p>
           <div className="grid gap-2 mt-1">
-            <Tip><strong>Aim for clean, consistent images.</strong> Poppy looks best with well-lit photos of a single item, isolated on a plain or transparent background.</Tip>
-            <Tip><strong>Borrow the product photo.</strong> The easiest way to get a great shot is to reuse the image made to sell the item — the platonic ideal of your well-loved tee, shot by pros to look better than anything you'd manage at home. Even for second-hand pieces or years-old favorites, it's worth a quick search; the brand name plus a short description and a couple of identifying details will usually turn one up.</Tip>
-            <Tip><strong>Fake it for the basics.</strong> For something really simple — black leggings, a gray crewneck tee — you don't need a photo of your exact piece. Grab an image of a similar product instead. No one will ever know.</Tip>
-            <Tip><strong>Shoot your own.</strong> For one-of-a-kind pieces you can't find online, your own photos work too. Use natural light, shoot from straight overhead, line up the shoulders, and smooth out wrinkles. For a little extra polish, try running the result through a photo-generating AI to give it that otherworldly sense of perfection.</Tip>
+            <Tip>
+              <strong>Aim for clean, consistent images.</strong> Poppy looks
+              best with well-lit photos of a single item, isolated on a plain or
+              transparent background.
+            </Tip>
+            <Tip>
+              <strong>Borrow the product photo.</strong> The easiest way to get
+              a great shot is to reuse the image made to sell the item — the
+              platonic ideal of your well-loved tee, shot by pros to look better
+              than anything you'd manage at home. Even for second-hand pieces or
+              years-old favorites, it's worth a quick search; the brand name
+              plus a short description and a couple of identifying details will
+              usually turn one up.
+            </Tip>
+            <Tip>
+              <strong>Fake it for the basics.</strong> For something really
+              simple — black leggings, a gray crewneck tee — you don't need a
+              photo of your exact piece. Grab an image of a similar product
+              instead. No one will ever know.
+            </Tip>
+            <Tip>
+              <strong>Shoot your own.</strong> For one-of-a-kind pieces you
+              can't find online, your own photos work too. Use natural light,
+              shoot from straight overhead, line up the shoulders, and smooth
+              out wrinkles. For a little extra polish, try running the result
+              through a photo-generating AI to give it that otherworldly sense
+              of perfection.
+            </Tip>
           </div>
         </Section>
 
-        <Section icon={I.shirt} tone="poppy" eyebrow="Using Poppy" title="How to use the app">
+        <Section
+          icon={I.shirt}
+          tone="poppy"
+          eyebrow="Using Poppy"
+          title="How to use the app"
+        >
           <div className="space-y-4">
             <HowTo icon={I.plus} title="Add an item">
-              Tap the <strong>+</strong> button in the Closet to add a piece. Snap or upload a photo, then fill in
-              details like category, brand, season, and the year you bought it. The more you fill in, the richer your stats get.
+              Tap the <strong>+</strong> button in the Closet to add a piece.
+              Snap or upload a photo, then fill in details like category, brand,
+              season, and the year you bought it. The more you fill in, the
+              richer your stats get.
             </HowTo>
             <HowTo icon={I.sunglasses} title="Create outfits (Looks)">
-              Head to the <strong>Looks</strong> tab and start a new look. Pick pieces from your closet to combine them
-              into a complete outfit, then save it. Looks are perfect for planning what to wear or remembering combos you love.
+              Head to the <strong>Looks</strong> tab and start a new look. Pick
+              pieces from your closet to combine them into a complete outfit,
+              then save it. Looks are perfect for planning what to wear or
+              remembering combos you love.
             </HowTo>
             <HowTo icon={I.suitcase} title="Build collections">
-              Open the <strong>Collections</strong> tab to group items and looks around a theme — think "Summer
-              capsule," "Work," or "Italy trip." Tap any collection to filter your closet down to just those pieces.
+              Open the <strong>Collections</strong> tab to group items and looks
+              around a theme — think "Summer capsule," "Work," or "Italy trip."
+              Tap any collection to filter your closet down to just those
+              pieces.
             </HowTo>
             <HowTo icon={I.tag} title="Add tags">
-              While editing an item, add your own <strong>custom tags</strong> (like "cozy," "going out," or "needs
-              tailoring"). Tags are searchable and show up in your stats, so you can slice your wardrobe any way you think about it.
+              While editing an item, add your own <strong>custom tags</strong>{" "}
+              (like "cozy," "going out," or "needs tailoring"). Tags are
+              searchable and show up in your stats, so you can slice your
+              wardrobe any way you think about it.
             </HowTo>
             <HowTo icon={I.pie} title="View your stats">
-              Open <strong>Stats</strong> from this menu to see your closet by the numbers — breakdowns by category,
-              season, and brand, your most-worn pieces, and how much of your closet you actually put into looks.
+              Open <strong>Stats</strong> from this menu to see your closet by
+              the numbers — breakdowns by category, season, and brand, your
+              most-worn pieces, and how much of your closet you actually put
+              into looks.
             </HowTo>
           </div>
         </Section>
 
-        <Section icon={I.shield} tone="leaf" eyebrow="Privacy" title="How your data is used">
+        <Section
+          icon={I.shield}
+          tone="leaf"
+          eyebrow="Privacy"
+          title="How your data is used"
+        >
           <p>
-            Short version: <strong>your closet stays yours.</strong> Poppy stores everything — your items, photos,
-            looks, collections, and tags — locally on your own device. Nothing is uploaded to a server, and there are
-            no accounts, ads, or trackers.
+            Short version: <strong>your closet stays yours.</strong> Poppy
+            stores everything — your items, photos, looks, collections, and tags
+            — locally on your own device. Nothing is uploaded to a server, and
+            there are no accounts, ads, or trackers.
           </p>
           <p>
-            Because your data lives on your device, it's a good idea to back it up. Use <strong>Save &amp; restore</strong>{" "}
-            in this menu to export a copy you can keep safe or move to a new device. If you clear your browser data or
-            uninstall the app without a backup, your closet may be lost.
+            Because your data lives on your device, it's a good idea to back it
+            up. Use <strong>Save &amp; restore</strong> in this menu to export a
+            copy you can keep safe or move to a new device. If you clear your
+            browser data or uninstall the app without a backup, your closet may
+            be lost.
           </p>
           <p>
-            No part of your wardrobe is ever sold, shared, or used to train anything.
+            No part of your wardrobe is ever sold, shared, or used to train
+            anything.
           </p>
         </Section>
 
-        <Section icon={I.code} tone="plum" eyebrow="Behind the Scenes" title="How Poppy was built">
+        <Section
+          icon={I.code}
+          tone="plum"
+          eyebrow="Behind the Scenes"
+          title="How Poppy was built"
+        >
           <p>
-            I have <em>very</em> mixed feelings about the current proliferation of AI, but it's the water I'm
-            swimming in. Poppy is my own vision, brought to life with a generous amount of help from Claude —
-            without which I'd never have found the time to get it off the ground.
+            I have <em>very</em> mixed feelings about the current proliferation
+            of AI, but it's the water I'm swimming in. Poppy is my own vision,
+            brought to life with a generous amount of help from Claude — without
+            which I'd never have found the time to get it off the ground.
           </p>
         </Section>
 
         <div className="pt-2 border-t-2 border-cream-100">
           <p className="text-xs text-ink-400 text-center">
-            Made with <I.heart size={11} className="inline text-poppy-500 -mt-0.5" /> for closets everywhere.
+            Made with{" "}
+            <I.heart size={11} className="inline text-poppy-500 -mt-0.5" /> and{" "}
+            <I.sparkles size={11} className="inline text-poppy-500 -mt-0.5" />{" "}
+            for closets everywhere.
           </p>
         </div>
       </div>
@@ -4638,5 +7679,5 @@ function AboutModal({ onClose }) {
 }
 
 // --- Mount ----------------------------------------------------------------
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<ClosetApp />);
