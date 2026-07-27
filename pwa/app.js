@@ -56,6 +56,7 @@ const I = {
   pie:      (p) => <Icon {...p} d={<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>} />,
   help:     (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></>} />,
   shield:   (p) => <Icon {...p} d={<><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></>} />,
+  code:     (p) => <Icon {...p} d={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>} />,
 };
 
 // The Poppy brand mark — embedded raster of the watercolor poppy from poppy-icon-cropped.png
@@ -4364,7 +4365,7 @@ function AboutModal({ onClose }) {
           </p>
         </Section>
 
-        <Section icon={I.shield} tone="leaf" eyebrow="Behind the Scenes" title="How Poppy was built">
+        <Section icon={I.code} tone="plum" eyebrow="Behind the Scenes" title="How Poppy was built">
           <p>
             I have <em>very</em> mixed feelings about the current proliferation of AI, but it's the water I'm
             swimming in. Poppy is my own vision, brought to life with a generous amount of help from Claude —
