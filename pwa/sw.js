@@ -1,5 +1,5 @@
 // Service Worker for Poppy PWA
-const CACHE_NAME = 'poppy-v33';
+const CACHE_NAME = 'poppy-v34';
 const CORE_ASSETS = [
   './',
   './index.html',
