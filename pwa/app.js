@@ -978,9 +978,9 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
     else setShowHelp(true);
   };
   const features = [
-    { Icon: I.shirt,      tone: "text-poppy-600 bg-poppy-100", title: "Your closet",  desc: "Photograph and organize your clothing." },
-    { Icon: I.sunglasses, tone: "text-petal-600 bg-petal-100", title: "Looks",        desc: "Compose items into outfits." },
-    { Icon: I.suitcase,   tone: "text-sky2-600 bg-sky2-100",   title: "Collections",  desc: "Save packing lists, capsules, or seasonal selections." },
+    { Icon: I.shirt,      tone: "text-poppy-600 bg-poppy-100", title: "Your closet",  desc: "Photograph and organize everything you own." },
+    { Icon: I.sunglasses, tone: "text-petal-600 bg-petal-100", title: "Looks",        desc: "Combine pieces into outfits worth keeping." },
+    { Icon: I.suitcase,   tone: "text-sky2-600 bg-sky2-100",   title: "Collections",  desc: "Packing lists, capsules, and seasonal rotations." },
   ];
   return (
     <div
@@ -996,7 +996,7 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
           <em className="text-poppy-600">Cultivate</em> your closet.
         </p>
         <p className="text-sm text-ink-500 mb-8 text-left">
-          Catalog your wardrobe and organize it into looks and collections. You own all your data. No ads, subscriptions or trackers.
+          Catalog your wardrobe and shape it into looks and collections. Everything stays on your device — no ads, no subscriptions, no trackers.
         </p>
 
         <div className="w-full space-y-2.5 text-left mb-8">
@@ -1284,7 +1284,7 @@ function ClosetApp() {
                       onClick={() => { setShowAbout(true); setShowMenu(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
-                      <I.help size={15} className="shrink-0" /> About &amp; FAQ
+                      <I.help size={15} className="shrink-0" /> About
                     </button>
                   </div>
                 </>
@@ -4274,7 +4274,7 @@ function AboutModal({ onClose }) {
 
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-poppy-50 rounded-full mb-3">
           <I.help size={12} className="text-poppy-600" />
-          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">About &amp; FAQ</p>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700">About</p>
         </div>
 
         <h3 className="font-display font-bold text-2xl sm:text-3xl mb-6 text-ink-900">
@@ -4283,45 +4283,43 @@ function AboutModal({ onClose }) {
 
         <Section icon={I.heart} tone="petal" eyebrow="About me" title="About the app creator">
           <p>
-            Hi, I'm Robyn. I'm a software engineer, a mom, and a stereotypically unfashionable Seattlite. 
-            </p>
-            <p>
-              After my daughter was born I went through a bit of an aesthetic identity crisis and 
-              found myself spending a lot of time staring at clothes online. 
-            </p>
-            <p>
-              Poppy is something I put together
-              in my limited free time to help navigate through the maze of personal style words,
-              color seasons, image identities, and more. 
-            </p>
-            <p>
-              The goal is to come out the other side a little more
-              confident, self-aware, and content with what I have. Thanks for coming along on this journey, 
-              maybe I'll see you there.
-            </p>
+            Hi, I'm Robyn — a software engineer, a mom, and a stereotypically unfashionable Seattleite.
+          </p>
+          <p>
+            After my daughter was born I hit a bit of an aesthetic identity crisis and started spending way too
+            much time thinking about clothes.
+          </p>
+          <p>
+            Poppy is what I've built, in bits of free time, to make sense of it all: a way to track what's
+            actually in my closet, plan packing lists and seasonal rotations, and add a little creativity to my
+            everyday outfits.
+          </p>
+          <p>
+            It's my roadmap through the maze of personal-style vocabulary, color seasons, image identities, and more.
+          </p>
+          <p>
+            If you're on a similar journey, give it a try — and please reach out. I'd love to hear from you.
+          </p>
         </Section>
 
         <Section icon={I.sparkles} tone="buttercup" eyebrow="Why Poppy" title="Why I created this app">
           <p>
-            Poppy is, essentially, a tool to help you appreciate what you already have. My hope is to make 
-            interacting with you existing wardrobe as engaging and aesthetically pleasing as searching for the
-            next new thing.
+            At its heart, Poppy is a tool for appreciating what you already have. My hope is to make spending
+            time with your existing wardrobe as engaging and beautiful as shopping for the next new thing.
           </p>
           <p>
-            What if we looked at the clothes we already own in the same aspirational light as the ads we're surrounded with?
-            Instead of constantly chasing something new, let's sell ourselves on what we already own.
+            What if we saw the clothes we already own in the same aspirational light as the ads all around us?
+            Instead of always chasing something new, let's sell ourselves on what's already hanging in the closet.
           </p>
         </Section>
 
-        <Section icon={I.camera} tone="sky2" eyebrow="Photo tips" title="Tips for photographing your clothes">
-          <p>The right item photos are essential to making your closet an aesthetic, aspirational experience. Here are some tips:</p>
+        <Section icon={I.camera} tone="sky2" eyebrow="Photo tips" title="Tips for cataloging your clothes">
+          <p>Good photos are what make your closet feel aspirational instead of utilitarian. A few ways to get them:</p>
           <div className="grid gap-2 mt-1">
-            <Tip><strong>Use soft, natural light.</strong> Shoot near a window during the day and avoid harsh overhead bulbs that flatten color.</Tip>
-            <Tip><strong>Pick a plain background.</strong> A bed, a clean floor, or a single-color wall keeps the focus on the garment.</Tip>
-            <Tip><strong>Lay it flat or hang it.</strong> Smooth out wrinkles and straighten sleeves so the true shape shows.</Tip>
-            <Tip><strong>Fill the frame.</strong> Get close enough that the piece fills most of the photo — you can always crop later.</Tip>
-            <Tip><strong>Keep colors true.</strong> Don't over-edit. The goal is to recognize the piece instantly, not to make it look like a catalog.</Tip>
-            <Tip><strong>Stay consistent.</strong> Using a similar angle and background for every item makes your closet grid feel tidy and calm.</Tip>
+            <Tip><strong>Aim for clean, consistent images.</strong> Poppy looks best with well-lit photos of a single item, isolated on a plain or transparent background.</Tip>
+            <Tip><strong>Borrow the product photo.</strong> The easiest way to get a great shot is to reuse the image made to sell the item — the platonic ideal of your well-loved tee, shot by pros to look better than anything you'd manage at home. Even for second-hand pieces or years-old favorites, it's worth a quick search; the brand name plus a short description and a couple of identifying details will usually turn one up.</Tip>
+            <Tip><strong>Fake it for the basics.</strong> For something really simple — black leggings, a gray crewneck tee — you don't need a photo of your exact piece. Grab an image of a similar product instead. No one will ever know.</Tip>
+            <Tip><strong>Shoot your own.</strong> For one-of-a-kind pieces you can't find online, your own photos work too. Use natural light, shoot from straight overhead, line up the shoulders, and smooth out wrinkles. For a little extra polish, try running the result through a photo-generating AI to give it that otherworldly sense of perfection.</Tip>
           </div>
         </Section>
 
@@ -4329,7 +4327,7 @@ function AboutModal({ onClose }) {
           <div className="space-y-4">
             <HowTo icon={I.plus} title="Add an item">
               Tap the <strong>+</strong> button in the Closet to add a piece. Snap or upload a photo, then fill in
-              details like category, brand, season, and the year you bought it. The more you add, the richer your stats become.
+              details like category, brand, season, and the year you bought it. The more you fill in, the richer your stats get.
             </HowTo>
             <HowTo icon={I.sunglasses} title="Create outfits (Looks)">
               Head to the <strong>Looks</strong> tab and start a new look. Pick pieces from your closet to combine them
@@ -4357,12 +4355,20 @@ function AboutModal({ onClose }) {
             no accounts, ads, or trackers.
           </p>
           <p>
-            Because your data lives on your device, it's a good idea to back it up. Use <strong>Save &amp; restore</strong>
+            Because your data lives on your device, it's a good idea to back it up. Use <strong>Save &amp; restore</strong>{" "}
             in this menu to export a copy you can keep safe or move to a new device. If you clear your browser data or
             uninstall the app without a backup, your closet may be lost.
           </p>
-          <p className="text-ink-500">
-            No part of your wardrobe is ever sold, shared, or used to train anything. Poppy simply isn't built that way.
+          <p>
+            No part of your wardrobe is ever sold, shared, or used to train anything.
+          </p>
+        </Section>
+
+        <Section icon={I.shield} tone="leaf" eyebrow="Behind the Scenes" title="How Poppy was built">
+          <p>
+            I have <em>very</em> mixed feelings about the current proliferation of AI, but it's the water I'm
+            swimming in. Poppy is my own vision, brought to life with a generous amount of help from Claude —
+            without which I'd never have found the time to get it off the ground.
           </p>
         </Section>
 
