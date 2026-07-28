@@ -225,3 +225,6 @@ pwa/node_modules/
 pwa/dist/
 .vite/
 *.local
+
+# Poppy: the app's source `lib/` must not be caught by the Python `lib/` ignore above
+!pwa/src/lib/
