@@ -13,10 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build release package
-        run: python3 build.py --no-bump
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: pwa/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: pwa
+      - name: Build
+        run: npm run build
+        working-directory: pwa
+      - name: Zip build
+        run: cd pwa/dist && zip -r "../../poppy-pwa-${GITHUB_REF_NAME}.zip" .
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.zip
+          files: poppy-pwa-*.zip
           generate_release_notes: true
