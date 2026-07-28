@@ -17,8 +17,17 @@ echo "Releasing $version..."
 # by vite-plugin-pwa, so there's no cache version to bump by hand anymore.
 ( cd pwa && npm run build )
 
+# Commit any pending work under this version. Unlike the old build.py flow (which
+# always bumped a tracked service-worker version), a release may have nothing new
+# to commit — the build output lives in the git-ignored pwa/dist/. In that case,
+# just tag the current HEAD instead of failing on an empty commit.
 git add -A
-git commit -m "$version"
+if git diff --cached --quiet; then
+  echo "No changes to commit — tagging current HEAD as $version."
+else
+  git commit -m "$version"
+fi
+
 git tag "$version"
 git push
 git push --tags
