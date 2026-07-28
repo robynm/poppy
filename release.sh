@@ -12,7 +12,10 @@ version="v$next"
 
 echo "Releasing $version..."
 
-python3 build.py
+# Validate the app builds before tagging. GitHub Actions rebuilds and publishes
+# on push (deploy) and on tag (release zip); the service worker is regenerated
+# by vite-plugin-pwa, so there's no cache version to bump by hand anymore.
+( cd pwa && npm run build )
 
 git add -A
 git commit -m "$version"
