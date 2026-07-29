@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+# Always operate from the repo root, no matter where this is invoked from
+# (e.g. `npm run release` from root, or `./release.sh` from anywhere).
+cd "$(dirname "$0")"
+
 # Determine next version from the latest git tag (expects vN format)
 latest=$(git tag --sort=-v:refname | grep -E '^v[0-9]+$' | head -1)
 if [ -z "$latest" ]; then

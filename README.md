@@ -5,6 +5,7 @@ A private wardrobe catalogue and outfit builder, packaged as an installable Prog
 ```
 poppy/
 ├── release.sh      ← one-command deploy: builds, commits, tags, pushes
+├── package.json    ← root command proxy (dev / build / test:e2e / release, all from here)
 ├── README.md       ← you are here
 ├── pwa/            ← the app (a Vite + React project)
 │   ├── index.html          ← Vite entry
@@ -35,9 +36,13 @@ poppy/
 
 ## Deploying
 
+From the repo root:
+
 ```sh
-./release.sh
+npm run release
 ```
+
+(`./release.sh` still works and can be run from anywhere.)
 
 That's it. The script determines the next version number automatically from the latest git tag, then:
 
@@ -56,9 +61,10 @@ In the repository settings on GitHub: **Settings → Pages → Source → GitHub
 
 ## Local development
 
+All commands run from the **repo root** — a thin root `package.json` proxies them into `pwa/`, so you never have to switch directories:
+
 ```sh
-cd pwa
-npm install       # first time only
+npm run setup     # first time only (installs the app's deps in pwa/)
 npm run dev       # dev server with instant reload
 ```
 
@@ -66,11 +72,15 @@ Then open the printed URL (<http://localhost:5173/>). Other scripts:
 
 | Command | What it does |
 |---|---|
+| `npm run setup` | Install the app's dependencies (in `pwa/`) |
 | `npm run dev` | Dev server with hot-module reload |
 | `npm run build` | Production build into `pwa/dist/` |
 | `npm run preview` | Serve the built `dist/` locally (verifies the production bundle + service worker) |
 | `npm run test:e2e` | Run the full Cypress suite headless (boots + tears down its own dev server) |
 | `npm run cypress:open` | Open the interactive Cypress runner (needs `npm run dev` running separately) |
+| `npm run release` | Build, commit, tag, and push a new version |
+
+(The same `dev` / `build` / `preview` / `test:e2e` scripts also exist inside `pwa/` if you prefer to work from there.)
 
 Tailwind is a real build step now, so color classes are extracted from the source. Classes built dynamically (e.g. `` bg-${tone}-50 ``) are covered by a `safelist` pattern in `tailwind.config.js` — extend it if you add new color families or shades.
 

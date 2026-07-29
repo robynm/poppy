@@ -1,0 +1,14 @@
+{
+  "name": "poppy-workspace",
+  "private": true,
+  "description": "Repo-root command proxy. The app lives in pwa/; these scripts run there so everything works from the repo root.",
+  "scripts": {
+    "setup": "npm --prefix pwa install",
+    "dev": "npm --prefix pwa run dev",
+    "build": "npm --prefix pwa run build",
+    "preview": "npm --prefix pwa run preview",
+    "test:e2e": "npm --prefix pwa run test:e2e",
+    "cypress:open": "npm --prefix pwa run cypress:open",
+    "release": "./release.sh"
+  }
+}
