@@ -61,7 +61,10 @@ function AboutModal({ onClose }) {
         onClick={onClose}
       ></div>
 
-      <div data-testid="about-modal" className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up">
+      <div
+        data-testid="about-modal"
+        className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up"
+      >
         <button
           data-testid="about-close"
           onClick={onClose}
@@ -254,10 +257,13 @@ function AboutModal({ onClose }) {
 
         <div className="pt-2 border-t-2 border-cream-100">
           <p className="text-xs text-ink-400 text-center">
-            Made with{" "}
-            <I.heart size={11} className="inline text-poppy-500 -mt-0.5" /> and{" "}
-            <I.sparkles size={11} className="inline text-poppy-500 -mt-0.5" />{" "}
-            for closets everywhere.
+            <a href="https://github.com/robynm/poppy">
+              Made with{" "}
+              <I.heart size={11} className="inline text-poppy-500 -mt-0.5" />{" "}
+              and{" "}
+              <I.sparkles size={11} className="inline text-poppy-500 -mt-0.5" />{" "}
+              for closets everywhere.
+            </a>
           </p>
         </div>
       </div>
