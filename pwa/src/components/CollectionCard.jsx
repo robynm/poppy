@@ -16,6 +16,8 @@ function CollectionCard({
   return (
     <div
       id={id}
+      data-testid="collection-card"
+      data-collection-id={collection.id}
       ref={cardRef}
       onClick={onOpen}
       className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-sky2-500 ring-4 ring-sky2-500/25" : "border-cream-200"}`}

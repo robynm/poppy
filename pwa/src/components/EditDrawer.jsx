@@ -78,6 +78,7 @@ function EditDrawer({
         onClick={onClose}
       ></div>
       <div
+        data-testid="edit-drawer"
         className="relative w-full sm:max-w-md bg-white h-full overflow-y-auto shadow-2xl fade-up"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
@@ -109,6 +110,7 @@ function EditDrawer({
             <button
               onClick={() => imageInputRef.current?.click()}
               disabled={replacing}
+              data-testid="replace-photo-btn"
               className="w-full max-w-xs mb-6 flex items-center justify-center gap-2 py-2.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[10px] font-bold tracking-[0.2em] uppercase rounded-full active:scale-95 disabled:opacity-40"
             >
               <I.upload size={12} /> Replace Photo
@@ -118,6 +120,7 @@ function EditDrawer({
             ref={imageInputRef}
             type="file"
             accept="image/*"
+            data-testid="replace-photo-file"
             onChange={(e) => {
               handleReplaceImage(e.target.files?.[0]);
               e.target.value = "";
@@ -131,13 +134,14 @@ function EditDrawer({
           <input
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            data-testid="edit-name"
             className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display text-xl py-1 mb-6"
           />
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
             Category
           </p>
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-6" data-testid="edit-category">
             {CATEGORY_OPTIONS.map((c) => (
               <Chip
                 key={c}
@@ -153,7 +157,7 @@ function EditDrawer({
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
             Status
           </p>
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-6" data-testid="edit-status">
             {STATUS_OPTIONS.map((s) => (
               <Chip
                 key={s}
@@ -193,13 +197,14 @@ function EditDrawer({
             }
             inputMode="numeric"
             placeholder="e.g. 2024"
+            data-testid="edit-year"
             className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1 mb-6"
           />
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
             Seasons
           </p>
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-6" data-testid="edit-seasons">
             {SEASON_OPTIONS.map((s) => (
               <Chip
                 key={s}
@@ -215,7 +220,7 @@ function EditDrawer({
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
             Occasions
           </p>
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-6" data-testid="edit-occasions">
             {OCCASION_OPTIONS.map((o) => (
               <Chip
                 key={o}
@@ -231,7 +236,7 @@ function EditDrawer({
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
             Custom Tags
           </p>
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-wrap gap-2 mb-3" data-testid="edit-custom-tags">
             {(() => {
               const shownTags = [
                 ...new Set([
@@ -266,10 +271,12 @@ function EditDrawer({
               onChange={(e) => setNewTag(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCustom()}
               placeholder="new tag…"
+              data-testid="edit-tag-input"
               className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
             />
             <button
               onClick={addCustom}
+              data-testid="edit-tag-add"
               className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
             >
               Add
@@ -279,7 +286,7 @@ function EditDrawer({
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
             Collections
           </p>
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-8" data-testid="edit-collections">
             {(collections || []).length === 0 && (
               <span className="text-xs text-ink-400 italic">
                 no collections yet — create one from the Closet
@@ -303,6 +310,7 @@ function EditDrawer({
           <div className="flex gap-3 pt-6 border-t-2 border-cream-100">
             <button
               onClick={() => onSave(draft)}
+              data-testid="edit-save"
               className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
             >
               <I.check size={14} /> Save
@@ -311,6 +319,7 @@ function EditDrawer({
               onClick={() => {
                 if (confirm(`Remove "${draft.name}"?`)) onDelete();
               }}
+              data-testid="edit-delete"
               className="px-5 py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-600 rounded-full active:scale-95"
               aria-label="Delete piece"
             >

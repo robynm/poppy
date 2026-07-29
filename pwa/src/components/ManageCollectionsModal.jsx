@@ -193,6 +193,7 @@ function ManageCollectionsModal({
                         )}
                       </div>
                       <button
+                        data-testid="collection-edit"
                         onClick={() => startEdit(c)}
                         className="w-8 h-8 flex items-center justify-center rounded-full text-ink-600 active:bg-poppy-100 active:text-poppy-600 transition-colors"
                         aria-label="Edit"
@@ -200,6 +201,7 @@ function ManageCollectionsModal({
                         <I.pencil size={14} />
                       </button>
                       <button
+                        data-testid="collection-delete"
                         onClick={() => deleteCollection(c.id)}
                         className="w-8 h-8 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-100 active:text-petal-600 transition-colors"
                         aria-label="Delete"
@@ -211,6 +213,7 @@ function ManageCollectionsModal({
                 </div>
               )}
               <button
+                data-testid="collection-new"
                 onClick={startNew}
                 className="w-full mt-2 flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
               >
@@ -226,6 +229,7 @@ function ManageCollectionsModal({
                   Name
                 </label>
                 <input
+                  data-testid="collection-name"
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                   placeholder="e.g. Italy Packing List"
@@ -237,6 +241,7 @@ function ManageCollectionsModal({
                   Description (optional)
                 </label>
                 <input
+                  data-testid="collection-desc"
                   value={draft.description}
                   onChange={(e) =>
                     setDraft({ ...draft, description: e.target.value })
@@ -335,6 +340,8 @@ function ManageCollectionsModal({
                         return (
                           <button
                             key={it.id}
+                            data-testid="collection-piece"
+                            data-item-id={it.id}
                             onClick={() => toggleItem(it.id)}
                             className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                           >
@@ -377,6 +384,7 @@ function ManageCollectionsModal({
               Cancel
             </button>
             <button
+              data-testid="collection-save"
               onClick={saveDraft}
               disabled={!draft.name.trim()}
               className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-sky2-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-40 shadow-pop"

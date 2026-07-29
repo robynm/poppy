@@ -12,7 +12,10 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
         className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white max-w-sm w-full p-6 sm:p-8 rounded-3xl shadow-2xl fade-up">
+      <div
+        data-testid="selfie-modal"
+        className="relative bg-white max-w-sm w-full p-6 sm:p-8 rounded-3xl shadow-2xl fade-up"
+      >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-ink-500 p-2"
@@ -69,6 +72,7 @@ function SelfieModal({ outfitName, selfieUrl, onFile, onRemove, onClose }) {
           ref={inputRef}
           type="file"
           accept="image/*"
+          data-testid="selfie-file"
           className="hidden"
           onChange={(e) => {
             onFile(e.target.files?.[0]);

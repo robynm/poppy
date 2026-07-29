@@ -1,6 +1,6 @@
 function FilterRow({ label, children }) {
   return (
-    <div className="py-2">
+    <div className="py-2" data-testid="filter-row" data-filter-label={label}>
       <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">
         {label}
       </p>

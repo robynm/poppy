@@ -142,7 +142,7 @@ function BulkSheet({
         className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
         onClick={onClose}
       ></div>
-      <div className="relative w-full sm:max-w-md bg-white shadow-2xl fade-up flex flex-col h-full">
+      <div data-testid="bulk-sheet" className="relative w-full sm:max-w-md bg-white shadow-2xl fade-up flex flex-col h-full">
         <div className="p-4 sm:p-6 border-b border-cream-100 flex items-center justify-between bg-white shrink-0">
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
@@ -275,6 +275,7 @@ function BulkSheet({
                 </div>
                 <div className="flex gap-2">
                   <input
+                    data-testid="bulk-tag-input"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addNewTag()}
@@ -282,6 +283,7 @@ function BulkSheet({
                     className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
                   />
                   <button
+                    data-testid="bulk-tag-add"
                     onClick={addNewTag}
                     className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
                   >
@@ -360,6 +362,7 @@ function BulkSheet({
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
         >
           <button
+            data-testid="bulk-apply"
             onClick={apply}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
           >

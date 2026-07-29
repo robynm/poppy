@@ -1,0 +1,59 @@
+{
+  "format": "wardrobe-backup-v1",
+  "exportedAt": "2025-01-01T00:00:00.000Z",
+  "counts": { "items": 2, "outfits": 1, "collections": 1 },
+  "data": {
+    "items": [
+      {
+        "id": "i_backup_1",
+        "name": "Imported Linen Shirt",
+        "category": "top",
+        "seasons": ["summer"],
+        "occasions": ["casual"],
+        "custom": ["imported-tag"],
+        "status": "owned",
+        "brand": "Everlane",
+        "yearPurchased": 2023
+      },
+      {
+        "id": "i_backup_2",
+        "name": "Imported Denim",
+        "category": "bottom",
+        "seasons": ["fall"],
+        "occasions": ["weekend"],
+        "custom": [],
+        "status": "owned",
+        "brand": "",
+        "yearPurchased": null
+      }
+    ],
+    "images": {
+      "i_backup_1": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    },
+    "outfits": [
+      {
+        "id": "o_backup_1",
+        "name": "Imported Look",
+        "itemIds": ["i_backup_1", "i_backup_2"],
+        "seasons": ["summer"],
+        "occasions": ["casual"],
+        "note": "",
+        "createdAt": 1700000000000,
+        "updatedAt": 1700000000000
+      }
+    ],
+    "customTags": ["imported-tag"],
+    "brands": ["Everlane"],
+    "collections": [
+      {
+        "id": "c_backup_1",
+        "name": "Imported Capsule",
+        "description": "",
+        "seasons": ["summer"],
+        "occasions": ["casual"],
+        "itemIds": ["i_backup_1", "i_backup_2"],
+        "createdAt": 1700000000000
+      }
+    ]
+  }
+}

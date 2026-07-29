@@ -1,0 +1,32 @@
+name: E2E Tests
+
+# Runs the Cypress end-to-end suite on pull requests. Pushes to main run the
+# same suite inside deploy.yml as a gate before publishing, so this workflow
+# targets PRs (and manual runs) to give fast feedback without double-running.
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: pwa/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: pwa
+      # test:e2e boots the Vite dev server, waits for it, runs cypress, tears down.
+      - name: Run E2E tests
+        run: npm run test:e2e
+        working-directory: pwa
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: pwa/cypress/screenshots
+          if-no-files-found: ignore

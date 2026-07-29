@@ -110,6 +110,7 @@ function OutfitsView({
                 <em className="text-petal-600">worth keeping.</em>
               </h3>
               <button
+                data-testid="new-look-btn"
                 ref={newLookButtonRef}
                 onClick={onNewOutfit}
                 style={{ flexShrink: 0 }}

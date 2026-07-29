@@ -79,6 +79,7 @@ function BuilderView({
         onClick={onCancel}
       />
       <div
+        data-testid="builder"
         className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
         style={{ height: "100dvh", maxHeight: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
@@ -139,6 +140,7 @@ function BuilderView({
               Name
             </label>
             <input
+              data-testid="builder-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Name this look…"
@@ -150,6 +152,7 @@ function BuilderView({
               Note (optional)
             </label>
             <input
+              data-testid="builder-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="a vibe, a memory…"
@@ -160,7 +163,7 @@ function BuilderView({
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
               Season
             </p>
-            <div className="flex gap-2 flex-wrap">
+            <div data-testid="builder-seasons" className="flex gap-2 flex-wrap">
               {SEASON_OPTIONS.map((s) => (
                 <Chip
                   key={s}
@@ -177,7 +180,7 @@ function BuilderView({
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
               Occasion
             </p>
-            <div className="flex gap-2 flex-wrap">
+            <div data-testid="builder-occasions" className="flex gap-2 flex-wrap">
               {OCCASION_OPTIONS.map((o) => (
                 <Chip
                   key={o}
@@ -279,6 +282,8 @@ function BuilderView({
                 return (
                   <div
                     key={it.id}
+                    data-testid="builder-piece"
+                    data-item-id={it.id}
                     onClick={() => toggleSelect(it.id)}
                     className={`cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                     style={{ animationDelay: `${i * 20}ms` }}
@@ -313,12 +318,14 @@ function BuilderView({
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1rem)" }}
         >
           <button
+            data-testid="builder-cancel"
             onClick={onCancel}
             className="flex-1 py-3.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
           >
             Cancel
           </button>
           <button
+            data-testid="builder-save"
             onClick={handleSave}
             disabled={!canSave}
             className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"

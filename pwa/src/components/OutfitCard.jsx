@@ -16,6 +16,8 @@ function OutfitCard({
   return (
     <div
       id={id}
+      data-testid="outfit-card"
+      data-outfit-id={outfit.id}
       ref={cardRef}
       onClick={onOpen}
       className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-petal-500 ring-4 ring-petal-500/25" : "border-cream-200"}`}

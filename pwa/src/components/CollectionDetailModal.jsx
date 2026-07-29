@@ -52,6 +52,7 @@ function CollectionDetailModal({
         onClick={onClose}
       />
       <div
+        data-testid="collection-detail"
         className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
         style={{ height: "100dvh", maxHeight: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
@@ -67,6 +68,7 @@ function CollectionDetailModal({
             </div>
             <div className="flex gap-1 shrink-0">
               <button
+                data-testid="detail-share"
                 onClick={handleShare}
                 disabled={sharing || pieces.length === 0}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors disabled:opacity-40"
@@ -75,6 +77,7 @@ function CollectionDetailModal({
                 <I.share size={15} />
               </button>
               <button
+                data-testid="detail-edit"
                 onClick={onEdit}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-sky2-50 active:text-sky2-600 transition-colors"
                 aria-label="Edit collection"
@@ -82,6 +85,7 @@ function CollectionDetailModal({
                 <I.pencil size={15} />
               </button>
               <button
+                data-testid="detail-delete"
                 onClick={onDelete}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors"
                 aria-label="Delete collection"
@@ -89,6 +93,7 @@ function CollectionDetailModal({
                 <I.trash size={15} />
               </button>
               <button
+                data-testid="detail-close"
                 onClick={onClose}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors"
                 aria-label="Close"
@@ -199,6 +204,7 @@ function CollectionDetailModal({
               </div>
             )}
             <button
+              data-testid="detail-open-closet"
               onClick={onOpenInCloset}
               className="w-full flex items-center justify-center gap-2 py-3 bg-sky2-50 text-sky2-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100 transition-colors"
             >
