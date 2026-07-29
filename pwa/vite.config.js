@@ -2,10 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// The app is served from a GitHub Pages project subpath (robynm.github.io/poppy/),
-// so hashed asset URLs must be prefixed with /poppy/.
+// The app is served from the root of the custom domain (poppy.robynm.net),
+// so asset URLs live at the site root. (The old robynm.github.io/poppy/ URL
+// 301-redirects to the custom domain.)
 export default defineConfig({
-  base: '/poppy/',
+  base: '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -21,9 +22,9 @@ export default defineConfig({
         short_name: 'Poppy',
         description:
           'Cultivate your closet. Tag the pieces you own and compose looks worth keeping.',
-        id: '/poppy/',
-        start_url: '/poppy/',
-        scope: '/poppy/',
+        id: '/',
+        start_url: '/',
+        scope: '/',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#FFFBF6',
