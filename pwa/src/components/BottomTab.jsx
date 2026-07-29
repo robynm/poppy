@@ -4,6 +4,11 @@ function BottomTab({ IconC, label, active, onClick, count, tone = "poppy", testI
     poppy: { bg: "bg-poppy-50", text: "text-poppy-600", pill: "bg-poppy-500" },
     petal: { bg: "bg-petal-50", text: "text-petal-600", pill: "bg-petal-500" },
     sky2: { bg: "bg-sky2-50", text: "text-sky2-600", pill: "bg-sky2-500" },
+    buttercup: {
+      bg: "bg-buttercup-50",
+      text: "text-buttercup-600",
+      pill: "bg-buttercup-500",
+    },
   };
   const t = toneMap[tone] || toneMap.poppy;
   return (

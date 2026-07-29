@@ -11,8 +11,10 @@ const KEYS = {
   customTags: "closet:custom_tags:v1",
   brands: "closet:brands:v1",
   collections: "closet:collections:v1",
+  selfies: "closet:selfies:v1",
   seeded: "closet:seeded:v1",
   imagesMigrated: "closet:images_migrated:v1",
+  selfiesMigrated: "closet:selfies_migrated:v1",
   theme: "closet:theme",
   splashDismissed: "closet:splash_dismissed:v1",
 };
@@ -45,6 +47,7 @@ Cypress.Commands.add("gotoApp", (state = {}) => {
         // Skip splash + seeding + migration so we control the data.
         set(KEYS.seeded, true);
         set(KEYS.imagesMigrated, true);
+        set(KEYS.selfiesMigrated, true);
         set(KEYS.splashDismissed, true);
       }
 
@@ -53,6 +56,7 @@ Cypress.Commands.add("gotoApp", (state = {}) => {
       set(KEYS.customTags, state.customTags || []);
       set(KEYS.brands, state.brands || []);
       set(KEYS.collections, state.collections || []);
+      set(KEYS.selfies, state.selfies || []);
       if (state.theme) set(KEYS.theme, state.theme);
 
       // Web Share isn't present in headless Electron; stub so share flows no-op

@@ -136,17 +136,4 @@ describe("Looks — builder & lifecycle", () => {
     cy.get('[data-testid="outfit-card"]').should("have.length", 1);
     cy.contains("Beach Day").should("be.visible");
   });
-
-  it("attaches a selfie to a look", () => {
-    cy.gotoApp({ items, outfits: [outfit()] });
-    cy.tab("looks");
-    cy.get('[data-testid="outfit-card"]').click();
-    cy.get('[data-testid="detail-selfie"]').click();
-    cy.get('[data-testid="selfie-modal"]').should("be.visible");
-    cy.uploadPhoto("selfie-file");
-    // On a successful save the modal closes itself.
-    cy.get('[data-testid="selfie-modal"]', { timeout: 15000 }).should(
-      "not.exist",
-    );
-  });
 });

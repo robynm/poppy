@@ -13,6 +13,7 @@ function BackupModal({
   customTags,
   brands,
   collections,
+  selfies,
   onClose,
   onImport,
 }) {
@@ -137,6 +138,7 @@ function BackupModal({
         customTags,
         brands,
         collections,
+        selfies,
       });
       setStatus({
         kind: "success",

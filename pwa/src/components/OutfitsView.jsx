@@ -4,11 +4,9 @@ import { FilterRow } from "./FilterRow.jsx";
 import { OutfitCard } from "./OutfitCard.jsx";
 import { OutfitCardPreview } from "./OutfitCardPreview.jsx";
 import { OutfitDetailModal } from "./OutfitDetailModal.jsx";
-import { SelfieModal } from "./SelfieModal.jsx";
 import { OCCASION_OPTIONS, SEASON_OPTIONS } from "../lib/constants.js";
 import { reorderByVisible, useDragReorder } from "../lib/hooks.js";
 import { I } from "../lib/icons.jsx";
-import { resizeImageToBlob } from "../lib/images.js";
 
 // --- OUTFITS VIEW ----------------------------------------------------------
 function OutfitsView({
@@ -18,13 +16,10 @@ function OutfitsView({
   onSave,
   onNewOutfit,
   onEditOutfit,
-  onPutImage,
-  onDeleteImage,
   scrollToId,
   onScrolled,
   onSetHeaderAction,
 }) {
-  const [selfieModal, setSelfieModal] = useState(null);
   const [viewingId, setViewingId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [dragMode, setDragMode] = useState(false);
@@ -66,7 +61,6 @@ function OutfitsView({
 
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
-    onDeleteImage(`selfie_${id}`);
     onSave(outfits.filter((o) => o.id !== id));
   };
 
@@ -297,29 +291,6 @@ function OutfitsView({
               : undefined
           }
           onDelete={() => handleDelete(viewingId)}
-          onOpenSelfie={() => {
-            const o = outfits.find((x) => x.id === viewingId);
-            setSelfieModal({ outfitId: o.id, outfitName: o.name });
-          }}
-        />
-      )}
-      {selfieModal && (
-        <SelfieModal
-          outfitName={selfieModal.outfitName}
-          selfieUrl={images[`selfie_${selfieModal.outfitId}`]}
-          onFile={async (file) => {
-            if (!file) return;
-            const blob = await resizeImageToBlob(file, 1200, 0.88);
-            if (blob) {
-              onPutImage(`selfie_${selfieModal.outfitId}`, blob);
-              setSelfieModal(null);
-            }
-          }}
-          onRemove={() => {
-            onDeleteImage(`selfie_${selfieModal.outfitId}`);
-            setSelfieModal(null);
-          }}
-          onClose={() => setSelfieModal(null)}
         />
       )}
     </>

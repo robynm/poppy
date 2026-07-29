@@ -14,6 +14,7 @@ async function exportBackup({
   customTags,
   brands,
   collections,
+  selfies,
 }) {
   // Read blobs straight from IDB so we don't depend on what's currently in
   // React state (defensive: if the cache is partial for any reason).
@@ -29,6 +30,7 @@ async function exportBackup({
       items: items.length,
       outfits: outfits.length,
       collections: (collections || []).length,
+      selfies: (selfies || []).length,
     },
     data: {
       items,
@@ -37,6 +39,7 @@ async function exportBackup({
       customTags,
       brands: brands || [],
       collections: collections || [],
+      selfies: selfies || [],
     },
   };
   const json = JSON.stringify(payload, null, 2);
@@ -86,15 +89,19 @@ function validateBackup(parsed) {
         error: `An item is missing id or name (id: ${it.id || "?"}).`,
       };
   }
-  // collections and brands are optional for backward compatibility with older backups
+  // collections, brands and selfies are optional for backward compatibility with older backups
   if (d.collections !== undefined && !Array.isArray(d.collections)) {
     return { ok: false, error: "Backup collections are malformed." };
   }
   if (d.brands !== undefined && !Array.isArray(d.brands)) {
     return { ok: false, error: "Backup brands are malformed." };
   }
+  if (d.selfies !== undefined && !Array.isArray(d.selfies)) {
+    return { ok: false, error: "Backup selfies are malformed." };
+  }
   if (!d.collections) d.collections = [];
   if (!d.brands) d.brands = [];
+  if (!d.selfies) d.selfies = [];
   // Normalize items missing the new fields
   d.items = d.items.map((i) => ({
     ...i,
@@ -161,7 +168,14 @@ function mergeBackup(current, incoming) {
   }
   const collections = Array.from(collectionMap.values());
 
-  return { items, images, outfits, customTags, brands, collections };
+  const selfieMap = new Map((current.selfies || []).map((s) => [s.id, s]));
+  for (const s of incoming.selfies || [])
+    if (!selfieMap.has(s.id)) selfieMap.set(s.id, s);
+  const selfies = Array.from(selfieMap.values()).sort(
+    (a, b) => (b.dateTaken || 0) - (a.dateTaken || 0),
+  );
+
+  return { items, images, outfits, customTags, brands, collections, selfies };
 }
 
 export { exportBackup, validateBackup, readFileAsText, mergeBackup };

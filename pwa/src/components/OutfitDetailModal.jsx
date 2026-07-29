@@ -5,18 +5,10 @@ import { I } from "../lib/icons.jsx";
 import { Log } from "../lib/log.js";
 import { shareAsImage } from "../lib/share.js";
 
-function OutfitDetailModal({
-  outfit,
-  items,
-  images,
-  onClose,
-  onEdit,
-  onDelete,
-  onOpenSelfie,
-}) {
+function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete }) {
   useBodyScrollLock();
   const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
-  const selfieUrl = images[`selfie_${outfit.id}`];
+  const selfieIds = (outfit.selfieIds || []).filter((id) => images[id]);
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
     if (sharing) return;
@@ -27,7 +19,6 @@ function OutfitDetailModal({
         subtitle: outfit.note,
         items: pieces,
         images,
-        selfieUrl,
         accent: "#EC4778",
         kindLabel: "Look",
       });
@@ -70,14 +61,6 @@ function OutfitDetailModal({
               >
                 <I.share size={15} />
               </button>
-              <button
-                data-testid="detail-selfie"
-                onClick={onOpenSelfie}
-                className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors"
-                aria-label="Outfit selfie"
-              >
-                <I.camera size={15} />
-              </button>
               {onEdit && (
                 <button
                   data-testid="detail-edit"
@@ -117,15 +100,6 @@ function OutfitDetailModal({
         {/* Scrollable content */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="p-4 bg-petal-50 grid grid-cols-3 gap-2 min-h-[200px]">
-            {selfieUrl && (
-              <div className="row-span-2 overflow-hidden rounded-2xl relative bg-white">
-                <img
-                  src={selfieUrl}
-                  alt="Outfit selfie"
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
-              </div>
-            )}
             {pieces.map((p) => (
               <div
                 key={p.id}
@@ -141,6 +115,28 @@ function OutfitDetailModal({
               </div>
             ))}
           </div>
+          {selfieIds.length > 0 && (
+            <div className="px-4 pt-4 sm:px-6" data-testid="detail-selfies">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+                Selfies
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {selfieIds.map((id) => (
+                  <div
+                    key={id}
+                    data-testid="detail-selfie-thumb"
+                    className="aspect-square bg-white rounded-2xl overflow-hidden shadow-card"
+                  >
+                    <img
+                      src={images[id]}
+                      alt="Selfie"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="p-4 sm:p-6 flex flex-wrap gap-1.5">
             {(outfit.seasons || []).map((s) => (
               <span
