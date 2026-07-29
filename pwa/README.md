@@ -23,6 +23,8 @@ For deploying and the repo-wide layout, see the [root README](../README.md). Thi
 
 ## Develop
 
+These scripts also proxy from the repo root (`npm run dev`, `npm run build`, `npm run test:e2e`, …), so you can work from either place. From here:
+
 ```bash
 npm install       # first time only
 npm run dev       # dev server at http://localhost:5173/
