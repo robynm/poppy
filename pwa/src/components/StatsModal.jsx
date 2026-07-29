@@ -372,10 +372,12 @@ function StatsModal({
         onClick={onClose}
       ></div>
       <div
+        data-testid="stats-modal"
         className="relative bg-white max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-t-3xl sm:rounded-3xl shadow-2xl fade-up"
         style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}
       >
         <button
+          data-testid="stats-close"
           onClick={onClose}
           className="absolute top-3 right-3 text-ink-500 p-2"
         >

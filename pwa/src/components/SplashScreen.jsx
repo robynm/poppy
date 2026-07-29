@@ -81,6 +81,7 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
         </div>
 
         <button
+          data-testid="splash-install"
           onClick={handleInstall}
           className="w-full flex items-center justify-center gap-2 py-4 bg-poppy-500 text-white text-xs font-bold tracking-[0.2em] uppercase rounded-full active:scale-95 shadow-poppy"
         >
@@ -112,6 +113,7 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
         )}
 
         <button
+          data-testid="splash-continue"
           onClick={onContinue}
           className="mt-4 text-[11px] font-bold tracking-[0.2em] uppercase text-ink-500 underline active:text-ink-700"
         >

@@ -327,6 +327,7 @@ function ClosetApp() {
             {headerAction && (
               <button
                 onClick={headerAction.onClick}
+                data-testid="header-action"
                 className={`flex items-center gap-1.5 px-3.5 py-2 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop ${
                   headerAction.tone === "petal"
                     ? "bg-petal-500"
@@ -342,6 +343,7 @@ function ClosetApp() {
               <button
                 onClick={() => setShowMenu((m) => !m)}
                 aria-label="Menu"
+                data-testid="menu-button"
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-cream-50 border-2 border-cream-100 text-ink-600 active:scale-95"
               >
                 <I.more size={16} />
@@ -358,6 +360,7 @@ function ClosetApp() {
                         setTheme((t) => (t === "winter" ? "spring" : "winter"));
                         setShowMenu(false);
                       }}
+                      data-testid="menu-theme"
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
                       {theme === "winter" ? (
@@ -373,6 +376,7 @@ function ClosetApp() {
                         setShowStats(true);
                         setShowMenu(false);
                       }}
+                      data-testid="menu-stats"
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
                       <I.pie size={15} className="shrink-0" /> Stats
@@ -383,6 +387,7 @@ function ClosetApp() {
                         setShowBackup(true);
                         setShowMenu(false);
                       }}
+                      data-testid="menu-backup"
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
                       <I.archive size={15} className="shrink-0" /> Save &amp;
@@ -394,6 +399,7 @@ function ClosetApp() {
                         setShowAbout(true);
                         setShowMenu(false);
                       }}
+                      data-testid="menu-about"
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
                     >
                       <I.help size={15} className="shrink-0" /> About
@@ -507,6 +513,7 @@ function ClosetApp() {
             tone="poppy"
             active={view === "closet"}
             onClick={() => setView("closet")}
+            testId="nav-closet"
           />
           <BottomTab
             IconC={I.sunglasses}
@@ -514,6 +521,7 @@ function ClosetApp() {
             tone="petal"
             active={view === "outfits"}
             onClick={() => setView("outfits")}
+            testId="nav-looks"
           />
           <BottomTab
             IconC={I.suitcase}
@@ -521,6 +529,7 @@ function ClosetApp() {
             tone="sky2"
             active={view === "collections"}
             onClick={() => setView("collections")}
+            testId="nav-collections"
           />
         </div>
       </nav>

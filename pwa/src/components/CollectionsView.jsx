@@ -110,6 +110,7 @@ function CollectionsView({
                 <em className="text-sky2-600">you've curated.</em>
               </h3>
               <button
+                data-testid="new-collection-btn"
                 ref={addButtonRef}
                 onClick={startNew}
                 style={{ flexShrink: 0 }}

@@ -46,6 +46,7 @@ function OutfitDetailModal({
         onClick={onClose}
       />
       <div
+        data-testid="outfit-detail"
         className="relative bg-white w-full sm:max-w-2xl sm:rounded-2xl flex flex-col shadow-2xl fade-up overflow-hidden"
         style={{ height: "100dvh", maxHeight: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
@@ -61,6 +62,7 @@ function OutfitDetailModal({
             </div>
             <div className="flex gap-1 shrink-0">
               <button
+                data-testid="detail-share"
                 onClick={handleShare}
                 disabled={sharing || pieces.length === 0}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors disabled:opacity-40"
@@ -69,6 +71,7 @@ function OutfitDetailModal({
                 <I.share size={15} />
               </button>
               <button
+                data-testid="detail-selfie"
                 onClick={onOpenSelfie}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-buttercup-50 active:text-buttercup-600 transition-colors"
                 aria-label="Outfit selfie"
@@ -77,6 +80,7 @@ function OutfitDetailModal({
               </button>
               {onEdit && (
                 <button
+                  data-testid="detail-edit"
                   onClick={onEdit}
                   className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-petal-50 active:text-petal-600 transition-colors"
                   aria-label="Edit outfit"
@@ -85,6 +89,7 @@ function OutfitDetailModal({
                 </button>
               )}
               <button
+                data-testid="detail-delete"
                 onClick={onDelete}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-400 active:bg-petal-50 active:text-petal-600 transition-colors"
                 aria-label="Delete outfit"
@@ -92,6 +97,7 @@ function OutfitDetailModal({
                 <I.trash size={15} />
               </button>
               <button
+                data-testid="detail-close"
                 onClick={onClose}
                 className="w-9 h-9 flex items-center justify-center rounded-full text-ink-500 active:bg-cream-100 transition-colors"
                 aria-label="Close"

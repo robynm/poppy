@@ -11,7 +11,10 @@ function AddItemModal({ onClose, onFile }) {
         className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
         onClick={onClose}
       ></div>
-      <div className="relative bg-white max-w-md w-full p-6 sm:p-8 rounded-2xl shadow-2xl fade-up">
+      <div
+        data-testid="add-item-modal"
+        className="relative bg-white max-w-md w-full p-6 sm:p-8 rounded-2xl shadow-2xl fade-up"
+      >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-ink-500 p-2"
@@ -33,6 +36,7 @@ function AddItemModal({ onClose, onFile }) {
         </p>
         <button
           onClick={() => inputRef.current?.click()}
+          data-testid="choose-photo-btn"
           className="w-full border-2 border-dashed border-poppy-200 bg-poppy-50/50 active:border-poppy-500 active:bg-poppy-50 transition-colors rounded-3xl py-8 sm:py-10 flex flex-col items-center gap-3 text-poppy-600"
         >
           <div className="w-12 h-12 rounded-full bg-poppy-100 flex items-center justify-center">
@@ -46,6 +50,7 @@ function AddItemModal({ onClose, onFile }) {
           ref={inputRef}
           type="file"
           accept="image/*"
+          data-testid="add-item-file"
           onChange={(e) => onFile(e.target.files?.[0])}
           className="hidden"
         />

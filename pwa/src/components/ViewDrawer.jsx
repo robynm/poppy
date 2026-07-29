@@ -11,7 +11,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex sm:justify-end">
+    <div data-testid="view-drawer" className="fixed inset-0 z-50 flex sm:justify-end">
       <div
         className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
         onClick={onClose}
@@ -25,6 +25,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
             Details
           </p>
           <button
+            data-testid="view-close"
             onClick={onClose}
             className="text-ink-500 p-2 -m-2"
             aria-label="Close"
@@ -174,6 +175,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
             )}
 
           <button
+            data-testid="view-edit"
             onClick={onEdit}
             className="w-full mt-2 flex items-center justify-center gap-2 py-3.5 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
           >

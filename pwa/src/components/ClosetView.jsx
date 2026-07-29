@@ -295,6 +295,7 @@ function ClosetView({
                 <button
                   ref={addButtonRef}
                   onClick={() => setAdding(true)}
+                  data-testid="add-piece-btn"
                   style={{ flexShrink: 0 }}
                   className="flex items-center justify-center gap-2 px-5 py-3 bg-poppy-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-poppy"
                 >
@@ -388,6 +389,7 @@ function ClosetView({
         </div> */}
             <button
               onClick={() => setShowFilters(!showFilters)}
+              data-testid="filters-toggle"
               className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
             >
               Filters{filterCount > 0 && ` · ${filterCount}`}
@@ -403,7 +405,10 @@ function ClosetView({
 
           {/* Collapsible filters */}
           {showFilters && (
-            <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
+            <div
+              data-testid="filter-panel"
+              className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card"
+            >
               <FilterRow label="Status">
                 {STATUS_OPTIONS.map((s) => (
                   <Chip
@@ -548,7 +553,10 @@ function ClosetView({
 
           {/* Active filters summary — shown when the drawer is closed */}
           {!showFilters && filterCount > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div
+              data-testid="active-filters"
+              className="mb-4 flex flex-wrap items-center gap-2"
+            >
               {activeCollection && activeCollectionObj && (
                 <RemovableChip
                   tone="collection"
@@ -835,12 +843,14 @@ function ClosetView({
               <div>
                 <button
                   onClick={selectAll}
+                  data-testid="select-all"
                   className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700 mr-2"
                 >
                   All
                 </button>
                 <button
                   onClick={exitSelectMode}
+                  data-testid="select-none"
                   className="text-[10px] font-bold tracking-[0.15em] uppercase text-poppy-600 underline active:text-poppy-700"
                 >
                   None
@@ -849,18 +859,21 @@ function ClosetView({
             </div>
             <button
               onClick={() => setBulkSheet("tags")}
+              data-testid="bulk-tags"
               className="px-3.5 py-2 bg-plum-50 text-plum-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-plum-100"
             >
               Tags
             </button>
             <button
               onClick={() => setBulkSheet("outfits")}
+              data-testid="bulk-looks"
               className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100"
             >
               Looks
             </button>
             <button
               onClick={() => setBulkSheet("collections")}
+              data-testid="bulk-collections"
               className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100"
             >
               Collections

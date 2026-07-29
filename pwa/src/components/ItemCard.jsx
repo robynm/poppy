@@ -18,6 +18,8 @@ function ItemCard({
     <div
       ref={cardRef}
       onClick={onClick}
+      data-testid="item-card"
+      data-item-id={item.id}
       className={`item-card fade-up bg-white border-2 ${compact ? "rounded-2xl select-none" : "cursor-pointer rounded-2xl active:scale-[0.98]"} overflow-hidden relative transition-colors shadow-card ${isDragging ? "opacity-0" : isDropTarget ? "border-poppy-500 ring-4 ring-poppy-500/25" : isSelected ? "border-poppy-500 ring-4 ring-poppy-500/25" : "border-cream-100"}`}
       style={{
         animationDelay: `${delay}ms`,

@@ -3,6 +3,7 @@ import { exportBackup, mergeBackup, readFileAsText, validateBackup } from "../li
 import { formatBytes } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { I } from "../lib/icons.jsx";
+import { Log } from "../lib/log.js";
 import { IDB } from "../lib/storage.js";
 
 function BackupModal({
@@ -271,10 +272,12 @@ function BackupModal({
         onClick={onClose}
       ></div>
       <div
+        data-testid="backup-modal"
         className="relative bg-white max-w-md w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-2xl shadow-2xl fade-up"
         style={{ paddingBottom: `max(env(safe-area-inset-bottom), 24px)` }}
       >
         <button
+          data-testid="backup-close"
           onClick={onClose}
           className="absolute top-3 right-3 text-ink-500 p-2"
         >
@@ -309,6 +312,7 @@ function BackupModal({
             like Google Drive, or email it to yourself.
           </p>
           <button
+            data-testid="backup-export"
             onClick={handleExport}
             disabled={busy}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
@@ -338,6 +342,7 @@ function BackupModal({
             </button>
           )}
           <input
+            data-testid="backup-file"
             ref={fileRef}
             type="file"
             accept="application/json,.json"
@@ -372,6 +377,7 @@ function BackupModal({
               </p>
               <div className="mt-4 flex flex-col gap-2">
                 <button
+                  data-testid="backup-merge"
                   onClick={() => applyStrategy("merge")}
                   disabled={busy}
                   className="w-full py-3.5 bg-leaf-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-50 disabled:active:scale-100"
@@ -389,6 +395,7 @@ function BackupModal({
                     }
                   }}
                   disabled={busy}
+                  data-testid="backup-replace"
                   className="w-full py-3.5 bg-petal-50 border-2 border-petal-100 text-petal-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                 >
                   Replace everything
@@ -436,6 +443,7 @@ function BackupModal({
             recent events and storage health so an issue can be traced.
           </p>
           <button
+            data-testid="backup-copy-diag"
             onClick={handleCopyDiagnostics}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-cream-200 text-ink-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
           >
