@@ -195,6 +195,15 @@ function AboutModal({ onClose }) {
               then save it. Looks are perfect for planning what to wear or
               remembering combos you love.
             </HowTo>
+            <HowTo icon={I.camera} title="Save snaps">
+              Open the <strong>Snaps</strong> tab to add photos of yourself
+              wearing an outfit. They're organized by the date each photo was
+              taken and grouped by month. Link a snap to a look — from the look
+              builder or the snap's own screen — to remember how you actually
+              wore it. Every snap also counts as a wear for each piece in that
+              look, so your <strong>Most worn</strong> stats reflect what you
+              really reach for.
+            </HowTo>
             <HowTo icon={I.suitcase} title="Build collections">
               Open the <strong>Collections</strong> tab to group items and looks
               around a theme — think "Summer capsule," "Work," or "Italy trip."
