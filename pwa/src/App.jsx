@@ -7,6 +7,7 @@ import { ClosetView } from "./components/ClosetView.jsx";
 import { CollectionsView } from "./components/CollectionsView.jsx";
 import { OutfitsView } from "./components/OutfitsView.jsx";
 import { PoppyMark } from "./components/PoppyMark.jsx";
+import { SelfiesView } from "./components/SelfiesView.jsx";
 import { SplashScreen } from "./components/SplashScreen.jsx";
 import { StatsModal } from "./components/StatsModal.jsx";
 import { STORAGE_KEYS } from "./lib/constants.js";
@@ -15,7 +16,15 @@ import { I } from "./lib/icons.jsx";
 import { dataUrlToBlob } from "./lib/images.js";
 import { Log } from "./lib/log.js";
 import { SEED_IMAGES, SEED_ITEMS } from "./seed.js";
-import { IDB, ObjectUrlCache, ensurePersistentStorage, hydrateImages, lsGet, lsSet, migrateLegacyImagesIfNeeded } from "./lib/storage.js";
+import {
+  IDB,
+  ObjectUrlCache,
+  ensurePersistentStorage,
+  hydrateImages,
+  lsGet,
+  lsSet,
+  migrateLegacyImagesIfNeeded,
+} from "./lib/storage.js";
 
 // --- Main App --------------------------------------------------------------
 function ClosetApp() {
@@ -26,6 +35,7 @@ function ClosetApp() {
   const [customTags, setCustomTags] = useState([]);
   const [brands, setBrands] = useState([]);
   const [collections, setCollections] = useState([]);
+  const [selfies, setSelfies] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -101,7 +111,9 @@ function ClosetApp() {
         lsSet(STORAGE_KEYS.customTags, []);
         lsSet(STORAGE_KEYS.brands, []);
         lsSet(STORAGE_KEYS.collections, []);
+        lsSet(STORAGE_KEYS.selfies, []);
         lsSet(STORAGE_KEYS.imagesMigrated, true);
+        lsSet(STORAGE_KEYS.selfiesMigrated, true);
         lsSet(STORAGE_KEYS.seeded, true);
       } else {
         // One-time migration for existing installs: localStorage data URLs → IDB blobs.
@@ -145,13 +157,60 @@ function ClosetApp() {
         });
       }
 
+      // Migration: promote legacy per-outfit selfies (IDB key `selfie_<outfitId>`)
+      // into first-class selfie entities. The look↔selfie link is 1-to-many and
+      // lives on the selfie (`selfie.outfitId`). The blob keeps its existing IDB
+      // key (now the selfie's id) — no copy needed. Runs once, guarded by a flag.
+      let outfits2 = lsGet(STORAGE_KEYS.outfits, []);
+      let selfies2 = lsGet(STORAGE_KEYS.selfies, []);
+      if (!lsGet(STORAGE_KEYS.selfiesMigrated, false)) {
+        const known = new Set(selfies2.map((s) => s.id));
+        const outfitIds = new Set(outfits2.map((o) => o.id));
+        const byId = new Map(outfits2.map((o) => [o.id, o]));
+        const added = [];
+        for (const key of Object.keys(urlMap)) {
+          if (!key.startsWith("selfie_") || known.has(key)) continue;
+          const ownerId = key.slice("selfie_".length);
+          const when = byId.get(ownerId)?.createdAt || Date.now();
+          added.push({
+            id: key,
+            createdAt: when,
+            dateTaken: when,
+            outfitId: outfitIds.has(ownerId) ? ownerId : null,
+          });
+        }
+        if (added.length) {
+          selfies2 = [...selfies2, ...added];
+          lsSet(STORAGE_KEYS.selfies, selfies2);
+          Log.info("selfies.migrated", { count: added.length });
+        }
+        lsSet(STORAGE_KEYS.selfiesMigrated, true);
+      }
+
+      // Convert any outfit.selfieIds[] (from an earlier build of this feature)
+      // into the selfie.outfitId model, then drop the field. Idempotent.
+      if (outfits2.some((o) => Array.isArray(o.selfieIds))) {
+        const owner = new Map();
+        for (const o of outfits2)
+          for (const sid of o.selfieIds || []) owner.set(sid, o.id);
+        selfies2 = selfies2.map((s) =>
+          owner.has(s.id) && s.outfitId == null
+            ? { ...s, outfitId: owner.get(s.id) }
+            : s,
+        );
+        outfits2 = outfits2.map(({ selfieIds, ...rest }) => rest);
+        lsSet(STORAGE_KEYS.selfies, selfies2);
+        lsSet(STORAGE_KEYS.outfits, outfits2);
+      }
+
       if (cancelled) return;
       setItems(items2);
       setImages(urlMap);
-      setOutfits(lsGet(STORAGE_KEYS.outfits, []));
+      setOutfits(outfits2);
       setCustomTags(lsGet(STORAGE_KEYS.customTags, []));
       setBrands(lsGet(STORAGE_KEYS.brands, []));
       setCollections(lsGet(STORAGE_KEYS.collections, []));
+      setSelfies(selfies2);
       setLoaded(true);
     })();
     return () => {
@@ -178,6 +237,16 @@ function ClosetApp() {
   const saveCollections = (n) => {
     setCollections(n);
     lsSet(STORAGE_KEYS.collections, n);
+  };
+  const saveSelfies = (n) => {
+    setSelfies(n);
+    lsSet(STORAGE_KEYS.selfies, n);
+  };
+  // Delete a selfie: remove the record and its photo. The look↔selfie link
+  // lives on the selfie, so nothing else needs updating.
+  const deleteSelfie = (id) => {
+    saveSelfies(selfies.filter((s) => s.id !== id));
+    deleteImage(id);
   };
 
   // Image writes go to IDB; React state holds object URLs only.
@@ -456,9 +525,9 @@ function ClosetApp() {
           outfits={outfits}
           items={items}
           images={images}
+          selfies={selfies}
           onSave={saveOutfits}
-          onPutImage={putImage}
-          onDeleteImage={deleteImage}
+          onSaveSelfies={saveSelfies}
           onNewOutfit={() => {
             setEditingOutfit(null);
             setBuilderOpen(true);
@@ -472,25 +541,53 @@ function ClosetApp() {
           onSetHeaderAction={setHeaderAction}
         />
       )}
+      {view === "selfies" && (
+        <SelfiesView
+          selfies={selfies}
+          outfits={outfits}
+          images={images}
+          onSaveSelfies={saveSelfies}
+          onPutImage={putImage}
+          onDeleteSelfie={deleteSelfie}
+          onSetHeaderAction={setHeaderAction}
+        />
+      )}
       {builderOpen && (
         <BuilderView
           items={items}
           images={images}
           collections={collections}
+          selfies={selfies}
           outfit={editingOutfit}
           onSaveOutfit={(o) => {
+            // The builder returns the selected selfie ids; association is stored
+            // on the selfie (1-to-many), so keep selfieIds off the outfit itself.
+            const { selfieIds = [], ...rest } = o;
+            let outfitId;
             if (editingOutfit) {
-              const next = outfits.map((x) =>
-                x.id === o.id ? { ...o, updatedAt: Date.now() } : x,
+              outfitId = o.id;
+              saveOutfits(
+                outfits.map((x) =>
+                  x.id === o.id ? { ...rest, updatedAt: Date.now() } : x,
+                ),
               );
-              saveOutfits(next);
             } else {
-              const next = [
-                { ...o, id: `o_${Date.now()}`, createdAt: Date.now() },
+              outfitId = `o_${Date.now()}`;
+              saveOutfits([
+                { ...rest, id: outfitId, createdAt: Date.now() },
                 ...outfits,
-              ];
-              saveOutfits(next);
+              ]);
             }
+            // Claim the chosen selfies for this look; release any it dropped.
+            const chosen = new Set(selfieIds);
+            saveSelfies(
+              selfies.map((s) => {
+                if (chosen.has(s.id))
+                  return s.outfitId === outfitId ? s : { ...s, outfitId };
+                if (s.outfitId === outfitId) return { ...s, outfitId: null };
+                return s;
+              }),
+            );
             setEditingOutfit(null);
             setBuilderOpen(false);
           }}
@@ -506,7 +603,7 @@ function ClosetApp() {
         className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-cream-100 shadow-card-hi"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="max-w-6xl mx-auto grid grid-cols-3 px-3 pt-2 pb-1">
+        <div className="max-w-6xl mx-auto grid grid-cols-4 px-3 pt-2 pb-1">
           <BottomTab
             IconC={I.shirt}
             label="Closet"
@@ -514,6 +611,14 @@ function ClosetApp() {
             active={view === "closet"}
             onClick={() => setView("closet")}
             testId="nav-closet"
+          />
+          <BottomTab
+            IconC={I.camera}
+            label="Snaps"
+            tone="buttercup"
+            active={view === "selfies"}
+            onClick={() => setView("selfies")}
+            testId="nav-selfies"
           />
           <BottomTab
             IconC={I.sunglasses}
@@ -541,6 +646,7 @@ function ClosetApp() {
           collections={collections}
           customTags={customTags}
           brands={brands}
+          selfies={selfies}
           onClose={() => setShowStats(false)}
         />
       )}
@@ -555,6 +661,7 @@ function ClosetApp() {
           customTags={customTags}
           brands={brands}
           collections={collections}
+          selfies={selfies}
           onClose={() => setShowBackup(false)}
           onImport={async (next, strategy) => {
             saveItems(next.items);
@@ -562,6 +669,7 @@ function ClosetApp() {
             saveCustomTags(next.customTags);
             if (next.brands) saveBrands(next.brands);
             if (next.collections) saveCollections(next.collections);
+            if (next.selfies) saveSelfies(next.selfies);
             return await replaceAllImages(next.images, {
               clearFirst: strategy === "replace",
             });

@@ -2,12 +2,10 @@ import { toTitle } from "../lib/format.js";
 import { I } from "../lib/icons.jsx";
 
 // The thumbnail + label block of a look tile — shared by the card and the drag ghost.
-function OutfitCardPreview({ outfit, items, images }) {
+function OutfitCardPreview({ outfit, items, images, selfies = [] }) {
   const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
-  const selfieUrl = images[`selfie_${outfit.id}`];
-  const thumbs = selfieUrl
-    ? [{ id: "selfie", url: selfieUrl }]
-    : pieces.slice(0, 4).map((p) => ({ id: p.id, url: images[p.id] }));
+  const selfieCount = selfies.filter((s) => s.outfitId === outfit.id).length;
+  const thumbs = pieces.slice(0, 4).map((p) => ({ id: p.id, url: images[p.id] }));
   return (
     <>
       <div
@@ -40,6 +38,12 @@ function OutfitCardPreview({ outfit, items, images }) {
         </h3>
         <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-petal-600 mt-0.5">
           {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
+          {selfieCount > 0 && (
+            <>
+              {" · "}
+              {selfieCount} {selfieCount === 1 ? "snap" : "snaps"}
+            </>
+          )}
         </p>
       </div>
     </>

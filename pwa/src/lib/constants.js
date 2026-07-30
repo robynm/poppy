@@ -30,8 +30,10 @@ const STORAGE_KEYS = {
   customTags: "closet:custom_tags:v1",
   brands: "closet:brands:v1",
   collections: "closet:collections:v1",
+  selfies: "closet:selfies:v1",
   seeded: "closet:seeded:v1",
   imagesMigrated: "closet:images_migrated:v1", // set to true once legacy localStorage images have been moved to IDB
+  selfiesMigrated: "closet:selfies_migrated:v1", // set once legacy per-outfit selfies (selfie_<id>) have become first-class selfie entities
   theme: "closet:theme",
   splashDismissed: "closet:splash_dismissed:v1", // set once a browser (non-installed) visitor chooses to continue
   diag: "closet:diag:v1", // rolling diagnostics log (see Log below)

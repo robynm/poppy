@@ -10,6 +10,7 @@ function BuilderView({
   items,
   images,
   collections,
+  selfies = [],
   outfit,
   onSaveOutfit,
   onCancel,
@@ -17,6 +18,11 @@ function BuilderView({
   useBodyScrollLock();
   const isEdit = !!outfit;
   const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
+  const [selectedSelfies, setSelectedSelfies] = useState(
+    outfit
+      ? selfies.filter((s) => s.outfitId === outfit.id).map((s) => s.id)
+      : [],
+  );
   const [name, setName] = useState(outfit ? outfit.name : "");
   const [note, setNote] = useState(outfit ? outfit.note || "" : "");
   const [seasons, setSeasons] = useState(outfit ? outfit.seasons || [] : []);
@@ -33,6 +39,12 @@ function BuilderView({
       selected.includes(id)
         ? selected.filter((s) => s !== id)
         : [...selected, id],
+    );
+  const toggleSelfie = (id) =>
+    setSelectedSelfies(
+      selectedSelfies.includes(id)
+        ? selectedSelfies.filter((s) => s !== id)
+        : [...selectedSelfies, id],
     );
   const scopeObj = scopeCollection
     ? (collections || []).find((c) => c.id === scopeCollection)
@@ -58,6 +70,7 @@ function BuilderView({
         name: name.trim(),
         note: note.trim(),
         itemIds: selected,
+        selfieIds: selectedSelfies,
         seasons,
         occasions,
       });
@@ -66,6 +79,7 @@ function BuilderView({
         name: name.trim(),
         note: note.trim(),
         itemIds: selected,
+        selfieIds: selectedSelfies,
         seasons,
         occasions,
       });
@@ -309,6 +323,48 @@ function BuilderView({
                 );
               })}
             </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Snaps ({selectedSelfies.length})
+            </p>
+            {selfies.length === 0 ? (
+              <p className="text-xs text-ink-400 italic">
+                No snaps yet — add some from the Snaps tab, then link them
+                here.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {selfies.map((s) => {
+                  const active = selectedSelfies.includes(s.id);
+                  return (
+                    <div
+                      key={s.id}
+                      data-testid="builder-selfie"
+                      data-selfie-id={s.id}
+                      onClick={() => toggleSelfie(s.id)}
+                      className={`cursor-pointer rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-buttercup-500 ring-2 ring-buttercup-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
+                    >
+                      <div className="aspect-square bg-cream-50 flex items-center justify-center relative">
+                        {images[s.id] && (
+                          <img
+                            src={images[s.id]}
+                            alt="Snap"
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        {active && (
+                          <div className="absolute top-1.5 right-1.5 bg-buttercup-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-pop">
+                            <I.check size={11} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

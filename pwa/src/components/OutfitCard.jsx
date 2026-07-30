@@ -5,6 +5,7 @@ function OutfitCard({
   outfit,
   items,
   images,
+  selfies,
   onOpen,
   delay = 0,
   id,
@@ -26,7 +27,12 @@ function OutfitCard({
         ...(isDragging && { animation: "none", opacity: 0 }),
       }}
     >
-      <OutfitCardPreview outfit={outfit} items={items} images={images} />
+      <OutfitCardPreview
+        outfit={outfit}
+        items={items}
+        images={images}
+        selfies={selfies}
+      />
       {reorderHandle && (
         <div
           aria-hidden="true"
