@@ -11,6 +11,7 @@ function StatsModal({
   collections,
   customTags,
   brands,
+  selfies = [],
   onClose,
 }) {
   useBodyScrollLock();
@@ -79,9 +80,31 @@ function StatsModal({
       ? Math.round((usedCount / owned.length) * 100)
       : 0;
 
-    // Most-worn pieces — owned items ranked by number of looks they appear in
+    // Most-versatile pieces — owned items ranked by number of looks they appear in
     const topItems = owned
       .map((i) => ({ id: i.id, name: i.name, count: lookCount[i.id] || 0 }))
+      .filter((x) => x.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Times worn — each snap counts as one wear for every item in its look.
+    // Looks with no snaps don't count as worn.
+    const snapsPerOutfit = {};
+    selfies.forEach((s) => {
+      if (s.outfitId)
+        snapsPerOutfit[s.outfitId] = (snapsPerOutfit[s.outfitId] || 0) + 1;
+    });
+    const wearCount = {};
+    outfits.forEach((o) => {
+      const wears = snapsPerOutfit[o.id] || 0;
+      if (!wears) return;
+      (o.itemIds || []).forEach((id) => {
+        wearCount[id] = (wearCount[id] || 0) + wears;
+      });
+    });
+    const totalWears = Object.values(wearCount).reduce((s, n) => s + n, 0);
+    const topWorn = owned
+      .map((i) => ({ id: i.id, name: i.name, count: wearCount[i.id] || 0 }))
       .filter((x) => x.count > 0)
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
@@ -106,13 +129,15 @@ function StatsModal({
       byOccasion,
       topBrands,
       topItems,
+      topWorn,
+      totalWears,
       byYear,
       allTags,
       usedCount,
       utilizationPct,
       avgItemsPerLook,
     };
-  }, [items, outfits, collections, customTags]);
+  }, [items, outfits, collections, customTags, selfies]);
 
   const Bar = ({ label, count, max, color }) => {
     const pct = max > 0 ? (count / max) * 100 : 0;
@@ -543,7 +568,41 @@ function StatsModal({
               </div>
             )}
 
-            {/* Most worn */}
+            {/* Most worn — driven by snaps */}
+            {stats.topWorn.length > 0 && (
+              <div className="mb-8" data-testid="stat-most-worn">
+                <div className="flex items-baseline justify-between mb-3">
+                  <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700">
+                    Most worn
+                  </p>
+                  <p className="text-[12px] text-ink-500">
+                    {stats.totalWears} total wears
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {stats.topWorn.map(({ id, name, count }, idx) => (
+                    <div
+                      key={id}
+                      data-testid="worn-item"
+                      data-item-id={id}
+                      className="flex items-center gap-3 p-2.5 bg-cream-50 border-2 border-cream-100 rounded-2xl"
+                    >
+                      <div className="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-buttercup-100 text-buttercup-700 font-display font-bold text-[12px]">
+                        {idx + 1}
+                      </div>
+                      <span className="flex-1 text-[13px] font-bold text-ink-800 capitalize truncate">
+                        {toTitle(name)}
+                      </span>
+                      <span className="shrink-0 text-[11px] font-bold bg-buttercup-100 text-buttercup-700 rounded-full px-2 py-0.5">
+                        {count} {count === 1 ? "wear" : "wears"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Most versatile — how many looks each piece appears in */}
             {stats.topItems.length > 0 && (
               <div className="mb-8">
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-poppy-700 mb-3">

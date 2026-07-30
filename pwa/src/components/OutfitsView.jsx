@@ -13,7 +13,9 @@ function OutfitsView({
   outfits,
   items,
   images,
+  selfies = [],
   onSave,
+  onSaveSelfies,
   onNewOutfit,
   onEditOutfit,
   scrollToId,
@@ -62,6 +64,12 @@ function OutfitsView({
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
     onSave(outfits.filter((o) => o.id !== id));
+    // Selfies outlive the look — just unlink any that pointed to it.
+    if (onSaveSelfies && selfies.some((s) => s.outfitId === id)) {
+      onSaveSelfies(
+        selfies.map((s) => (s.outfitId === id ? { ...s, outfitId: null } : s)),
+      );
+    }
   };
 
   useEffect(() => {
@@ -214,6 +222,7 @@ function OutfitsView({
                   outfit={o}
                   items={items}
                   images={images}
+                  selfies={selfies}
                   onOpen={dragMode ? undefined : () => setViewingId(o.id)}
                   delay={i * 40}
                   cardRef={(el) => register(i, el)}
@@ -252,7 +261,12 @@ function OutfitsView({
                 boxShadow: "0 22px 60px rgba(236, 71, 120, 0.35)",
               }}
             >
-              <OutfitCardPreview outfit={o} items={items} images={images} />
+              <OutfitCardPreview
+                outfit={o}
+                items={items}
+                images={images}
+                selfies={selfies}
+              />
             </div>
           );
         })()}
@@ -280,6 +294,7 @@ function OutfitsView({
           outfit={outfits.find((o) => o.id === viewingId)}
           items={items}
           images={images}
+          selfies={selfies}
           onClose={() => setViewingId(null)}
           onEdit={
             onEditOutfit

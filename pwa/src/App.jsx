@@ -16,7 +16,15 @@ import { I } from "./lib/icons.jsx";
 import { dataUrlToBlob } from "./lib/images.js";
 import { Log } from "./lib/log.js";
 import { SEED_IMAGES, SEED_ITEMS } from "./seed.js";
-import { IDB, ObjectUrlCache, ensurePersistentStorage, hydrateImages, lsGet, lsSet, migrateLegacyImagesIfNeeded } from "./lib/storage.js";
+import {
+  IDB,
+  ObjectUrlCache,
+  ensurePersistentStorage,
+  hydrateImages,
+  lsGet,
+  lsSet,
+  migrateLegacyImagesIfNeeded,
+} from "./lib/storage.js";
 
 // --- Main App --------------------------------------------------------------
 function ClosetApp() {
@@ -150,30 +158,49 @@ function ClosetApp() {
       }
 
       // Migration: promote legacy per-outfit selfies (IDB key `selfie_<outfitId>`)
-      // into first-class selfie entities, associating each with its look. Runs
-      // once, guarded by a flag. The blob keeps its existing IDB key (now the
-      // selfie's id) — no copy needed.
+      // into first-class selfie entities. The look↔selfie link is 1-to-many and
+      // lives on the selfie (`selfie.outfitId`). The blob keeps its existing IDB
+      // key (now the selfie's id) — no copy needed. Runs once, guarded by a flag.
       let outfits2 = lsGet(STORAGE_KEYS.outfits, []);
       let selfies2 = lsGet(STORAGE_KEYS.selfies, []);
       if (!lsGet(STORAGE_KEYS.selfiesMigrated, false)) {
-        const legacyKeys = Object.keys(urlMap).filter((k) =>
-          k.startsWith("selfie_"),
-        );
-        if (legacyKeys.length) {
-          const byId = new Map(outfits2.map((o) => [o.id, o]));
-          const added = [];
-          for (const key of legacyKeys) {
-            const owner = byId.get(key.slice("selfie_".length));
-            const when = owner?.createdAt || Date.now();
-            added.push({ id: key, createdAt: when, dateTaken: when });
-            if (owner) owner.selfieIds = [...(owner.selfieIds || []), key];
-          }
+        const known = new Set(selfies2.map((s) => s.id));
+        const outfitIds = new Set(outfits2.map((o) => o.id));
+        const byId = new Map(outfits2.map((o) => [o.id, o]));
+        const added = [];
+        for (const key of Object.keys(urlMap)) {
+          if (!key.startsWith("selfie_") || known.has(key)) continue;
+          const ownerId = key.slice("selfie_".length);
+          const when = byId.get(ownerId)?.createdAt || Date.now();
+          added.push({
+            id: key,
+            createdAt: when,
+            dateTaken: when,
+            outfitId: outfitIds.has(ownerId) ? ownerId : null,
+          });
+        }
+        if (added.length) {
           selfies2 = [...selfies2, ...added];
           lsSet(STORAGE_KEYS.selfies, selfies2);
-          lsSet(STORAGE_KEYS.outfits, outfits2);
           Log.info("selfies.migrated", { count: added.length });
         }
         lsSet(STORAGE_KEYS.selfiesMigrated, true);
+      }
+
+      // Convert any outfit.selfieIds[] (from an earlier build of this feature)
+      // into the selfie.outfitId model, then drop the field. Idempotent.
+      if (outfits2.some((o) => Array.isArray(o.selfieIds))) {
+        const owner = new Map();
+        for (const o of outfits2)
+          for (const sid of o.selfieIds || []) owner.set(sid, o.id);
+        selfies2 = selfies2.map((s) =>
+          owner.has(s.id) && s.outfitId == null
+            ? { ...s, outfitId: owner.get(s.id) }
+            : s,
+        );
+        outfits2 = outfits2.map(({ selfieIds, ...rest }) => rest);
+        lsSet(STORAGE_KEYS.selfies, selfies2);
+        lsSet(STORAGE_KEYS.outfits, outfits2);
       }
 
       if (cancelled) return;
@@ -215,15 +242,10 @@ function ClosetApp() {
     setSelfies(n);
     lsSet(STORAGE_KEYS.selfies, n);
   };
-  // Delete a selfie everywhere: the record, its photo, and any look's reference.
+  // Delete a selfie: remove the record and its photo. The look↔selfie link
+  // lives on the selfie, so nothing else needs updating.
   const deleteSelfie = (id) => {
     saveSelfies(selfies.filter((s) => s.id !== id));
-    const nextOutfits = outfits.map((o) =>
-      (o.selfieIds || []).includes(id)
-        ? { ...o, selfieIds: o.selfieIds.filter((x) => x !== id) }
-        : o,
-    );
-    saveOutfits(nextOutfits);
     deleteImage(id);
   };
 
@@ -503,7 +525,9 @@ function ClosetApp() {
           outfits={outfits}
           items={items}
           images={images}
+          selfies={selfies}
           onSave={saveOutfits}
+          onSaveSelfies={saveSelfies}
           onNewOutfit={() => {
             setEditingOutfit(null);
             setBuilderOpen(true);
@@ -536,18 +560,34 @@ function ClosetApp() {
           selfies={selfies}
           outfit={editingOutfit}
           onSaveOutfit={(o) => {
+            // The builder returns the selected selfie ids; association is stored
+            // on the selfie (1-to-many), so keep selfieIds off the outfit itself.
+            const { selfieIds = [], ...rest } = o;
+            let outfitId;
             if (editingOutfit) {
-              const next = outfits.map((x) =>
-                x.id === o.id ? { ...o, updatedAt: Date.now() } : x,
+              outfitId = o.id;
+              saveOutfits(
+                outfits.map((x) =>
+                  x.id === o.id ? { ...rest, updatedAt: Date.now() } : x,
+                ),
               );
-              saveOutfits(next);
             } else {
-              const next = [
-                { ...o, id: `o_${Date.now()}`, createdAt: Date.now() },
+              outfitId = `o_${Date.now()}`;
+              saveOutfits([
+                { ...rest, id: outfitId, createdAt: Date.now() },
                 ...outfits,
-              ];
-              saveOutfits(next);
+              ]);
             }
+            // Claim the chosen selfies for this look; release any it dropped.
+            const chosen = new Set(selfieIds);
+            saveSelfies(
+              selfies.map((s) => {
+                if (chosen.has(s.id))
+                  return s.outfitId === outfitId ? s : { ...s, outfitId };
+                if (s.outfitId === outfitId) return { ...s, outfitId: null };
+                return s;
+              }),
+            );
             setEditingOutfit(null);
             setBuilderOpen(false);
           }}
@@ -573,6 +613,14 @@ function ClosetApp() {
             testId="nav-closet"
           />
           <BottomTab
+            IconC={I.camera}
+            label="Snaps"
+            tone="buttercup"
+            active={view === "selfies"}
+            onClick={() => setView("selfies")}
+            testId="nav-selfies"
+          />
+          <BottomTab
             IconC={I.sunglasses}
             label="Looks"
             tone="petal"
@@ -588,14 +636,6 @@ function ClosetApp() {
             onClick={() => setView("collections")}
             testId="nav-collections"
           />
-          <BottomTab
-            IconC={I.camera}
-            label="Selfies"
-            tone="buttercup"
-            active={view === "selfies"}
-            onClick={() => setView("selfies")}
-            testId="nav-selfies"
-          />
         </div>
       </nav>
 
@@ -606,6 +646,7 @@ function ClosetApp() {
           collections={collections}
           customTags={customTags}
           brands={brands}
+          selfies={selfies}
           onClose={() => setShowStats(false)}
         />
       )}

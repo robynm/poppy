@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { I } from "../lib/icons.jsx";
@@ -26,16 +27,24 @@ function SelfieDetailModal({
 }) {
   useBodyScrollLock();
 
-  const linkedLooks = (outfits || []).filter((o) =>
-    (o.selfieIds || []).includes(selfie.id),
-  );
+  // Edits are staged in a draft and only committed on Save.
+  const [draftDate, setDraftDate] = useState(selfie.dateTaken);
+  const [draftOutfitId, setDraftOutfitId] = useState(selfie.outfitId ?? null);
 
   const changeDate = (e) => {
     const ts = fromDateInputValue(e.target.value);
-    if (ts == null) return;
+    if (ts != null) setDraftDate(ts);
+  };
+
+  const save = () => {
     onSaveSelfies(
-      selfies.map((s) => (s.id === selfie.id ? { ...s, dateTaken: ts } : s)),
+      selfies.map((s) =>
+        s.id === selfie.id
+          ? { ...s, dateTaken: draftDate, outfitId: draftOutfitId }
+          : s,
+      ),
     );
+    onClose();
   };
 
   return (
@@ -61,7 +70,7 @@ function SelfieDetailModal({
           {imageUrl && (
             <img
               src={imageUrl}
-              alt="Selfie"
+              alt="Snap"
               className="w-full max-h-[55vh] object-contain"
             />
           )}
@@ -75,7 +84,7 @@ function SelfieDetailModal({
             <input
               data-testid="selfie-date"
               type="date"
-              value={toDateInputValue(selfie.dateTaken)}
+              value={toDateInputValue(draftDate)}
               onChange={changeDate}
               className="w-full bg-transparent border-b border-cream-200 focus:border-buttercup-500 outline-none text-sm py-1"
             />
@@ -83,35 +92,66 @@ function SelfieDetailModal({
 
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1.5">
-              In these looks
+              Worn in
             </p>
-            {linkedLooks.length === 0 ? (
+            {(outfits || []).length === 0 ? (
               <p className="text-xs italic text-ink-400">
-                Not linked to a look yet — add it from a look's builder.
+                No looks yet — create one from the Looks tab.
               </p>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {linkedLooks.map((o) => (
-                  <span
-                    key={o.id}
-                    className="text-[10px] font-bold tracking-[0.1em] uppercase text-petal-700 bg-petal-50 px-2.5 py-1 rounded-full"
-                  >
-                    {toTitle(o.name)}
-                  </span>
-                ))}
+              <div className="flex flex-wrap gap-1.5" data-testid="selfie-looks">
+                <button
+                  data-testid="selfie-look-none"
+                  onClick={() => setDraftOutfitId(null)}
+                  className={`text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 transition-all ${
+                    draftOutfitId == null
+                      ? "bg-ink-500 text-white border-ink-500"
+                      : "bg-white text-ink-500 border-cream-200"
+                  }`}
+                >
+                  None
+                </button>
+                {outfits.map((o) => {
+                  const active = draftOutfitId === o.id;
+                  return (
+                    <button
+                      key={o.id}
+                      data-testid="selfie-look-option"
+                      data-outfit-id={o.id}
+                      onClick={() => setDraftOutfitId(active ? null : o.id)}
+                      className={`text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 transition-all ${
+                        active
+                          ? "bg-petal-500 text-white border-petal-500 shadow-pop"
+                          : "bg-petal-50 text-petal-700 border-petal-100"
+                      }`}
+                    >
+                      {toTitle(o.name)}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          <button
-            data-testid="selfie-delete"
-            onClick={() => {
-              if (confirm("Delete this selfie?")) onDelete();
-            }}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-petal-50 border-2 border-petal-100 text-petal-600 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95"
-          >
-            <I.trash size={14} /> Delete
-          </button>
+          <div className="flex gap-3 pt-1">
+            <button
+              data-testid="selfie-save"
+              onClick={save}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-buttercup-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+            >
+              <I.check size={14} /> Save
+            </button>
+            <button
+              data-testid="selfie-delete"
+              onClick={() => {
+                if (confirm("Delete this snap?")) onDelete();
+              }}
+              aria-label="Delete snap"
+              className="px-5 py-3 bg-petal-50 border-2 border-petal-100 text-petal-600 rounded-full active:scale-95"
+            >
+              <I.trash size={14} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

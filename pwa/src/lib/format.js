@@ -31,6 +31,15 @@ function monthLabel(ts) {
   });
 }
 
+// Human day label, e.g. "Jul 15, 2026".
+function dateLabel(ts) {
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 // Group items carrying a `dateTaken` (epoch ms) into month buckets, newest
 // month first, and newest item first within each month. Returns
 // [{ key, label, items }].
@@ -47,4 +56,4 @@ function groupByMonth(list) {
   return groups;
 }
 
-export { toTitle, formatBytes, monthKey, monthLabel, groupByMonth };
+export { toTitle, formatBytes, monthKey, monthLabel, dateLabel, groupByMonth };

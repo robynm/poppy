@@ -19,7 +19,9 @@ function BuilderView({
   const isEdit = !!outfit;
   const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
   const [selectedSelfies, setSelectedSelfies] = useState(
-    outfit ? [...(outfit.selfieIds || [])] : [],
+    outfit
+      ? selfies.filter((s) => s.outfitId === outfit.id).map((s) => s.id)
+      : [],
   );
   const [name, setName] = useState(outfit ? outfit.name : "");
   const [note, setNote] = useState(outfit ? outfit.note || "" : "");
@@ -325,11 +327,11 @@ function BuilderView({
 
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
-              Selfies ({selectedSelfies.length})
+              Snaps ({selectedSelfies.length})
             </p>
             {selfies.length === 0 ? (
               <p className="text-xs text-ink-400 italic">
-                No selfies yet — add some from the Selfies tab, then link them
+                No snaps yet — add some from the Snaps tab, then link them
                 here.
               </p>
             ) : (
@@ -348,7 +350,7 @@ function BuilderView({
                         {images[s.id] && (
                           <img
                             src={images[s.id]}
-                            alt="Selfie"
+                            alt="Snap"
                             className="w-full h-full object-cover"
                           />
                         )}

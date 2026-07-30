@@ -34,7 +34,7 @@ function SelfiesView({
         onSetHeaderAction(
           entry.isIntersecting
             ? null
-            : { label: "Add Selfies", tone: "poppy", onClick: openPicker },
+            : { label: "Add Snaps", tone: "poppy", onClick: openPicker },
         ),
       { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" },
     );
@@ -77,11 +77,11 @@ function SelfiesView({
         <div className="fade-up">
           <div className="mb-6 sm:mb-10">
             <h2 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900 mb-2">
-              Selfies
+              Snaps
             </h2>
             <div className="flex items-end justify-between gap-4">
               <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
-                <em className="text-buttercup-600">worn &amp; remembered.</em>
+                <em className="text-buttercup-600">looks, lived in.</em>
               </h3>
               <button
                 data-testid="selfies-upload-btn"
@@ -91,7 +91,7 @@ function SelfiesView({
                 style={{ flexShrink: 0 }}
                 className="flex items-center gap-2 px-5 py-3 bg-buttercup-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-40"
               >
-                <I.plus size={16} /> {uploading ? "Adding…" : "Add Selfies"}
+                <I.plus size={16} /> {uploading ? "Adding…" : "Add Snaps"}
               </button>
             </div>
           </div>
@@ -115,7 +115,7 @@ function SelfiesView({
                 <I.camera size={28} className="text-buttercup-600" />
               </div>
               <p className="font-display font-bold text-2xl mb-2 text-ink-900">
-                No selfies yet.
+                No snaps yet.
               </p>
               <p className="text-xs font-bold tracking-widest uppercase text-buttercup-700 mb-6 px-4">
                 Add photos to remember how you wore it
@@ -154,7 +154,7 @@ function SelfiesView({
                         {images[s.id] && (
                           <img
                             src={images[s.id]}
-                            alt="Selfie"
+                            alt="Snap"
                             loading="lazy"
                             className="w-full h-full object-cover"
                           />

@@ -1,14 +1,24 @@
 import { useState } from "react";
-import { toTitle } from "../lib/format.js";
+import { toTitle, dateLabel } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { I } from "../lib/icons.jsx";
 import { Log } from "../lib/log.js";
 import { shareAsImage } from "../lib/share.js";
 
-function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete }) {
+function OutfitDetailModal({
+  outfit,
+  items,
+  images,
+  selfies = [],
+  onClose,
+  onEdit,
+  onDelete,
+}) {
   useBodyScrollLock();
   const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
-  const selfieIds = (outfit.selfieIds || []).filter((id) => images[id]);
+  const linkedSelfies = selfies
+    .filter((s) => s.outfitId === outfit.id && images[s.id])
+    .sort((a, b) => b.dateTaken - a.dateTaken);
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
     if (sharing) return;
@@ -115,23 +125,28 @@ function OutfitDetailModal({ outfit, items, images, onClose, onEdit, onDelete })
               </div>
             ))}
           </div>
-          {selfieIds.length > 0 && (
+          {linkedSelfies.length > 0 && (
             <div className="px-4 pt-4 sm:px-6" data-testid="detail-selfies">
               <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
-                Selfies
+                Snaps
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {selfieIds.map((id) => (
+                {linkedSelfies.map((s) => (
                   <div
-                    key={id}
+                    key={s.id}
                     data-testid="detail-selfie-thumb"
-                    className="aspect-square bg-white rounded-2xl overflow-hidden shadow-card"
+                    className="rounded-2xl overflow-hidden shadow-card bg-white"
                   >
-                    <img
-                      src={images[id]}
-                      alt="Selfie"
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="aspect-square">
+                      <img
+                        src={images[s.id]}
+                        alt="Snap"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <p className="text-[9px] font-bold tracking-[0.05em] text-ink-600 text-center px-1 py-1">
+                      {dateLabel(s.dateTaken)}
+                    </p>
                   </div>
                 ))}
               </div>

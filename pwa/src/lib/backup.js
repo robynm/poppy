@@ -97,7 +97,7 @@ function validateBackup(parsed) {
     return { ok: false, error: "Backup brands are malformed." };
   }
   if (d.selfies !== undefined && !Array.isArray(d.selfies)) {
-    return { ok: false, error: "Backup selfies are malformed." };
+    return { ok: false, error: "Backup snaps are malformed." };
   }
   if (!d.collections) d.collections = [];
   if (!d.brands) d.brands = [];
