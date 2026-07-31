@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { CroppedImage } from "./CroppedImage.jsx";
 import { SelfieDetailModal } from "./SelfieDetailModal.jsx";
 import { groupByMonth } from "../lib/format.js";
 import { readDateTaken } from "../lib/exif.js";
@@ -149,16 +150,13 @@ function SelfiesView({
                         data-testid="selfie-card"
                         data-selfie-id={s.id}
                         onClick={() => setViewingId(s.id)}
-                        className="aspect-square bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform"
+                        className="bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform"
                       >
-                        {images[s.id] && (
-                          <img
-                            src={images[s.id]}
-                            alt="Snap"
-                            loading="lazy"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                        <CroppedImage
+                          url={images[s.id]}
+                          crop={s.crop}
+                          className="w-full aspect-[3/4]"
+                        />
                       </button>
                     ))}
                   </div>

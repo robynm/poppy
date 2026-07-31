@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CroppedImage } from "./CroppedImage.jsx";
 import { toTitle, dateLabel } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { I } from "../lib/icons.jsx";
@@ -137,13 +138,11 @@ function OutfitDetailModal({
                     data-testid="detail-selfie-thumb"
                     className="rounded-2xl overflow-hidden shadow-card bg-white"
                   >
-                    <div className="aspect-square">
-                      <img
-                        src={images[s.id]}
-                        alt="Snap"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    <CroppedImage
+                      url={images[s.id]}
+                      crop={s.crop}
+                      className="w-full aspect-[3/4]"
+                    />
                     <p className="text-[9px] font-bold tracking-[0.05em] text-ink-600 text-center px-1 py-1">
                       {dateLabel(s.dateTaken)}
                     </p>
