@@ -43,6 +43,17 @@ describe("Looks — builder & lifecycle", () => {
     cy.contains("No looks yet.").should("be.visible");
   });
 
+  it("collapses the pieces grid in the builder", () => {
+    cy.gotoApp({ items, outfits: [] });
+    cy.tab("looks");
+    cy.get('[data-testid="new-look-btn"]').click();
+    cy.get('[data-testid="builder-piece"]').should("have.length", 3);
+    cy.get('[data-testid="builder-pieces-toggle"]').click();
+    cy.get('[data-testid="builder-piece"]').should("not.exist");
+    cy.get('[data-testid="builder-pieces-toggle"]').click();
+    cy.get('[data-testid="builder-piece"]').should("have.length", 3);
+  });
+
   it("keeps Save disabled until a name and at least one piece are chosen", () => {
     cy.gotoApp({ items, outfits: [] });
     cy.tab("looks");
@@ -131,9 +142,11 @@ describe("Looks — builder & lifecycle", () => {
     });
     cy.tab("looks");
     cy.get('[data-testid="outfit-card"]').should("have.length", 2);
+    cy.get('[data-testid="looks-count"]').should("contain", "2 looks");
     cy.contains("Filters").click();
     cy.get('[data-filter-label="Season"]').contains("summer").click();
     cy.get('[data-testid="outfit-card"]').should("have.length", 1);
+    cy.get('[data-testid="looks-count"]').should("contain", "Showing 1 of 2");
     cy.contains("Beach Day").should("be.visible");
   });
 });

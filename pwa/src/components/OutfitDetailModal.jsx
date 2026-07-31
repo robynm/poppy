@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CroppedImage } from "./CroppedImage.jsx";
 import { toTitle, dateLabel } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 import { Log } from "../lib/log.js";
 import { shareAsImage } from "../lib/share.js";
@@ -16,6 +17,7 @@ function OutfitDetailModal({
   onDelete,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
   const linkedSelfies = selfies
     .filter((s) => s.outfitId === outfit.id && images[s.id])

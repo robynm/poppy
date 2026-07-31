@@ -1,9 +1,11 @@
 import { useRef } from "react";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 function AddItemModal({ onClose, onFile }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   const inputRef = useRef();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">

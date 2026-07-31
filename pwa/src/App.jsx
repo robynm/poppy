@@ -11,6 +11,7 @@ import { SelfiesView } from "./components/SelfiesView.jsx";
 import { SplashScreen } from "./components/SplashScreen.jsx";
 import { StatsModal } from "./components/StatsModal.jsx";
 import { STORAGE_KEYS } from "./lib/constants.js";
+import { useBackButton } from "./lib/backNav.js";
 import { useInstallPrompt } from "./lib/hooks.js";
 import { I } from "./lib/icons.jsx";
 import { dataUrlToBlob } from "./lib/images.js";
@@ -47,6 +48,8 @@ function ClosetApp() {
   const [scrollToOutfitId, setScrollToOutfitId] = useState(null);
   const [theme, setTheme] = useState(() => lsGet(STORAGE_KEYS.theme, "spring"));
   const [showMenu, setShowMenu] = useState(false);
+  // Device Back closes the header menu before leaving the app.
+  useBackButton(showMenu, () => setShowMenu(false));
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme === "winter" ? "winter" : "";

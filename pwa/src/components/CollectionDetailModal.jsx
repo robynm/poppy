@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 import { Log } from "../lib/log.js";
 import { shareAsImage } from "../lib/share.js";
@@ -17,6 +18,7 @@ function CollectionDetailModal({
   onOpenInCloset,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   const pieces = items.filter((i) => collection.itemIds.includes(i.id));
   const collectionOutfits = (outfits || []).filter(
     (o) =>

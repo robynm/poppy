@@ -3,6 +3,7 @@ import { Chip } from "./Chip.jsx";
 import { OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- MANAGE COLLECTIONS ---------------------------------------------------
@@ -15,6 +16,7 @@ function ManageCollectionsModal({
   initialEditingId,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   // If we opened straight into an edit/new flow, remember that — Cancel should close instead of returning to the list
   const directEdit = !!initialEditingId;
 

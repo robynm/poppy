@@ -4,6 +4,7 @@ import { CroppedImage } from "./CroppedImage.jsx";
 import { CATEGORY_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- BUILDER VIEW ----------------------------------------------------------
@@ -17,6 +18,7 @@ function BuilderView({
   onCancel,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onCancel);
   const isEdit = !!outfit;
   const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
   const [selectedSelfies, setSelectedSelfies] = useState(
@@ -35,6 +37,7 @@ function BuilderView({
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [activeStatuses, setActiveStatuses] = useState(["owned"]);
   const [scopeCollection, setScopeCollection] = useState(null);
+  const [piecesOpen, setPiecesOpen] = useState(true);
   const toggleSelect = (id) =>
     setSelected(
       selected.includes(id)
@@ -288,9 +291,24 @@ function BuilderView({
           </div>
 
           <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
-              Pieces ({selected.length})
-            </p>
+            <button
+              type="button"
+              data-testid="builder-pieces-toggle"
+              onClick={() => setPiecesOpen((o) => !o)}
+              className="w-full flex items-center justify-between mb-2"
+            >
+              <span className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+                Pieces ({selected.length})
+              </span>
+              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">
+                {piecesOpen ? "Hide" : "Show"}
+                <I.chevron
+                  size={14}
+                  className={`transition-transform ${piecesOpen ? "rotate-90" : "-rotate-90"}`}
+                />
+              </span>
+            </button>
+            {piecesOpen && (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {filtered.map((it, i) => {
                 const active = selected.includes(it.id);
@@ -324,6 +342,7 @@ function BuilderView({
                 );
               })}
             </div>
+            )}
           </div>
 
           <div>

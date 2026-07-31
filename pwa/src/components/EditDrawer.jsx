@@ -4,6 +4,7 @@ import { Chip } from "./Chip.jsx";
 import { CATEGORY_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 import { resizeImageToBlob } from "../lib/images.js";
 import { Log } from "../lib/log.js";
@@ -24,6 +25,7 @@ function EditDrawer({
   onDelete,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   const [draft, setDraft] = useState(item);
   const [newTag, setNewTag] = useState("");
   const imageInputRef = useRef();

@@ -119,6 +119,33 @@ function CollectionsView({
                 <I.plus size={16} /> New Collection
               </button>
             </div>
+            {collections.length > 0 && (
+              <p
+                data-testid="collections-count"
+                className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base"
+              >
+                {filterCount > 0 ? (
+                  <>
+                    Showing{" "}
+                    <span className="font-bold text-ink-800">
+                      {filteredCollections.length}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-bold text-ink-800">
+                      {collections.length}
+                    </span>{" "}
+                    collections
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold text-ink-800">
+                      {collections.length}
+                    </span>{" "}
+                    {collections.length === 1 ? "collection" : "collections"}
+                  </>
+                )}
+              </p>
+            )}
           </div>
 
           <div className="mb-4 flex gap-2">

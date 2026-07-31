@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { exportBackup, mergeBackup, readFileAsText, validateBackup } from "../lib/backup.js";
 import { formatBytes } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 import { Log } from "../lib/log.js";
 import { IDB } from "../lib/storage.js";
@@ -18,6 +19,7 @@ function BackupModal({
   onImport,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   const fileRef = useRef();
   const [status, setStatus] = useState(null); // {kind: 'info'|'error'|'warn'|'success', message}
   const [pending, setPending] = useState(null); // parsed valid backup awaiting strategy choice

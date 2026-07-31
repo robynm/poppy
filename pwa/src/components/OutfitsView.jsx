@@ -121,6 +121,33 @@ function OutfitsView({
                 <I.plus size={16} /> New Look
               </button>
             </div>
+            {outfits.length > 0 && (
+              <p
+                data-testid="looks-count"
+                className="mt-3 sm:mt-4 text-ink-600 text-sm sm:text-base"
+              >
+                {filterCount > 0 ? (
+                  <>
+                    Showing{" "}
+                    <span className="font-bold text-ink-800">
+                      {filteredOutfits.length}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-bold text-ink-800">
+                      {outfits.length}
+                    </span>{" "}
+                    looks
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold text-ink-800">
+                      {outfits.length}
+                    </span>{" "}
+                    {outfits.length === 1 ? "look" : "looks"}
+                  </>
+                )}
+              </p>
+            )}
           </div>
 
           <div className="mb-4 flex gap-2">

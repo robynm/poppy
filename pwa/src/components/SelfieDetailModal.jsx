@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
+import { CroppedImage, cropLayout, minZoomFor } from "./CroppedImage.jsx";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // yyyy-mm-dd (local) for an <input type="date">.
@@ -17,7 +19,10 @@ function fromDateInputValue(str) {
 }
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
-const DEFAULT_CROP = { zoom: 1, x: 50, y: 50 };
+// x/y are 0..1 focal points; guard older data stored as 0..100.
+const norm = (v) => (v == null ? 0.5 : v > 1 ? v / 100 : v);
+const initCrop = (c) =>
+  c ? { zoom: c.zoom ?? 1, x: norm(c.x), y: norm(c.y) } : { zoom: 1, x: 0.5, y: 0.5 };
 
 function SelfieDetailModal({
   selfie,
@@ -29,14 +34,19 @@ function SelfieDetailModal({
   onClose,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
 
   // Edits are staged in a draft and only committed on Save.
   const [draftDate, setDraftDate] = useState(selfie.dateTaken);
   const [draftOutfitId, setDraftOutfitId] = useState(selfie.outfitId ?? null);
-  const [crop, setCrop] = useState(selfie.crop || DEFAULT_CROP);
+  const [crop, setCrop] = useState(() => initCrop(selfie.crop));
+  const [aspect, setAspect] = useState(null);
 
   const frameRef = useRef(null);
   const dragRef = useRef(null);
+
+  // How far you can zoom out (whole image visible) depends on the photo's shape.
+  const minZoom = aspect ? minZoomFor(aspect) : 0.3;
 
   const changeDate = (e) => {
     const ts = fromDateInputValue(e.target.value);
@@ -52,8 +62,8 @@ function SelfieDetailModal({
     const d = dragRef.current;
     if (!d || !frameRef.current) return;
     const rect = frameRef.current.getBoundingClientRect();
-    const nx = clamp(d.x - ((e.clientX - d.px) / rect.width) * (100 / crop.zoom), 0, 100);
-    const ny = clamp(d.y - ((e.clientY - d.py) / rect.height) * (100 / crop.zoom), 0, 100);
+    const nx = clamp(d.x - (e.clientX - d.px) / rect.width, 0, 1);
+    const ny = clamp(d.y - (e.clientY - d.py) / rect.height, 0, 1);
     setCrop((c) => ({ ...c, x: nx, y: ny }));
   };
   const onPointerUp = () => {
@@ -106,13 +116,29 @@ function SelfieDetailModal({
                   src={imageUrl}
                   alt="Snap"
                   draggable={false}
-                  className="absolute left-1/2 top-1/2 max-w-none object-cover pointer-events-none"
-                  style={{
-                    width: `${crop.zoom * 100}%`,
-                    height: `${crop.zoom * 100}%`,
-                    transform: "translate(-50%, -50%)",
-                    objectPosition: `${crop.x}% ${crop.y}%`,
+                  onLoad={(e) => {
+                    const a =
+                      e.currentTarget.naturalWidth /
+                      e.currentTarget.naturalHeight;
+                    setAspect(a);
+                    // Never leave zoom below the fully-zoomed-out point.
+                    setCrop((c) => ({
+                      ...c,
+                      zoom: Math.max(c.zoom, minZoomFor(a)),
+                    }));
                   }}
+                  className="max-w-none pointer-events-none"
+                  style={
+                    aspect
+                      ? cropLayout(aspect, crop)
+                      : {
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }
+                  }
                 />
               )}
             </div>
@@ -121,9 +147,9 @@ function SelfieDetailModal({
               <input
                 data-testid="selfie-zoom"
                 type="range"
-                min="1"
+                min={minZoom}
                 max="3"
-                step="0.05"
+                step="0.02"
                 value={crop.zoom}
                 onChange={(e) =>
                   setCrop((c) => ({ ...c, zoom: Number(e.target.value) }))
@@ -132,7 +158,7 @@ function SelfieDetailModal({
               />
             </div>
             <p className="text-[10px] text-center text-ink-400 mt-1">
-              Drag to reposition · slide to zoom
+              Drag to reposition · slide to zoom in or out
             </p>
           </div>
 

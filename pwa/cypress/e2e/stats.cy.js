@@ -67,6 +67,29 @@ describe("Stats — times worn", () => {
     cy.get('[data-testid="worn-item"][data-item-id="i3"]').should("not.exist");
   });
 
+  it("expands the Most-worn list to show all items", () => {
+    const items = Array.from({ length: 6 }, (_, i) =>
+      owned(`i${i + 1}`, `Item ${i + 1}`, "top"),
+    );
+    cy.gotoApp({
+      items,
+      outfits: [look("o1", items.map((i) => i.id))],
+      selfies: [snap("s1", "o1")],
+    });
+    openStats();
+
+    // Collapsed: only the top 5 show.
+    cy.get('[data-testid="worn-item"]').should("have.length", 5);
+    cy.get('[data-testid="worn-toggle"]')
+      .should("contain", "Show all 6")
+      .click();
+    cy.get('[data-testid="worn-item"]').should("have.length", 6);
+    cy.get('[data-testid="worn-toggle"]').should("contain", "Show less");
+
+    // The versatility list has the same toggle.
+    cy.get('[data-testid="versatile-toggle"]').should("contain", "Show all 6");
+  });
+
   it("omits the Most-worn section when no look has a snap", () => {
     cy.gotoApp({
       items: [owned("i1", "White Tee", "top")],

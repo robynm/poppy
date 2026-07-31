@@ -15,7 +15,8 @@ function BottomTab({ IconC, label, active, onClick, count, tone = "poppy", testI
     <button
       onClick={onClick}
       data-testid={testId}
-      className={`relative flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-2xl transition-all ${active ? t.bg : "bg-transparent"} active:scale-95`}
+      aria-label={label}
+      className={`relative flex items-center justify-center py-1.5 px-1 rounded-2xl transition-all ${active ? t.bg : "bg-transparent"} active:scale-95`}
     >
       <div
         className={`relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${active ? `${t.pill} text-white shadow-pop` : "text-ink-400"}`}
@@ -27,11 +28,6 @@ function BottomTab({ IconC, label, active, onClick, count, tone = "poppy", testI
           </span>
         )}
       </div>
-      <span
-        className={`text-[10px] font-bold tracking-[0.1em] uppercase ${active ? t.text : "text-ink-400"}`}
-      >
-        {label}
-      </span>
     </button>
   );
 }
