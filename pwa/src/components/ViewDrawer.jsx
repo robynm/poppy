@@ -1,10 +1,12 @@
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- VIEW DRAWER (read-only details) --------------------------------------
 function ViewDrawer({ item, image, collections, onClose, onEdit }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   if (!item) return null;
   const inCollections = (collections || []).filter((c) =>
     c.itemIds.includes(item.id),

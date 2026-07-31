@@ -4,6 +4,7 @@ import { CroppedImage } from "./CroppedImage.jsx";
 import { CATEGORY_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- BUILDER VIEW ----------------------------------------------------------
@@ -17,6 +18,7 @@ function BuilderView({
   onCancel,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onCancel);
   const isEdit = !!outfit;
   const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
   const [selectedSelfies, setSelectedSelfies] = useState(

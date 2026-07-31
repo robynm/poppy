@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { CATEGORY_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- Backup Modal ---------------------------------------------------------
@@ -15,6 +16,7 @@ function StatsModal({
   onClose,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [tagSort, setTagSort] = useState("count");
   const [wornExpanded, setWornExpanded] = useState(false);

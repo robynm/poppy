@@ -1,9 +1,11 @@
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- About & FAQ ----------------------------------------------------------
 function AboutModal({ onClose }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
 
   // A section with an icon chip, heading, and free-form body
   const Section = ({

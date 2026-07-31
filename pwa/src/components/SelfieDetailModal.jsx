@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { CroppedImage, cropLayout, minZoomFor } from "./CroppedImage.jsx";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
+import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // yyyy-mm-dd (local) for an <input type="date">.
@@ -33,6 +34,7 @@ function SelfieDetailModal({
   onClose,
 }) {
   useBodyScrollLock();
+  useBackButton(true, onClose);
 
   // Edits are staged in a draft and only committed on Save.
   const [draftDate, setDraftDate] = useState(selfie.dateTaken);
