@@ -17,6 +17,8 @@ function StatsModal({
   useBodyScrollLock();
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [tagSort, setTagSort] = useState("count");
+  const [wornExpanded, setWornExpanded] = useState(false);
+  const [versatileExpanded, setVersatileExpanded] = useState(false);
 
   const stats = useMemo(() => {
     const owned = items.filter((i) => (i.status || "owned") === "owned");
@@ -84,8 +86,7 @@ function StatsModal({
     const topItems = owned
       .map((i) => ({ id: i.id, name: i.name, count: lookCount[i.id] || 0 }))
       .filter((x) => x.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+      .sort((a, b) => b.count - a.count);
 
     // Times worn — each snap counts as one wear for every item in its look.
     // Looks with no snaps don't count as worn.
@@ -106,8 +107,7 @@ function StatsModal({
     const topWorn = owned
       .map((i) => ({ id: i.id, name: i.name, count: wearCount[i.id] || 0 }))
       .filter((x) => x.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+      .sort((a, b) => b.count - a.count);
 
     const avgItemsPerLook = outfits.length
       ? (
@@ -580,7 +580,10 @@ function StatsModal({
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {stats.topWorn.map(({ id, name, count }, idx) => (
+                  {(wornExpanded
+                    ? stats.topWorn
+                    : stats.topWorn.slice(0, 5)
+                  ).map(({ id, name, count }, idx) => (
                     <div
                       key={id}
                       data-testid="worn-item"
@@ -599,6 +602,17 @@ function StatsModal({
                     </div>
                   ))}
                 </div>
+                {stats.topWorn.length > 5 && (
+                  <button
+                    data-testid="worn-toggle"
+                    onClick={() => setWornExpanded((e) => !e)}
+                    className="mt-3 text-[11px] font-bold text-ink-500 active:text-ink-800"
+                  >
+                    {wornExpanded
+                      ? "Show less"
+                      : `Show all ${stats.topWorn.length}`}
+                  </button>
+                )}
               </div>
             )}
 
@@ -609,7 +623,10 @@ function StatsModal({
                   Most versatile items
                 </p>
                 <div className="flex flex-col gap-2">
-                  {stats.topItems.map(({ id, name, count }, idx) => (
+                  {(versatileExpanded
+                    ? stats.topItems
+                    : stats.topItems.slice(0, 5)
+                  ).map(({ id, name, count }, idx) => (
                     <div
                       key={id}
                       className="flex items-center gap-3 p-2.5 bg-cream-50 border-2 border-cream-100 rounded-2xl"
@@ -626,6 +643,17 @@ function StatsModal({
                     </div>
                   ))}
                 </div>
+                {stats.topItems.length > 5 && (
+                  <button
+                    data-testid="versatile-toggle"
+                    onClick={() => setVersatileExpanded((e) => !e)}
+                    className="mt-3 text-[11px] font-bold text-ink-500 active:text-ink-800"
+                  >
+                    {versatileExpanded
+                      ? "Show less"
+                      : `Show all ${stats.topItems.length}`}
+                  </button>
+                )}
               </div>
             )}
 
