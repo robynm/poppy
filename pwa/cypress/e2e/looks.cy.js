@@ -142,9 +142,11 @@ describe("Looks — builder & lifecycle", () => {
     });
     cy.tab("looks");
     cy.get('[data-testid="outfit-card"]').should("have.length", 2);
+    cy.get('[data-testid="looks-count"]').should("contain", "2 looks");
     cy.contains("Filters").click();
     cy.get('[data-filter-label="Season"]').contains("summer").click();
     cy.get('[data-testid="outfit-card"]').should("have.length", 1);
+    cy.get('[data-testid="looks-count"]').should("contain", "Showing 1 of 2");
     cy.contains("Beach Day").should("be.visible");
   });
 });

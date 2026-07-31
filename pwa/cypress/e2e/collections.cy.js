@@ -121,9 +121,14 @@ describe("Collections", () => {
     });
     cy.tab("collections");
     cy.get('[data-testid="collection-card"]').should("have.length", 2);
+    cy.get('[data-testid="collections-count"]').should("contain", "2 collections");
     cy.contains("Filters").click();
     cy.get('[data-filter-label="Season"]').contains("winter").click();
     cy.get('[data-testid="collection-card"]').should("have.length", 1);
+    cy.get('[data-testid="collections-count"]').should(
+      "contain",
+      "Showing 1 of 2",
+    );
     cy.contains("Aspen").should("be.visible");
   });
 });
