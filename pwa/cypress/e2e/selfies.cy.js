@@ -105,6 +105,25 @@ describe("Selfies gallery", () => {
     );
   });
 
+  it("saves a zoom/crop adjustment on the snap", () => {
+    cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+    // Set the range via the native setter so React's onChange fires.
+    cy.get('[data-testid="selfie-zoom"]').then(($el) => {
+      const el = $el[0];
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      ).set;
+      setter.call(el, "2");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    cy.get('[data-testid="selfie-save"]').click();
+
+    readSelfies().then((s) => expect(s[0].crop.zoom).to.eq(2));
+  });
+
   it("discards edits when closed without saving", () => {
     cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
     cy.tab("selfies");
@@ -217,7 +236,7 @@ describe("Selfie ↔ look association (1-to-many)", () => {
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
     cy.get('[data-testid="selfie-detail"]').should("be.visible");
-    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').click();
+    cy.get('[data-testid="selfie-look"]').select("o1");
     cy.get('[data-testid="selfie-save"]').click();
     cy.get('[data-testid="selfie-detail"]').should("not.exist");
     readSelfies2().then((s) => expect(s[0].outfitId).to.eq("o1"));
