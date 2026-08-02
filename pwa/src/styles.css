@@ -162,10 +162,14 @@ body { font-family: 'Nunito', -apple-system, system-ui, sans-serif; color: var(-
 @keyframes bloom { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
 .bloom { animation: bloom .55s cubic-bezier(.34, 1.56, .64, 1) both; }
 
-/* Safe area insets for notched phones */
-header, footer, main { padding-left: max(env(safe-area-inset-left), 0px); padding-right: max(env(safe-area-inset-right), 0px); }
-header { padding-top: env(safe-area-inset-top); }
-footer { padding-bottom: env(safe-area-inset-bottom); }
+/* Safe area insets for notched phones. In @layer base so Tailwind's padding
+   utilities (px-4, etc., which live in the later `utilities` layer) still win —
+   otherwise this unlayered rule would zero out the content's side padding. */
+@layer base {
+  header, footer, main { padding-left: max(env(safe-area-inset-left), 0px); padding-right: max(env(safe-area-inset-right), 0px); }
+  header { padding-top: env(safe-area-inset-top); }
+  footer { padding-bottom: env(safe-area-inset-bottom); }
+}
 
 /* Custom scrollbar — peek of poppy */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
