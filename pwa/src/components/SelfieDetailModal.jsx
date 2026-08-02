@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CroppedImage, cropLayout, minZoomFor } from "./CroppedImage.jsx";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
@@ -117,6 +117,25 @@ function SelfieDetailModal({
         ? draftItems.filter((x) => x !== id)
         : [...draftItems, id],
     );
+
+  // Looks that overlap the tagged pieces, ranked by closeness of match
+  // (Jaccard similarity, so a tight match beats a big look sharing one piece).
+  // Already-tagged looks are excluded — they've graduated to "Worn in".
+  const suggestedOutfits = useMemo(() => {
+    if (draftItems.length === 0) return [];
+    const tagged = new Set(draftItems);
+    return (outfits || [])
+      .filter((o) => !draftOutfitIds.includes(o.id))
+      .map((o) => {
+        const ids = o.itemIds || [];
+        const shared = ids.filter((id) => tagged.has(id)).length;
+        const union = new Set([...ids, ...draftItems]).size;
+        return { o, shared, score: union ? shared / union : 0 };
+      })
+      .filter((x) => x.shared > 0)
+      .sort((a, b) => b.score - a.score || b.shared - a.shared)
+      .slice(0, 3);
+  }, [outfits, draftItems, draftOutfitIds]);
 
   const save = () => {
     onSaveSelfies(
@@ -399,6 +418,37 @@ function SelfieDetailModal({
               </div>
             )}
           </div>
+
+          {/* Suggested looks — matched to the tagged pieces, tap to tag */}
+          {suggestedOutfits.length > 0 && (
+            <div>
+              <label className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1.5">
+                <I.sparkles size={11} className="text-buttercup-500" />
+                Suggested looks
+              </label>
+              <div
+                className="flex flex-wrap gap-1.5"
+                data-testid="selfie-suggestions"
+              >
+                {suggestedOutfits.map(({ o, shared }) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    data-testid="selfie-suggestion"
+                    data-outfit-id={o.id}
+                    onClick={() => toggleOutfit(o)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 border-dashed border-petal-200 bg-petal-50/50 text-petal-700 active:scale-95"
+                  >
+                    <I.plus size={11} />
+                    {toTitle(o.name)}
+                    <span className="text-[10px] leading-4 font-bold bg-petal-100 text-petal-600 rounded-full px-1.5">
+                      {shared}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-1">
             <button

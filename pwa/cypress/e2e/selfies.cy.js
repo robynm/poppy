@@ -286,6 +286,64 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.get('[data-testid="selfie-item"]').should("have.length", 2);
   });
 
+  it("suggests looks matching the tagged pieces, ranked by overlap", () => {
+    const wide = [
+      owned("i1", "White Tee", "top"),
+      owned("i2", "Blue Jeans", "bottom"),
+      owned("i3", "Sun Hat", "accessory"),
+      owned("i4", "Sneakers", "shoes"),
+    ];
+    const mk = (id, name, itemIds) => ({
+      id,
+      name,
+      itemIds,
+      seasons: [],
+      occasions: [],
+      note: "",
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    cy.gotoApp({
+      items: wide,
+      selfies: [selfie("s_1", JULY_A)],
+      outfits: [
+        mk("o1", "Sunny Day", ["i1", "i2"]), // shares 2
+        mk("o2", "Tee Combo", ["i1", "i3"]), // shares 1
+        mk("o3", "Rainy Day", ["i3", "i4"]), // shares 0
+      ],
+    });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+
+    // No pieces tagged → no suggestions.
+    cy.get('[data-testid="selfie-suggestion"]').should("not.exist");
+
+    // Tag White Tee + Blue Jeans.
+    cy.get('[data-testid="selfie-pieces-toggle"]').click();
+    cy.get('[data-testid="selfie-item"][data-item-id="i1"]').click();
+    cy.get('[data-testid="selfie-item"][data-item-id="i2"]').click();
+
+    // Only the overlapping looks are suggested, closest first (o1 shares 2).
+    cy.get('[data-testid="selfie-suggestion"]').should("have.length", 2);
+    cy.get('[data-testid="selfie-suggestion"]')
+      .first()
+      .should("have.attr", "data-outfit-id", "o1");
+    cy.get('[data-testid="selfie-suggestion"][data-outfit-id="o3"]').should(
+      "not.exist",
+    );
+
+    // Tagging a suggestion promotes it to "Worn in" and drops it from the list.
+    cy.get('[data-testid="selfie-suggestion"][data-outfit-id="o1"]').click();
+    cy.get('[data-testid="selfie-suggestion"][data-outfit-id="o1"]').should(
+      "not.exist",
+    );
+    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').should(
+      "exist",
+    );
+    cy.get('[data-testid="selfie-save"]').click();
+    readSelfies2().then((s) => expect(s[0].outfitIds).to.include("o1"));
+  });
+
   it("tags individual pieces directly on a snap", () => {
     cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [] });
     cy.tab("selfies");
