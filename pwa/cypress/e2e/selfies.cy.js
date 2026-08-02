@@ -1,5 +1,5 @@
-// Selfies: month-grouped gallery, upload, edit date (reflow), delete, and
-// association with a look (built in the look builder, shown in look detail).
+// Selfies: month-grouped gallery, upload, edit date, delete, mood rating, and
+// tagging (pieces directly + looks, which auto-add their pieces).
 
 const PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -9,11 +9,14 @@ const JULY_A = new Date(2026, 6, 15, 12).getTime(); // 2026-07
 const JULY_B = new Date(2026, 6, 2, 12).getTime(); // 2026-07
 const MAY = new Date(2026, 4, 10, 12).getTime(); // 2026-05
 
-const selfie = (id, dateTaken, outfitId = null) => ({
+const selfie = (id, dateTaken, over = {}) => ({
   id,
   createdAt: dateTaken,
   dateTaken,
-  outfitId,
+  outfitIds: [],
+  itemIds: [],
+  rating: null,
+  ...over,
 });
 
 const owned = (id, name, category) => ({
@@ -48,14 +51,12 @@ describe("Selfies gallery", () => {
     cy.tab("selfies");
 
     cy.get('[data-testid="selfie-month"]').should("have.length", 2);
-    // Newest month first.
     cy.get('[data-testid="selfie-month"]')
       .first()
       .should("have.attr", "data-month", "2026-07");
     cy.get('[data-testid="selfie-month"]')
       .eq(1)
       .should("have.attr", "data-month", "2026-05");
-    // July has two, May has one.
     cy.get('[data-month="2026-07"] [data-testid="selfie-card"]').should(
       "have.length",
       2,
@@ -105,11 +106,25 @@ describe("Selfies gallery", () => {
     );
   });
 
+  it("saves a mood rating and shows it on the thumbnail", () => {
+    cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+    cy.get('[data-testid="selfie-rating-btn"][data-rating="happy"]').click();
+    cy.get('[data-testid="selfie-save"]').click();
+
+    readSelfies().then((s) => expect(s[0].rating).to.eq("happy"));
+    cy.get('[data-testid="selfie-card-rating"]').should(
+      "have.attr",
+      "data-rating",
+      "happy",
+    );
+  });
+
   it("saves a zoom/crop adjustment on the snap", () => {
     cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
-    // Set the range via the native setter so React's onChange fires.
     cy.get('[data-testid="selfie-zoom"]').then(($el) => {
       const el = $el[0];
       const setter = Object.getOwnPropertyDescriptor(
@@ -132,7 +147,6 @@ describe("Selfies gallery", () => {
       "cypress/fixtures/sample-item.jpg",
       { force: true },
     );
-    // The new photo lands in IndexedDB for this snap (poll until written).
     const hasImage = () =>
       cy.window().then(
         (win) =>
@@ -170,7 +184,6 @@ describe("Selfies gallery", () => {
     cy.get('[data-testid="selfie-date"]').type("2026-05-10");
     cy.get('[data-testid="selfie-close"]').click();
 
-    // Nothing persisted — still under the original month.
     cy.get('[data-testid="selfie-month"]').should(
       "have.attr",
       "data-month",
@@ -211,9 +224,7 @@ describe("Selfies gallery", () => {
         },
       ],
     });
-    // Put a legacy selfie blob in IDB (the old `selfie_<outfitId>` convention).
     cy.seedImages({ selfie_o1: PNG });
-    // Simulate an un-migrated install and reload so the migration runs.
     cy.window().then((w) =>
       w.localStorage.removeItem("closet:selfies_migrated:v1"),
     );
@@ -224,20 +235,21 @@ describe("Selfies gallery", () => {
       const s = JSON.parse(w.localStorage.getItem("closet:selfies:v1"));
       expect(s).to.have.length(1);
       expect(s[0].id).to.eq("selfie_o1");
-      expect(s[0].dateTaken).to.eq(created); // dated to the look's creation
-      expect(s[0].outfitId).to.eq("o1"); // 1-to-many link lives on the selfie
+      expect(s[0].dateTaken).to.eq(created);
+      expect(s[0].outfitIds).to.include("o1"); // single link → outfitIds[]
+      expect(s[0].itemIds).to.include("i1"); // seeded from the look's pieces
     });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').should("have.length", 1);
   });
 });
 
-describe("Selfie ↔ look association (1-to-many)", () => {
-  const items = [owned("i1", "White Tee", "top")];
+describe("Selfie tagging (pieces + looks)", () => {
+  const items = [owned("i1", "White Tee", "top"), owned("i2", "Blue Jeans", "bottom")];
   const look = (over = {}) => ({
     id: "o1",
     name: "Sunny Day",
-    itemIds: ["i1"],
+    itemIds: ["i1", "i2"],
     seasons: [],
     occasions: [],
     note: "",
@@ -250,9 +262,64 @@ describe("Selfie ↔ look association (1-to-many)", () => {
       .window()
       .then((win) => JSON.parse(win.localStorage.getItem("closet:selfies:v1")));
 
-  it("links a selfie to a look in the builder and shows it in the detail", () => {
+  it("shows only tagged looks and pieces by default, expanding to edit", () => {
+    cy.gotoApp({
+      items,
+      selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1"] })],
+      outfits: [look(), look({ id: "o2", name: "Rainy Day" })],
+    });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+
+    // Collapsed: only the tagged look + tagged piece are shown.
+    cy.get('[data-testid="selfie-look-option"]').should("have.length", 1);
+    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').should(
+      "exist",
+    );
+    cy.get('[data-testid="selfie-item"]').should("have.length", 1);
+    cy.get('[data-testid="selfie-item"][data-item-id="i1"]').should("exist");
+
+    // Expand → the full selectable lists appear.
+    cy.get('[data-testid="selfie-looks-toggle"]').click();
+    cy.get('[data-testid="selfie-look-option"]').should("have.length", 2);
+    cy.get('[data-testid="selfie-pieces-toggle"]').click();
+    cy.get('[data-testid="selfie-item"]').should("have.length", 2);
+  });
+
+  it("tags individual pieces directly on a snap", () => {
     cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [] });
-    cy.seedImages({ s_1: PNG }); // detail only renders selfies that have a photo
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+    cy.get('[data-testid="selfie-pieces-toggle"]').click(); // expand to edit
+    cy.get('[data-testid="selfie-item"][data-item-id="i1"]').click();
+    cy.get('[data-testid="selfie-save"]').click();
+
+    readSelfies2().then((s) => {
+      expect(s[0].itemIds).to.include("i1");
+      expect(s[0].itemIds).to.not.include("i2");
+    });
+  });
+
+  it("tagging a look auto-adds its pieces; untagging the look leaves them", () => {
+    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [look()] });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+    cy.get('[data-testid="selfie-looks-toggle"]').click(); // expand to edit
+    // Tag the look → its pieces are added.
+    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').click();
+    // Untag the look → pieces remain.
+    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').click();
+    cy.get('[data-testid="selfie-save"]').click();
+
+    readSelfies2().then((s) => {
+      expect(s[0].outfitIds).to.not.include("o1");
+      expect(s[0].itemIds).to.include.members(["i1", "i2"]);
+    });
+  });
+
+  it("links a look via the builder and shows the snap in the look detail", () => {
+    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [] });
+    cy.seedImages({ s_1: PNG }); // detail only renders snaps that have a photo
 
     cy.tab("looks");
     cy.get('[data-testid="new-look-btn"]').click();
@@ -261,77 +328,78 @@ describe("Selfie ↔ look association (1-to-many)", () => {
     cy.get('[data-testid="builder-selfie"][data-selfie-id="s_1"]').click();
     cy.get('[data-testid="builder-save"]').click();
 
-    // The link is recorded on the selfie.
-    readSelfies2().then((s) => expect(s[0].outfitId).to.be.a("string"));
+    readSelfies2().then((s) => {
+      expect(s[0].outfitIds).to.have.length(1);
+      expect(s[0].itemIds).to.include("i1"); // the look's piece was added
+    });
     cy.get('[data-testid="outfit-card"]').click();
     cy.get('[data-testid="detail-selfies"]').should("be.visible");
     cy.get('[data-testid="detail-selfie-thumb"]').should("have.length", 1);
   });
 
-  it("links a look to a selfie from the edit-selfie screen", () => {
+  it("tags a look from the edit-selfie screen (adds its pieces)", () => {
     cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [look()] });
     cy.seedImages({ s_1: PNG });
 
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
-    cy.get('[data-testid="selfie-detail"]').should("be.visible");
-    cy.get('[data-testid="selfie-look"]').select("o1");
+    cy.get('[data-testid="selfie-looks-toggle"]').click(); // expand to edit
+    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').click();
     cy.get('[data-testid="selfie-save"]').click();
     cy.get('[data-testid="selfie-detail"]').should("not.exist");
-    readSelfies2().then((s) => expect(s[0].outfitId).to.eq("o1"));
+    readSelfies2().then((s) => {
+      expect(s[0].outfitIds).to.include("o1");
+      expect(s[0].itemIds).to.include.members(["i1", "i2"]);
+    });
 
-    // It now shows on the look.
     cy.tab("looks");
     cy.get('[data-testid="outfit-card"]').click();
     cy.get('[data-testid="detail-selfie-thumb"]').should("have.length", 1);
   });
 
-  it("offers only unlinked snaps in the look builder", () => {
+  it("offers all snaps in the builder (this look's pre-selected)", () => {
     cy.gotoApp({
       items,
-      selfies: [selfie("s_free", JULY_A), selfie("s_taken", JULY_A, "o1")],
+      selfies: [
+        selfie("s_free", JULY_A),
+        selfie("s_taken", JULY_A, { outfitIds: ["o1"], itemIds: ["i1", "i2"] }),
+      ],
       outfits: [look()],
     });
     cy.tab("looks");
     cy.get('[data-testid="new-look-btn"]').click();
-    cy.get('[data-testid="builder-selfie"]').should("have.length", 1);
-    cy.get('[data-testid="builder-selfie"][data-selfie-id="s_free"]').should(
-      "exist",
-    );
-    cy.get('[data-testid="builder-selfie"][data-selfie-id="s_taken"]').should(
-      "not.exist",
-    );
+    cy.get('[data-testid="builder-selfie"]').should("have.length", 2);
   });
 
   it("shows the linked look's name on the snap thumbnail", () => {
     cy.gotoApp({
       items,
-      selfies: [selfie("s_1", JULY_A, "o1")],
+      selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1", "i2"] })],
       outfits: [look()],
     });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card-look"]').should("contain", "Sunny Day");
   });
 
-  it("shows the selfie count on the look thumbnail", () => {
+  it("shows the snap count on the look thumbnail", () => {
     cy.gotoApp({
       items,
       outfits: [look()],
       selfies: [
-        selfie("s_1", JULY_A, "o1"),
-        selfie("s_2", JULY_B, "o1"),
-        selfie("s_3", MAY, null),
+        selfie("s_1", JULY_A, { outfitIds: ["o1"] }),
+        selfie("s_2", JULY_B, { outfitIds: ["o1"] }),
+        selfie("s_3", MAY),
       ],
     });
     cy.tab("looks");
     cy.get('[data-testid="outfit-card"]').should("contain", "2 snaps");
   });
 
-  it("deleting a selfie removes it from the look it was linked to", () => {
+  it("deleting a snap removes it from the look it was tagged in", () => {
     cy.confirmDialogs(true);
     cy.gotoApp({
       items,
-      selfies: [selfie("s_1", JULY_A, "o1")],
+      selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1"] })],
       outfits: [look()],
     });
     cy.seedImages({ s_1: PNG });
@@ -346,21 +414,23 @@ describe("Selfie ↔ look association (1-to-many)", () => {
     cy.get('[data-testid="detail-selfies"]').should("not.exist");
   });
 
-  it("unlinks a look's selfies when the look is deleted (selfies survive)", () => {
+  it("untags a deleted look from its snaps (snaps survive)", () => {
     cy.confirmDialogs(true);
     cy.gotoApp({
       items,
-      selfies: [selfie("s_1", JULY_A, "o1")],
+      selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1"] })],
       outfits: [look()],
     });
     cy.tab("looks");
     cy.get('[data-testid="outfit-card"]').click();
     cy.get('[data-testid="detail-delete"]').click();
 
-    // Look gone, selfie survives but unlinked.
     cy.get('[data-testid="outfit-card"]').should("not.exist");
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').should("have.length", 1);
-    readSelfies2().then((s) => expect(s[0].outfitId).to.eq(null));
+    readSelfies2().then((s) => {
+      expect(s[0].outfitIds).to.be.empty; // untagged
+      expect(s[0].itemIds).to.include("i1"); // tagged pieces stay
+    });
   });
 });

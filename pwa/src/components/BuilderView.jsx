@@ -23,7 +23,9 @@ function BuilderView({
   const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
   const [selectedSelfies, setSelectedSelfies] = useState(
     outfit
-      ? selfies.filter((s) => s.outfitId === outfit.id).map((s) => s.id)
+      ? selfies
+          .filter((s) => (s.outfitIds || []).includes(outfit.id))
+          .map((s) => s.id)
       : [],
   );
   const [name, setName] = useState(outfit ? outfit.name : "");
@@ -50,11 +52,9 @@ function BuilderView({
         ? selectedSelfies.filter((s) => s !== id)
         : [...selectedSelfies, id],
     );
-  // Only offer snaps that aren't already tied to a different look (this look's
-  // own snaps stay selectable when editing).
-  const availableSelfies = (selfies || []).filter(
-    (s) => !s.outfitId || (outfit && s.outfitId === outfit.id),
-  );
+  // A snap can be tagged with any number of looks, so offer all of them
+  // (this look's snaps come pre-selected).
+  const availableSelfies = selfies || [];
   const scopeObj = scopeCollection
     ? (collections || []).find((c) => c.id === scopeCollection)
     : null;
@@ -356,7 +356,7 @@ function BuilderView({
             </p>
             {availableSelfies.length === 0 ? (
               <p className="text-xs text-ink-400 italic">
-                No unlinked snaps — add some from the Snaps tab, then link them
+                No snaps yet — add some from the Snaps tab, then link them
                 here.
               </p>
             ) : (
@@ -375,7 +375,7 @@ function BuilderView({
                         <CroppedImage
                           url={images[s.id]}
                           crop={s.crop}
-                          className="w-full aspect-[3/4]"
+                          className="w-full aspect-[1/2]"
                         />
                         {active && (
                           <div className="absolute top-1.5 right-1.5 bg-buttercup-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-pop">

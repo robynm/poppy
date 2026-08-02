@@ -90,19 +90,12 @@ function StatsModal({
       .filter((x) => x.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    // Times worn — each snap counts as one wear for every item in its look.
-    // Looks with no snaps don't count as worn.
-    const snapsPerOutfit = {};
-    selfies.forEach((s) => {
-      if (s.outfitId)
-        snapsPerOutfit[s.outfitId] = (snapsPerOutfit[s.outfitId] || 0) + 1;
-    });
+    // Times worn — each snap counts as one wear for every piece tagged on it
+    // (an outfit tag adds its pieces to the snap, so this covers both).
     const wearCount = {};
-    outfits.forEach((o) => {
-      const wears = snapsPerOutfit[o.id] || 0;
-      if (!wears) return;
-      (o.itemIds || []).forEach((id) => {
-        wearCount[id] = (wearCount[id] || 0) + wears;
+    selfies.forEach((s) => {
+      (s.itemIds || []).forEach((id) => {
+        wearCount[id] = (wearCount[id] || 0) + 1;
       });
     });
     const totalWears = Object.values(wearCount).reduce((s, n) => s + n, 0);

@@ -4,7 +4,9 @@ import { I } from "../lib/icons.jsx";
 // The thumbnail + label block of a look tile — shared by the card and the drag ghost.
 function OutfitCardPreview({ outfit, items, images, selfies = [] }) {
   const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
-  const selfieCount = selfies.filter((s) => s.outfitId === outfit.id).length;
+  const selfieCount = selfies.filter((s) =>
+    (s.outfitIds || []).includes(outfit.id),
+  ).length;
   const thumbs = pieces.slice(0, 4).map((p) => ({ id: p.id, url: images[p.id] }));
   return (
     <>

@@ -20,7 +20,7 @@ function OutfitDetailModal({
   useBackButton(true, onClose);
   const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
   const linkedSelfies = selfies
-    .filter((s) => s.outfitId === outfit.id && images[s.id])
+    .filter((s) => (s.outfitIds || []).includes(outfit.id) && images[s.id])
     .sort((a, b) => b.dateTaken - a.dateTaken);
   const [sharing, setSharing] = useState(false);
   const handleShare = async () => {
@@ -143,7 +143,7 @@ function OutfitDetailModal({
                     <CroppedImage
                       url={images[s.id]}
                       crop={s.crop}
-                      className="w-full aspect-[3/4]"
+                      className="w-full aspect-[1/2]"
                     />
                     <p className="text-[9px] font-bold tracking-[0.05em] text-ink-600 text-center px-1 py-1">
                       {dateLabel(s.dateTaken)}

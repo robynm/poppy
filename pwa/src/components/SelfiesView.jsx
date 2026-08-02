@@ -11,9 +11,12 @@ import { Log } from "../lib/log.js";
 // A gallery of selfies grouped by the month each photo was taken. Photos are
 // uploaded here (date-taken read from EXIF, falling back to the file date) and
 // can be associated with looks from the look builder.
+const RATING_ICON = { happy: I.smile, meh: I.meh, sad: I.frown };
+
 function SelfiesView({
   selfies,
   outfits,
+  items,
   images,
   onSaveSelfies,
   onPutImage,
@@ -148,20 +151,35 @@ function SelfiesView({
                   </h4>
                   <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 items-start">
                     {group.items.map((s) => {
-                      const look = s.outfitId && outfitName[s.outfitId];
+                      const firstLook = (s.outfitIds || [])[0];
+                      const look = firstLook && outfitName[firstLook];
+                      const extra = (s.outfitIds || []).length - 1;
                       return (
                         <button
                           key={s.id}
                           data-testid="selfie-card"
                           data-selfie-id={s.id}
                           onClick={() => setViewingId(s.id)}
-                          className="bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform text-left"
+                          className="relative bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform text-left"
                         >
                           <CroppedImage
                             url={images[s.id]}
                             crop={s.crop}
-                            className="w-full aspect-[3/4]"
+                            className="w-full aspect-[1/2]"
                           />
+                          {s.rating &&
+                            (() => {
+                              const Glyph = RATING_ICON[s.rating];
+                              return (
+                                <span
+                                  data-testid="selfie-card-rating"
+                                  data-rating={s.rating}
+                                  className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-white/85 text-buttercup-600 shadow-card"
+                                >
+                                  <Glyph size={14} />
+                                </span>
+                              );
+                            })()}
                           {look && (
                             <div className="p-2 border-t-2 border-cream-100">
                               <p
@@ -169,6 +187,9 @@ function SelfiesView({
                                 className="font-display font-semibold text-xs leading-tight truncate text-ink-900"
                               >
                                 {toTitle(look)}
+                                {extra > 0 && (
+                                  <span className="text-ink-400"> +{extra}</span>
+                                )}
                               </p>
                             </div>
                           )}
@@ -188,6 +209,8 @@ function SelfiesView({
           selfie={viewing}
           imageUrl={images[viewing.id]}
           outfits={outfits}
+          items={items}
+          images={images}
           onSaveSelfies={onSaveSelfies}
           onReplaceImage={onPutImage}
           selfies={selfies}
