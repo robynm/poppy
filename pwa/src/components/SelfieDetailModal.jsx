@@ -4,6 +4,7 @@ import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
+import { resizeImageToBlob } from "../lib/images.js";
 
 // yyyy-mm-dd (local) for an <input type="date">.
 function toDateInputValue(ts) {
@@ -30,6 +31,7 @@ function SelfieDetailModal({
   outfits,
   selfies,
   onSaveSelfies,
+  onReplaceImage,
   onDelete,
   onClose,
 }) {
@@ -41,9 +43,28 @@ function SelfieDetailModal({
   const [draftOutfitId, setDraftOutfitId] = useState(selfie.outfitId ?? null);
   const [crop, setCrop] = useState(() => initCrop(selfie.crop));
   const [aspect, setAspect] = useState(null);
+  const [replacing, setReplacing] = useState(false);
 
   const frameRef = useRef(null);
   const dragRef = useRef(null);
+  const fileRef = useRef(null);
+
+  // Swap the underlying photo for this snap, keeping its id/date/look. The crop
+  // resets since the new image may be a different shape.
+  const handleReplace = async (file) => {
+    if (!file || !onReplaceImage) return;
+    setReplacing(true);
+    try {
+      const blob = await resizeImageToBlob(file, 1200, 0.88);
+      if (blob) {
+        await onReplaceImage(selfie.id, blob);
+        setCrop({ zoom: 1, x: 0.5, y: 0.5 });
+        setAspect(null);
+      }
+    } finally {
+      setReplacing(false);
+    }
+  };
 
   // How far you can zoom out (whole image visible) depends on the photo's shape.
   const minZoom = aspect ? minZoomFor(aspect) : 0.3;
@@ -102,7 +123,7 @@ function SelfieDetailModal({
 
         <div className="p-5 space-y-4">
           {/* Crop / reposition */}
-          <div>
+          <div className="select-none">
             <div
               ref={frameRef}
               onPointerDown={onPointerDown}
@@ -160,6 +181,28 @@ function SelfieDetailModal({
             <p className="text-[10px] text-center text-ink-400 mt-1">
               Drag to reposition · slide to zoom in or out
             </p>
+            <div className="mx-auto w-full max-w-[240px] mt-3">
+              <button
+                type="button"
+                data-testid="selfie-replace-btn"
+                onClick={() => fileRef.current?.click()}
+                disabled={replacing}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-cream-50 border-2 border-cream-100 text-ink-700 text-[10px] font-bold tracking-[0.2em] uppercase rounded-full active:scale-95 disabled:opacity-40"
+              >
+                <I.upload size={12} /> {replacing ? "Replacing…" : "Replace Photo"}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                data-testid="selfie-replace-file"
+                className="hidden"
+                onChange={(e) => {
+                  handleReplace(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </div>
           </div>
 
           <div>

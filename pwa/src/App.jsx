@@ -405,7 +405,9 @@ function ClosetApp() {
                     ? "bg-petal-500"
                     : headerAction.tone === "sky2"
                       ? "bg-sky2-500"
-                      : "bg-poppy-500"
+                      : headerAction.tone === "buttercup"
+                        ? "bg-buttercup-500"
+                        : "bg-poppy-500"
                 }`}
               >
                 <I.plus size={12} /> {headerAction.label}

@@ -50,6 +50,11 @@ function BuilderView({
         ? selectedSelfies.filter((s) => s !== id)
         : [...selectedSelfies, id],
     );
+  // Only offer snaps that aren't already tied to a different look (this look's
+  // own snaps stay selectable when editing).
+  const availableSelfies = (selfies || []).filter(
+    (s) => !s.outfitId || (outfit && s.outfitId === outfit.id),
+  );
   const scopeObj = scopeCollection
     ? (collections || []).find((c) => c.id === scopeCollection)
     : null;
@@ -349,14 +354,14 @@ function BuilderView({
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
               Snaps ({selectedSelfies.length})
             </p>
-            {selfies.length === 0 ? (
+            {availableSelfies.length === 0 ? (
               <p className="text-xs text-ink-400 italic">
-                No snaps yet — add some from the Snaps tab, then link them
+                No unlinked snaps — add some from the Snaps tab, then link them
                 here.
               </p>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {selfies.map((s) => {
+                {availableSelfies.map((s) => {
                   const active = selectedSelfies.includes(s.id);
                   return (
                     <div
