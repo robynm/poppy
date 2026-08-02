@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CroppedImage, cropLayout, minZoomFor } from "./CroppedImage.jsx";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
@@ -25,10 +25,18 @@ const norm = (v) => (v == null ? 0.5 : v > 1 ? v / 100 : v);
 const initCrop = (c) =>
   c ? { zoom: c.zoom ?? 1, x: norm(c.x), y: norm(c.y) } : { zoom: 1, x: 0.5, y: 0.5 };
 
+const RATINGS = [
+  { key: "happy", Glyph: I.smile },
+  { key: "meh", Glyph: I.meh },
+  { key: "sad", Glyph: I.frown },
+];
+
 function SelfieDetailModal({
   selfie,
   imageUrl,
   outfits,
+  items,
+  images,
   selfies,
   onSaveSelfies,
   onReplaceImage,
@@ -40,17 +48,20 @@ function SelfieDetailModal({
 
   // Edits are staged in a draft and only committed on Save.
   const [draftDate, setDraftDate] = useState(selfie.dateTaken);
-  const [draftOutfitId, setDraftOutfitId] = useState(selfie.outfitId ?? null);
+  const [draftOutfitIds, setDraftOutfitIds] = useState(selfie.outfitIds || []);
+  const [draftItems, setDraftItems] = useState(selfie.itemIds || []);
+  const [draftRating, setDraftRating] = useState(selfie.rating ?? null);
   const [crop, setCrop] = useState(() => initCrop(selfie.crop));
   const [aspect, setAspect] = useState(null);
   const [replacing, setReplacing] = useState(false);
+  // Looks & pieces show only what's tagged; expand to edit the full list.
+  const [looksOpen, setLooksOpen] = useState(false);
+  const [piecesOpen, setPiecesOpen] = useState(false);
 
   const frameRef = useRef(null);
   const dragRef = useRef(null);
   const fileRef = useRef(null);
 
-  // Swap the underlying photo for this snap, keeping its id/date/look. The crop
-  // resets since the new image may be a different shape.
   const handleReplace = async (file) => {
     if (!file || !onReplaceImage) return;
     setReplacing(true);
@@ -66,7 +77,6 @@ function SelfieDetailModal({
     }
   };
 
-  // How far you can zoom out (whole image visible) depends on the photo's shape.
   const minZoom = aspect ? minZoomFor(aspect) : 0.3;
 
   const changeDate = (e) => {
@@ -91,11 +101,54 @@ function SelfieDetailModal({
     dragRef.current = null;
   };
 
+  // Toggle a look. Adding also merges its pieces into the tagged items;
+  // removing leaves the tagged items untouched.
+  const toggleOutfit = (o) => {
+    if (draftOutfitIds.includes(o.id)) {
+      setDraftOutfitIds(draftOutfitIds.filter((x) => x !== o.id));
+    } else {
+      setDraftOutfitIds([...draftOutfitIds, o.id]);
+      setDraftItems((prev) => [...new Set([...prev, ...(o.itemIds || [])])]);
+    }
+  };
+  const toggleItem = (id) =>
+    setDraftItems(
+      draftItems.includes(id)
+        ? draftItems.filter((x) => x !== id)
+        : [...draftItems, id],
+    );
+
+  // Looks that overlap the tagged pieces, ranked by closeness of match
+  // (Jaccard similarity, so a tight match beats a big look sharing one piece).
+  // Already-tagged looks are excluded — they've graduated to "Worn in".
+  const suggestedOutfits = useMemo(() => {
+    if (draftItems.length === 0) return [];
+    const tagged = new Set(draftItems);
+    return (outfits || [])
+      .filter((o) => !draftOutfitIds.includes(o.id))
+      .map((o) => {
+        const ids = o.itemIds || [];
+        const shared = ids.filter((id) => tagged.has(id)).length;
+        const union = new Set([...ids, ...draftItems]).size;
+        return { o, shared, score: union ? shared / union : 0 };
+      })
+      .filter((x) => x.shared > 0)
+      .sort((a, b) => b.score - a.score || b.shared - a.shared)
+      .slice(0, 3);
+  }, [outfits, draftItems, draftOutfitIds]);
+
   const save = () => {
     onSaveSelfies(
       selfies.map((s) =>
         s.id === selfie.id
-          ? { ...s, dateTaken: draftDate, outfitId: draftOutfitId, crop }
+          ? {
+              ...s,
+              dateTaken: draftDate,
+              crop,
+              rating: draftRating,
+              outfitIds: draftOutfitIds,
+              itemIds: draftItems,
+            }
           : s,
       ),
     );
@@ -130,7 +183,7 @@ function SelfieDetailModal({
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
-              className="relative overflow-hidden rounded-2xl bg-cream-50 mx-auto w-full max-w-[240px] aspect-[3/4] touch-none select-none cursor-grab active:cursor-grabbing"
+              className="relative overflow-hidden rounded-2xl bg-cream-50 mx-auto w-full max-w-[200px] aspect-[1/2] touch-none select-none cursor-grab active:cursor-grabbing"
             >
               {imageUrl && (
                 <img
@@ -142,7 +195,6 @@ function SelfieDetailModal({
                       e.currentTarget.naturalWidth /
                       e.currentTarget.naturalHeight;
                     setAspect(a);
-                    // Never leave zoom below the fully-zoomed-out point.
                     setCrop((c) => ({
                       ...c,
                       zoom: Math.max(c.zoom, minZoomFor(a)),
@@ -163,7 +215,7 @@ function SelfieDetailModal({
                 />
               )}
             </div>
-            <div className="mx-auto w-full max-w-[240px] mt-2 flex items-center gap-2">
+            <div className="mx-auto w-full max-w-[200px] mt-2 flex items-center gap-2">
               <I.search size={13} className="shrink-0 text-ink-400" />
               <input
                 data-testid="selfie-zoom"
@@ -181,7 +233,7 @@ function SelfieDetailModal({
             <p className="text-[10px] text-center text-ink-400 mt-1">
               Drag to reposition · slide to zoom in or out
             </p>
-            <div className="mx-auto w-full max-w-[240px] mt-3">
+            <div className="mx-auto w-full max-w-[200px] mt-3">
               <button
                 type="button"
                 data-testid="selfie-replace-btn"
@@ -205,6 +257,36 @@ function SelfieDetailModal({
             </div>
           </div>
 
+          {/* Rating */}
+          <div>
+            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1.5">
+              How you felt
+            </label>
+            <div className="flex gap-2" data-testid="selfie-rating">
+              {RATINGS.map((r) => {
+                const active = draftRating === r.key;
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    data-testid="selfie-rating-btn"
+                    data-rating={r.key}
+                    onClick={() =>
+                      setDraftRating(active ? null : r.key)
+                    }
+                    className={`flex-1 flex items-center justify-center py-2.5 rounded-2xl border-2 transition-all ${
+                      active
+                        ? "border-buttercup-500 bg-buttercup-50 text-buttercup-600 shadow-pop"
+                        : "border-cream-100 text-ink-300"
+                    }`}
+                  >
+                    <r.Glyph size={26} stroke={1.75} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div>
             <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
               Date taken
@@ -218,30 +300,155 @@ function SelfieDetailModal({
             />
           </div>
 
+          {/* Looks (multi-select) — tagged only by default; expand to edit */}
           <div>
-            <label className="block text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1">
-              Worn in
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+                Worn in
+              </label>
+              {(outfits || []).length > 0 && (
+                <button
+                  type="button"
+                  data-testid="selfie-looks-toggle"
+                  onClick={() => setLooksOpen((o) => !o)}
+                  className="text-[10px] font-bold uppercase tracking-[0.1em] text-buttercup-600 active:text-buttercup-700"
+                >
+                  {looksOpen ? "Done" : "Edit"}
+                </button>
+              )}
+            </div>
             {(outfits || []).length === 0 ? (
               <p className="text-xs italic text-ink-400">
                 No looks yet — create one from the Looks tab.
               </p>
+            ) : !looksOpen && draftOutfitIds.length === 0 ? (
+              <p className="text-xs italic text-ink-400">
+                Not tagged in any looks yet.
+              </p>
             ) : (
-              <select
-                data-testid="selfie-look"
-                value={draftOutfitId ?? ""}
-                onChange={(e) => setDraftOutfitId(e.target.value || null)}
-                className="w-full bg-white border-2 border-cream-200 focus:border-buttercup-500 outline-none text-sm rounded-full px-3 py-2 font-bold text-ink-700"
-              >
-                <option value="">Not worn in a look</option>
-                {outfits.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {toTitle(o.name)}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-wrap gap-1.5" data-testid="selfie-looks">
+                {(looksOpen
+                  ? outfits
+                  : outfits.filter((o) => draftOutfitIds.includes(o.id))
+                ).map((o) => {
+                  const active = draftOutfitIds.includes(o.id);
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      data-testid="selfie-look-option"
+                      data-outfit-id={o.id}
+                      onClick={() => toggleOutfit(o)}
+                      className={`text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 transition-all ${
+                        active
+                          ? "bg-petal-500 text-white border-petal-500 shadow-pop"
+                          : "bg-petal-50 text-petal-700 border-petal-100"
+                      }`}
+                    >
+                      {toTitle(o.name)}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
+
+          {/* Tagged pieces — tagged only by default; expand to edit */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+                Pieces ({draftItems.length})
+              </label>
+              {(items || []).length > 0 && (
+                <button
+                  type="button"
+                  data-testid="selfie-pieces-toggle"
+                  onClick={() => setPiecesOpen((o) => !o)}
+                  className="text-[10px] font-bold uppercase tracking-[0.1em] text-buttercup-600 active:text-buttercup-700"
+                >
+                  {piecesOpen ? "Done" : "Edit"}
+                </button>
+              )}
+            </div>
+            {(items || []).length === 0 ? (
+              <p className="text-xs italic text-ink-400">
+                No pieces in your closet yet.
+              </p>
+            ) : !piecesOpen && draftItems.length === 0 ? (
+              <p className="text-xs italic text-ink-400">No pieces tagged yet.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {(piecesOpen
+                  ? items
+                  : items.filter((it) => draftItems.includes(it.id))
+                ).map((it) => {
+                  const active = draftItems.includes(it.id);
+                  return (
+                    <button
+                      key={it.id}
+                      type="button"
+                      data-testid="selfie-item"
+                      data-item-id={it.id}
+                      onClick={() => toggleItem(it.id)}
+                      className={`relative rounded-xl overflow-hidden border-2 transition-all active:scale-[0.97] ${
+                        active
+                          ? "border-buttercup-500 ring-2 ring-buttercup-500/25 shadow-pop"
+                          : "border-cream-100 bg-white"
+                      }`}
+                    >
+                      <div className="aspect-square bg-cream-50 flex items-center justify-center">
+                        {images[it.id] ? (
+                          <img
+                            src={images[it.id]}
+                            alt={it.name}
+                            className="w-full h-full object-contain p-1"
+                          />
+                        ) : (
+                          <I.shirt size={16} className="text-poppy-300" />
+                        )}
+                      </div>
+                      {active && (
+                        <div className="absolute top-0.5 right-0.5 bg-buttercup-500 text-white rounded-full w-4 h-4 flex items-center justify-center shadow-pop">
+                          <I.check size={9} />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Suggested looks — matched to the tagged pieces, tap to tag */}
+          {suggestedOutfits.length > 0 && (
+            <div>
+              <label className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1.5">
+                <I.sparkles size={11} className="text-buttercup-500" />
+                Suggested looks
+              </label>
+              <div
+                className="flex flex-wrap gap-1.5"
+                data-testid="selfie-suggestions"
+              >
+                {suggestedOutfits.map(({ o, shared }) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    data-testid="selfie-suggestion"
+                    data-outfit-id={o.id}
+                    onClick={() => toggleOutfit(o)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 border-dashed border-petal-200 bg-petal-50/50 text-petal-700 active:scale-95"
+                  >
+                    <I.plus size={11} />
+                    {toTitle(o.name)}
+                    <span className="text-[10px] leading-4 font-bold bg-petal-100 text-petal-600 rounded-full px-1.5">
+                      {shared}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-1">
             <button

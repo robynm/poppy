@@ -206,6 +206,23 @@ function ClosetApp() {
         lsSet(STORAGE_KEYS.outfits, outfits2);
       }
 
+      // Convert single `selfie.outfitId` → `outfitIds[]`, and seed `itemIds[]`
+      // (directly-tagged pieces) from the tagged outfits. Idempotent.
+      if (selfies2.some((s) => !s.outfitIds || !s.itemIds)) {
+        const byOutfit = new Map(outfits2.map((o) => [o.id, o]));
+        selfies2 = selfies2.map((s) => {
+          if (s.outfitIds && s.itemIds) return s;
+          const outfitIds = s.outfitIds || (s.outfitId ? [s.outfitId] : []);
+          const fromOutfits = outfitIds.flatMap(
+            (id) => byOutfit.get(id)?.itemIds || [],
+          );
+          const itemIds = [...new Set([...(s.itemIds || []), ...fromOutfits])];
+          const { outfitId, ...rest } = s;
+          return { ...rest, outfitIds, itemIds };
+        });
+        lsSet(STORAGE_KEYS.selfies, selfies2);
+      }
+
       if (cancelled) return;
       setItems(items2);
       setImages(urlMap);
@@ -550,6 +567,7 @@ function ClosetApp() {
         <SelfiesView
           selfies={selfies}
           outfits={outfits}
+          items={items}
           images={images}
           onSaveSelfies={saveSelfies}
           onPutImage={putImage}
@@ -583,13 +601,30 @@ function ClosetApp() {
                 ...outfits,
               ]);
             }
-            // Claim the chosen selfies for this look; release any it dropped.
+            // Tag the chosen selfies with this look (add to outfitIds and merge
+            // its pieces into itemIds); un-tag the look from any dropped selfie,
+            // but leave that selfie's tagged items in place.
             const chosen = new Set(selfieIds);
+            const outfitItemIds = rest.itemIds || [];
             saveSelfies(
               selfies.map((s) => {
-                if (chosen.has(s.id))
-                  return s.outfitId === outfitId ? s : { ...s, outfitId };
-                if (s.outfitId === outfitId) return { ...s, outfitId: null };
+                const linked = (s.outfitIds || []).includes(outfitId);
+                if (chosen.has(s.id)) {
+                  return {
+                    ...s,
+                    outfitIds: linked
+                      ? s.outfitIds
+                      : [...(s.outfitIds || []), outfitId],
+                    itemIds: [
+                      ...new Set([...(s.itemIds || []), ...outfitItemIds]),
+                    ],
+                  };
+                }
+                if (linked)
+                  return {
+                    ...s,
+                    outfitIds: s.outfitIds.filter((x) => x !== outfitId),
+                  };
                 return s;
               }),
             );

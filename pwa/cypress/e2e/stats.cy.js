@@ -1,5 +1,6 @@
-// Stats: "Most worn" is driven by snaps — each snap on a look counts as one
-// wear for every item in that look; looks with no snaps don't count.
+// Stats: "Most worn" is driven by snaps — each snap counts as one wear for
+// every piece tagged on it (tagging a look adds its pieces to the snap, so a
+// snap carries its own itemIds); pieces on no snap don't count.
 
 const owned = (id, name, category) => ({
   id,
@@ -12,11 +13,12 @@ const owned = (id, name, category) => ({
   brand: "",
   yearPurchased: "",
 });
-const snap = (id, outfitId) => ({
+const snap = (id, itemIds) => ({
   id,
   createdAt: 1700000000000,
   dateTaken: 1700000000000,
-  outfitId,
+  outfitIds: [],
+  itemIds,
 });
 const look = (id, itemIds) => ({
   id,
@@ -43,9 +45,9 @@ describe("Stats — times worn", () => {
         owned("i2", "Blue Jeans", "bottom"),
         owned("i3", "Sun Hat", "accessory"),
       ],
-      // o1 has two snaps; o2 has none.
+      // o1 has two snaps (each carrying o1's pieces); o2 has none.
       outfits: [look("o1", ["i1", "i2"]), look("o2", ["i2", "i3"])],
-      selfies: [snap("s1", "o1"), snap("s2", "o1")],
+      selfies: [snap("s1", ["i1", "i2"]), snap("s2", ["i1", "i2"])],
     });
     openStats();
 
@@ -74,7 +76,7 @@ describe("Stats — times worn", () => {
     cy.gotoApp({
       items,
       outfits: [look("o1", items.map((i) => i.id))],
-      selfies: [snap("s1", "o1")],
+      selfies: [snap("s1", items.map((i) => i.id))],
     });
     openStats();
 

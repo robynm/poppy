@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // Portrait frame aspect (width / height) that snaps are cropped to.
-const FRAME_ASPECT = 3 / 4;
+const FRAME_ASPECT = 1 / 2;
 
 // x/y focal are stored 0..1. Guard older data that used 0..100.
 function focal(v) {

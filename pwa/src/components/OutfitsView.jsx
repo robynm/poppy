@@ -64,10 +64,15 @@ function OutfitsView({
   const handleDelete = (id) => {
     if (!confirm("Delete this outfit?")) return;
     onSave(outfits.filter((o) => o.id !== id));
-    // Selfies outlive the look — just unlink any that pointed to it.
-    if (onSaveSelfies && selfies.some((s) => s.outfitId === id)) {
+    // Selfies outlive the look — just untag it from any that reference it
+    // (their tagged pieces stay put).
+    if (onSaveSelfies && selfies.some((s) => (s.outfitIds || []).includes(id))) {
       onSaveSelfies(
-        selfies.map((s) => (s.outfitId === id ? { ...s, outfitId: null } : s)),
+        selfies.map((s) =>
+          (s.outfitIds || []).includes(id)
+            ? { ...s, outfitIds: s.outfitIds.filter((x) => x !== id) }
+            : s,
+        ),
       );
     }
   };
