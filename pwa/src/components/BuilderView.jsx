@@ -326,7 +326,7 @@ function BuilderView({
                     className={`cursor-pointer fade-up rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                     style={{ animationDelay: `${i * 20}ms` }}
                   >
-                    <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center relative">
+                    <div className="aspect-square bg-poppy-gradient flex items-center justify-center relative">
                       {images[it.id] && (
                         <img
                           src={images[it.id]}

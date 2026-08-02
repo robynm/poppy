@@ -37,7 +37,7 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
         </div>
 
         <div className="px-4 sm:px-6 pt-6 pb-4 flex flex-col items-center">
-          <div className="w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden flex items-center justify-center">
+          <div className="w-full max-w-xs aspect-[3/4] bg-poppy-gradient rounded-2xl overflow-hidden flex items-center justify-center">
             {image ? (
               <img
                 src={image}

@@ -95,7 +95,7 @@ function EditDrawer({
 
         <div className="p-4 sm:p-6">
           <div className="flex flex-col items-center">
-            <div className="relative w-full max-w-xs aspect-[3/4] bg-gradient-to-br bg-poppy-gradient rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
+            <div className="relative w-full max-w-xs aspect-[3/4] bg-poppy-gradient rounded-2xl overflow-hidden mb-3 flex items-center justify-center">
               {image && (
                 <img
                   src={image}
