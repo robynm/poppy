@@ -347,7 +347,7 @@ function ManageCollectionsModal({
                             onClick={() => toggleItem(it.id)}
                             className={`relative rounded-2xl overflow-hidden border-2 transition-all active:scale-[0.97] ${active ? "border-poppy-500 ring-2 ring-poppy-500/25 shadow-pop" : "border-cream-100 bg-white"}`}
                           >
-                            <div className="aspect-square bg-gradient-to-br bg-poppy-gradient flex items-center justify-center">
+                            <div className="aspect-square bg-poppy-gradient flex items-center justify-center">
                               {images[it.id] && (
                                 <img
                                   src={images[it.id]}

@@ -739,7 +739,7 @@ function ClosetView({
               }}
             >
               <div
-                className={`${dragMode ? "aspect-square" : "aspect-[3/4]"} bg-gradient-to-br bg-poppy-gradient flex items-center justify-center overflow-hidden`}
+                className={`${dragMode ? "aspect-square" : "aspect-[3/4]"} bg-poppy-gradient flex items-center justify-center overflow-hidden`}
               >
                 {image ? (
                   <img

@@ -1,6 +1,94 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Safelist for classes built dynamically at runtime (e.g. AboutModal's
+   `bg-${tone}-50`). Mirrors the old JS safelist regex. */
+@source inline("{bg,text,border}-{poppy,cream,ink,buttercup,leaf,petal,sky2,plum}-{50,100,200,300,400,500,600,700,800,900}");
+
+/* Theme — map Tailwind's color/shadow namespaces onto the CSS variables below.
+   `inline` references the raw vars directly so the [data-theme="winter"]
+   overrides cascade and utilities like `bg-poppy-500` stay theme-aware. */
+@theme inline {
+  --color-poppy-50: var(--poppy-50);
+  --color-poppy-100: var(--poppy-100);
+  --color-poppy-200: var(--poppy-200);
+  --color-poppy-300: var(--poppy-300);
+  --color-poppy-400: var(--poppy-400);
+  --color-poppy-500: var(--poppy-500);
+  --color-poppy-600: var(--poppy-600);
+  --color-poppy-700: var(--poppy-700);
+  --color-poppy-800: var(--poppy-800);
+  --color-poppy-900: var(--poppy-900);
+
+  --color-cream-50: var(--cream-50);
+  --color-cream-100: var(--cream-100);
+  --color-cream-200: var(--cream-200);
+  --color-cream-300: var(--cream-300);
+  --color-cream-400: var(--cream-400);
+  --color-cream-500: var(--cream-500);
+  --color-cream-600: var(--cream-600);
+  --color-cream-700: var(--cream-700);
+
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+
+  --color-buttercup-50: var(--buttercup-50);
+  --color-buttercup-100: var(--buttercup-100);
+  --color-buttercup-200: var(--buttercup-200);
+  --color-buttercup-300: var(--buttercup-300);
+  --color-buttercup-400: var(--buttercup-400);
+  --color-buttercup-500: var(--buttercup-500);
+  --color-buttercup-600: var(--buttercup-600);
+  --color-buttercup-700: var(--buttercup-700);
+
+  --color-leaf-50: var(--leaf-50);
+  --color-leaf-100: var(--leaf-100);
+  --color-leaf-200: var(--leaf-200);
+  --color-leaf-300: var(--leaf-300);
+  --color-leaf-400: var(--leaf-400);
+  --color-leaf-500: var(--leaf-500);
+  --color-leaf-600: var(--leaf-600);
+  --color-leaf-700: var(--leaf-700);
+
+  --color-petal-50: var(--petal-50);
+  --color-petal-100: var(--petal-100);
+  --color-petal-200: var(--petal-200);
+  --color-petal-300: var(--petal-300);
+  --color-petal-400: var(--petal-400);
+  --color-petal-500: var(--petal-500);
+  --color-petal-600: var(--petal-600);
+  --color-petal-700: var(--petal-700);
+
+  --color-sky2-50: var(--sky2-50);
+  --color-sky2-100: var(--sky2-100);
+  --color-sky2-200: var(--sky2-200);
+  --color-sky2-300: var(--sky2-300);
+  --color-sky2-400: var(--sky2-400);
+  --color-sky2-500: var(--sky2-500);
+  --color-sky2-600: var(--sky2-600);
+  --color-sky2-700: var(--sky2-700);
+
+  --color-plum-50: var(--plum-50);
+  --color-plum-100: var(--plum-100);
+  --color-plum-200: var(--plum-200);
+  --color-plum-300: var(--plum-300);
+  --color-plum-400: var(--plum-400);
+  --color-plum-500: var(--plum-500);
+  --color-plum-600: var(--plum-600);
+  --color-plum-700: var(--plum-700);
+
+  --shadow-poppy: var(--sh-poppy);
+  --shadow-card: var(--sh-card);
+  --shadow-card-hi: var(--sh-card-hi);
+  --shadow-pop: var(--sh-pop);
+}
 
 /* ── Spring (default) ── */
 :root {
@@ -20,10 +108,10 @@
   --sky2-400:#469CCB;  --sky2-500:#2882B7;  --sky2-600:#1E6594;  --sky2-700:#164D72;
   --plum-50:#F4EEFB;   --plum-100:#E1D2F4;  --plum-200:#C5A8E8;  --plum-300:#A881D8;
   --plum-400:#8D60C5;  --plum-500:#7344AB;  --plum-600:#583389;  --plum-700:#3F2566;
-  --shadow-poppy: 0 12px 32px -12px rgba(255,90,54,0.45);
-  --shadow-card:  0 4px 16px -6px rgba(94,21,5,0.10);
-  --shadow-card-hi: 0 18px 36px -16px rgba(94,21,5,0.20);
-  --shadow-pop:   0 8px 24px -8px rgba(94,21,5,0.18);
+  --sh-poppy: 0 12px 32px -12px rgba(255,90,54,0.45);
+  --sh-card:  0 4px 16px -6px rgba(94,21,5,0.10);
+  --sh-card-hi: 0 18px 36px -16px rgba(94,21,5,0.20);
+  --sh-pop:   0 8px 24px -8px rgba(94,21,5,0.18);
   --wash: radial-gradient(circle at 90% -10%, rgba(255,90,54,0.10), transparent 40%),
           radial-gradient(circle at -10% 110%, rgba(247,201,72,0.10), transparent 45%);
 }
@@ -45,10 +133,10 @@
   --sky2-400:#0E89FA;  --sky2-500:#006AD1;  --sky2-600:#0052A4;  --sky2-700:#003C77;
   --plum-50:#F0E8FF;   --plum-100:#D6C2FF;  --plum-200:#B391FF;  --plum-300:#905CFF;
   --plum-400:#6F2EFE;  --plum-500:#5610E2;  --plum-600:#4308B5;  --plum-700:#320588;
-  --shadow-poppy: 0 12px 32px -12px rgba(215,16,41,0.40);
-  --shadow-card:  0 4px 16px -6px rgba(20,30,43,0.10);
-  --shadow-card-hi: 0 18px 36px -16px rgba(20,30,43,0.22);
-  --shadow-pop:   0 8px 24px -8px rgba(20,30,43,0.18);
+  --sh-poppy: 0 12px 32px -12px rgba(215,16,41,0.40);
+  --sh-card:  0 4px 16px -6px rgba(20,30,43,0.10);
+  --sh-card-hi: 0 18px 36px -16px rgba(20,30,43,0.22);
+  --sh-pop:   0 8px 24px -8px rgba(20,30,43,0.18);
   --wash: linear-gradient(160deg, #ECF1F7 0%, #F7FAFC 100%);
 }
 
@@ -58,17 +146,11 @@ body { font-family: 'Nunito', -apple-system, system-ui, sans-serif; color: var(-
 
 /* Background wash — driven by CSS variable so it changes with theme */
 .poppy-wash { background-image: var(--wash); }
-.bg-poppy-gradient {
-  --tw-gradient-from: var(--cream-100) var(--tw-gradient-from-position);
-  --tw-gradient-to: var(--poppy-100) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
 
-[data-theme="winter"] .bg-poppy-gradient {
-  --tw-gradient-from: var(--cream-50) var(--tw-gradient-from-position);
-  --tw-gradient-to: var(--cream-100) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
+/* Placeholder gradient behind item photos. Self-contained (v4-safe) so it no
+   longer depends on Tailwind's internal gradient custom properties. */
+.bg-poppy-gradient { background-image: linear-gradient(to bottom right, var(--cream-100), var(--poppy-100)); }
+[data-theme="winter"] .bg-poppy-gradient { background-image: linear-gradient(to bottom right, var(--cream-50), var(--cream-100)); }
 
 
 .item-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s; content-visibility: auto; contain-intrinsic-size: auto 150px; }
