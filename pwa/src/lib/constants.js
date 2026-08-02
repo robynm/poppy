@@ -23,17 +23,22 @@ const OCCASION_OPTIONS = [
   "formal",
 ];
 const STATUS_OPTIONS = ["planned", "owned", "donated"];
+// High-level kind of an edit (single-select). Outfit = worn together; capsule =
+// mix-and-match themed set; packing list = for a trip; rotation = a season's go-to set.
+const EDIT_TYPE_OPTIONS = ["outfit", "capsule", "packing list", "rotation"];
 
 const STORAGE_KEYS = {
   items: "closet:items:v1",
-  outfits: "closet:outfits:v1",
+  edits: "closet:edits:v1", // unified "edits" — outfits + collections merged into one concept
+  outfits: "closet:outfits:v1", // legacy — read once for the edits merge + legacy backups
   customTags: "closet:custom_tags:v1",
   brands: "closet:brands:v1",
-  collections: "closet:collections:v1",
+  collections: "closet:collections:v1", // legacy — read once for the edits merge + legacy backups
   selfies: "closet:selfies:v1",
   seeded: "closet:seeded:v1",
   imagesMigrated: "closet:images_migrated:v1", // set to true once legacy localStorage images have been moved to IDB
   selfiesMigrated: "closet:selfies_migrated:v1", // set once legacy per-outfit selfies (selfie_<id>) have become first-class selfie entities
+  editsMerged: "closet:edits_merged:v1", // set once legacy outfits + collections have been merged into edits
   theme: "closet:theme",
   splashDismissed: "closet:splash_dismissed:v1", // set once a browser (non-installed) visitor chooses to continue
   diag: "closet:diag:v1", // rolling diagnostics log (see Log below)
@@ -44,4 +49,4 @@ const LEGACY_IMAGES_KEY = "closet:images:v1";
 
 const BACKUP_FORMAT = "wardrobe-backup-v1";
 
-export { POPPY_MARK_SRC, CATEGORY_OPTIONS, SEASON_OPTIONS, OCCASION_OPTIONS, STATUS_OPTIONS, STORAGE_KEYS, LEGACY_IMAGES_KEY, BACKUP_FORMAT };
+export { POPPY_MARK_SRC, CATEGORY_OPTIONS, SEASON_OPTIONS, OCCASION_OPTIONS, STATUS_OPTIONS, EDIT_TYPE_OPTIONS, STORAGE_KEYS, LEGACY_IMAGES_KEY, BACKUP_FORMAT };

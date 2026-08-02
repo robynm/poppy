@@ -10,10 +10,9 @@ import { IDB } from "../lib/storage.js";
 function BackupModal({
   items,
   images,
-  outfits,
+  edits,
   customTags,
   brands,
-  collections,
   selfies,
   onClose,
   onImport,
@@ -60,7 +59,7 @@ function BackupModal({
       storageEstimate && storageEstimate.quota
         ? `Storage: ${formatBytes(storageEstimate.usage || 0)} used of ${formatBytes(storageEstimate.quota)}`
         : `Storage: estimate unavailable`,
-      `Items: ${items.length} · Outfits: ${outfits.length} · Photos in IndexedDB: ${idbCount === null ? "?" : idbCount} · Photos in memory: ${Object.keys(images).length}`,
+      `Items: ${items.length} · Edits: ${edits.length} · Photos in IndexedDB: ${idbCount === null ? "?" : idbCount} · Photos in memory: ${Object.keys(images).length}`,
       ``,
       `Recent events (newest last):`,
       ...Log.entries().map(
@@ -136,10 +135,9 @@ function BackupModal({
       }
       const { sizeBytes } = await exportBackup({
         items,
-        outfits,
+        edits,
         customTags,
         brands,
-        collections,
         selfies,
       });
       setStatus({
@@ -191,8 +189,8 @@ function BackupModal({
         photoCount,
         missing,
       });
-      const colsCount = result.data.collections?.length || 0;
-      const found = `Found ${itemCount} items, ${result.data.outfits.length} outfits${colsCount ? `, ${colsCount} collections` : ""}, ${photoCount} photos.`;
+      const editCount = result.data.edits?.length || 0;
+      const found = `Found ${itemCount} items, ${editCount} edit${editCount === 1 ? "" : "s"}, ${photoCount} photos.`;
       if (missing > 0) {
         setStatus({
           kind: "warn",
@@ -217,10 +215,10 @@ function BackupModal({
     // Build a `current` snapshot without the images map — images live in IDB now.
     const current = {
       items,
-      outfits,
+      edits,
       customTags,
       brands: brands || [],
-      collections: collections || [],
+      selfies: selfies || [],
     };
     const next =
       strategy === "replace"
@@ -301,8 +299,8 @@ function BackupModal({
 
         <div className="mb-6 p-3 bg-cream-50 border-2 border-cream-100 rounded-2xl text-xs text-ink-600 leading-relaxed">
           <span className="font-bold text-ink-800">{items.length}</span> pieces
-          · <span className="font-bold text-ink-800">{outfits.length}</span>{" "}
-          outfits · <span className="font-bold text-ink-800">{photoCount}</span>{" "}
+          · <span className="font-bold text-ink-800">{edits.length}</span>{" "}
+          edits · <span className="font-bold text-ink-800">{photoCount}</span>{" "}
           photos{storageLine ? ` · ${storageLine}` : ""}
         </div>
 
@@ -392,7 +390,7 @@ function BackupModal({
                   onClick={() => {
                     if (
                       confirm(
-                        "Replace your entire closet with this backup? Your current items and outfits will be deleted.",
+                        "Replace your entire closet with this backup? Your current items and edits will be deleted.",
                       )
                     ) {
                       applyStrategy("replace");

@@ -19,17 +19,15 @@ function ClosetView({
   images,
   customTags,
   brands,
-  collections,
-  outfits,
-  activeCollection,
-  onSetActiveCollection,
+  edits,
+  activeEdit,
+  onSetActiveEdit,
   onSaveItems,
   onPutImage,
   onDeleteImage,
   onSaveCustomTags,
   onSaveBrands,
-  onSaveCollections,
-  onSaveOutfits,
+  onSaveEdits,
   onSetHeaderAction,
   onOpenStats,
 }) {
@@ -70,9 +68,9 @@ function ClosetView({
   const [showFilters, setShowFilters] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [bulkSheet, setBulkSheet] = useState(null); // "tags" | "collections" | "outfits"
+  const [bulkSheet, setBulkSheet] = useState(null); // "tags" | "edits"
   const [dragMode, setDragMode] = useState(false);
-  const setActiveCollection = onSetActiveCollection;
+  const setActiveEdit = onSetActiveEdit;
 
   const toggle = (list, setList, v) =>
     setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -98,14 +96,14 @@ function ClosetView({
     } else setSelectMode(true);
   };
 
-  const activeCollectionObj = activeCollection
-    ? collections.find((c) => c.id === activeCollection)
+  const activeEditObj = activeEdit
+    ? edits.find((e) => e.id === activeEdit)
     : null;
 
   const filtered = useMemo(
     () =>
       items.filter((it) => {
-        if (activeCollectionObj && !activeCollectionObj.itemIds.includes(it.id))
+        if (activeEditObj && !activeEditObj.itemIds.includes(it.id))
           return false;
         if (
           activeStatuses.length &&
@@ -139,7 +137,7 @@ function ClosetView({
       }),
     [
       items,
-      activeCollectionObj,
+      activeEditObj,
       activeStatuses,
       activeBrands,
       activeYears,
@@ -197,11 +195,11 @@ function ClosetView({
   const handleDelete = (id) => {
     onSaveItems(items.filter((i) => i.id !== id));
     onDeleteImage(id);
-    // Remove the deleted item from any collection it belongs to
-    onSaveCollections(
-      (collections || []).map((c) => ({
-        ...c,
-        itemIds: c.itemIds.filter((x) => x !== id),
+    // Remove the deleted item from any edit it belongs to
+    onSaveEdits(
+      (edits || []).map((e) => ({
+        ...e,
+        itemIds: e.itemIds.filter((x) => x !== id),
       })),
     );
     if (editing === id) setEditing(null);
@@ -265,7 +263,7 @@ function ClosetView({
     activeSeasons.length +
     activeOccasions.length +
     activeCustom.length +
-    (activeCollection ? 1 : 0) +
+    (activeEdit ? 1 : 0) +
     (activeStatuses.length === 1 && activeStatuses[0] === "owned" ? 0 : 1) +
     activeBrands.length +
     activeYears.length;
@@ -347,9 +345,9 @@ function ClosetView({
             </p>
           </div>
 
-          {activeCollectionObj && activeCollectionObj.description && (
+          {activeEditObj && activeEditObj.note && (
             <p className="text-sm italic text-ink-500 mb-4">
-              "{activeCollectionObj.description}"
+              "{activeEditObj.note}"
             </p>
           )}
 
@@ -421,27 +419,25 @@ function ClosetView({
                   </Chip>
                 ))}
               </FilterRow>
-              {collections.length > 0 && (
-                <FilterRow label="Collection">
+              {edits.length > 0 && (
+                <FilterRow label="Edit">
                   <Chip
                     tone="collection"
-                    active={activeCollection === null}
-                    onClick={() => setActiveCollection(null)}
+                    active={activeEdit === null}
+                    onClick={() => setActiveEdit(null)}
                   >
                     Entire Closet
                   </Chip>
-                  {collections.map((c) => (
+                  {edits.map((e) => (
                     <Chip
-                      key={c.id}
+                      key={e.id}
                       tone="collection"
-                      active={activeCollection === c.id}
+                      active={activeEdit === e.id}
                       onClick={() =>
-                        setActiveCollection(
-                          activeCollection === c.id ? null : c.id,
-                        )
+                        setActiveEdit(activeEdit === e.id ? null : e.id)
                       }
                     >
-                      {toTitle(c.name)}
+                      {toTitle(e.name)}
                     </Chip>
                   ))}
                 </FilterRow>
@@ -538,7 +534,7 @@ function ClosetView({
                     setActiveSeasons([]);
                     setActiveOccasions([]);
                     setActiveCustom([]);
-                    setActiveCollection(null);
+                    setActiveEdit(null);
                     setActiveStatuses(["owned"]);
                     setActiveBrands([]);
                     setActiveYears([]);
@@ -557,12 +553,12 @@ function ClosetView({
               data-testid="active-filters"
               className="mb-4 flex flex-wrap items-center gap-2"
             >
-              {activeCollection && activeCollectionObj && (
+              {activeEdit && activeEditObj && (
                 <RemovableChip
                   tone="collection"
-                  onRemove={() => setActiveCollection(null)}
+                  onRemove={() => setActiveEdit(null)}
                 >
-                  <I.folder size={11} /> {toTitle(activeCollectionObj.name)}
+                  <I.layers size={11} /> {toTitle(activeEditObj.name)}
                 </RemovableChip>
               )}
               {!(
@@ -652,7 +648,7 @@ function ClosetView({
                   setActiveSeasons([]);
                   setActiveOccasions([]);
                   setActiveCustom([]);
-                  setActiveCollection(null);
+                  setActiveEdit(null);
                   setActiveStatuses(["owned"]);
                   setActiveBrands([]);
                   setActiveYears([]);
@@ -791,7 +787,7 @@ function ClosetView({
         <ViewDrawer
           item={items.find((i) => i.id === viewing)}
           image={images[viewing]}
-          collections={collections}
+          edits={edits}
           onClose={() => setViewing(null)}
           onEdit={() => {
             setEditing(viewing);
@@ -806,10 +802,10 @@ function ClosetView({
           customTags={customTags}
           usedCustomTags={usedCustomTags}
           brands={brands}
-          collections={collections}
+          edits={edits}
           onCustomTagsChange={onSaveCustomTags}
           onBrandsChange={onSaveBrands}
-          onCollectionsChange={onSaveCollections}
+          onEditsChange={onSaveEdits}
           onReplaceImage={(id, blob) => onPutImage(id, blob)}
           onClose={() => {
             setEditing(null);
@@ -865,18 +861,11 @@ function ClosetView({
               Tags
             </button>
             <button
-              onClick={() => setBulkSheet("outfits")}
-              data-testid="bulk-looks"
+              onClick={() => setBulkSheet("edits")}
+              data-testid="bulk-edits"
               className="px-3.5 py-2 bg-petal-50 text-petal-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-petal-100"
             >
-              Looks
-            </button>
-            <button
-              onClick={() => setBulkSheet("collections")}
-              data-testid="bulk-collections"
-              className="px-3.5 py-2 bg-sky2-50 text-sky2-700 text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 active:bg-sky2-100"
-            >
-              Collections
+              Edits
             </button>
           </div>
         </div>
@@ -888,12 +877,10 @@ function ClosetView({
           selectedIds={selectedIds}
           items={items}
           customTags={customTags}
-          collections={collections}
-          outfits={outfits}
+          edits={edits}
           onSaveItems={onSaveItems}
           onSaveCustomTags={onSaveCustomTags}
-          onSaveCollections={onSaveCollections}
-          onSaveOutfits={onSaveOutfits}
+          onSaveEdits={onSaveEdits}
           onClose={() => setBulkSheet(null)}
         />
       )}

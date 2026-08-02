@@ -5,11 +5,11 @@ describe("Navigation, theme & splash", () => {
     cy.gotoApp({ items: [] });
     cy.get('[data-testid="add-piece-btn"]').should("be.visible"); // Closet
 
-    cy.tab("looks");
-    cy.get('[data-testid="new-look-btn"]').should("be.visible");
+    cy.tab("selfies");
+    cy.get('[data-testid="selfies-upload-btn"]').should("be.visible");
 
-    cy.tab("collections");
-    cy.get('[data-testid="new-collection-btn"]').should("be.visible");
+    cy.tab("edits");
+    cy.get('[data-testid="new-edit-btn"]').should("be.visible");
 
     cy.tab("closet");
     cy.get('[data-testid="add-piece-btn"]').should("be.visible");

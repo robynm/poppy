@@ -20,7 +20,7 @@ const RATING_FILTERS = [
 
 function SelfiesView({
   selfies,
-  outfits,
+  edits,
   items,
   images,
   onSaveSelfies,
@@ -89,8 +89,8 @@ function SelfiesView({
       : selfies;
   const groups = groupByMonth(filteredSelfies);
   const viewing = selfies.find((s) => s.id === viewingId);
-  const outfitName = Object.fromEntries(
-    (outfits || []).map((o) => [o.id, o.name]),
+  const editName = Object.fromEntries(
+    (edits || []).map((e) => [e.id, e.name]),
   );
 
   return (
@@ -217,7 +217,7 @@ function SelfiesView({
                   <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 items-start">
                     {group.items.map((s) => {
                       const firstLook = (s.outfitIds || [])[0];
-                      const look = firstLook && outfitName[firstLook];
+                      const look = firstLook && editName[firstLook];
                       const extra = (s.outfitIds || []).length - 1;
                       return (
                         <button
@@ -273,7 +273,7 @@ function SelfiesView({
         <SelfieDetailModal
           selfie={viewing}
           imageUrl={images[viewing.id]}
-          outfits={outfits}
+          edits={edits}
           items={items}
           images={images}
           onSaveSelfies={onSaveSelfies}

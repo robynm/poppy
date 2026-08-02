@@ -23,16 +23,16 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
       desc: "Photograph and organize everything you own.",
     },
     {
-      Icon: I.sunglasses,
+      Icon: I.layers,
       tone: "text-petal-600 bg-petal-100",
-      title: "Looks",
-      desc: "Combine pieces into outfits worth keeping.",
+      title: "Edits",
+      desc: "Outfits, capsules, and packing lists worth keeping.",
     },
     {
-      Icon: I.suitcase,
-      tone: "text-sky2-600 bg-sky2-100",
-      title: "Collections",
-      desc: "Packing lists, capsules, and seasonal rotations.",
+      Icon: I.camera,
+      tone: "text-buttercup-600 bg-buttercup-100",
+      title: "Snaps",
+      desc: "Remember how you actually wore it.",
     },
   ];
   return (
@@ -54,7 +54,7 @@ function SplashScreen({ canInstall, onInstall, onContinue }) {
           <em className="text-poppy-600">Cultivate</em> your closet.
         </p>
         <p className="text-sm text-ink-500 mb-8 text-left">
-          Catalog your wardrobe and shape it into looks and collections.
+          Catalog your wardrobe and shape it into edits — outfits and capsules.
           Everything stays on your device — no ads, no subscriptions, no
           trackers.
         </p>

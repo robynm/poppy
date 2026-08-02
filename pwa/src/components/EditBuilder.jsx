@@ -1,44 +1,41 @@
 import { useState } from "react";
 import { Chip } from "./Chip.jsx";
 import { CroppedImage } from "./CroppedImage.jsx";
-import { CATEGORY_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
+import { CATEGORY_OPTIONS, EDIT_TYPE_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
-// --- BUILDER VIEW ----------------------------------------------------------
-function BuilderView({
+// --- EDIT BUILDER ----------------------------------------------------------
+function EditBuilder({
   items,
   images,
-  collections,
   selfies = [],
-  outfit,
-  onSaveOutfit,
+  edit,
+  onSaveEdit,
   onCancel,
 }) {
   useBodyScrollLock();
   useBackButton(true, onCancel);
-  const isEdit = !!outfit;
-  const [selected, setSelected] = useState(outfit ? [...outfit.itemIds] : []);
+  const isEdit = !!edit;
+  const [selected, setSelected] = useState(edit ? [...edit.itemIds] : []);
   const [selectedSelfies, setSelectedSelfies] = useState(
-    outfit
+    edit
       ? selfies
-          .filter((s) => (s.outfitIds || []).includes(outfit.id))
+          .filter((s) => (s.outfitIds || []).includes(edit.id))
           .map((s) => s.id)
       : [],
   );
-  const [name, setName] = useState(outfit ? outfit.name : "");
-  const [note, setNote] = useState(outfit ? outfit.note || "" : "");
-  const [seasons, setSeasons] = useState(outfit ? outfit.seasons || [] : []);
-  const [occasions, setOccasions] = useState(
-    outfit ? outfit.occasions || [] : [],
-  );
+  const [name, setName] = useState(edit ? edit.name : "");
+  const [note, setNote] = useState(edit ? edit.note || "" : "");
+  const [type, setType] = useState(edit ? edit.type || null : null);
+  const [seasons, setSeasons] = useState(edit ? edit.seasons || [] : []);
+  const [occasions, setOccasions] = useState(edit ? edit.occasions || [] : []);
   const toggleTag = (list, setList, v) =>
     setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [activeStatuses, setActiveStatuses] = useState(["owned"]);
-  const [scopeCollection, setScopeCollection] = useState(null);
   const [piecesOpen, setPiecesOpen] = useState(true);
   const toggleSelect = (id) =>
     setSelected(
@@ -52,16 +49,10 @@ function BuilderView({
         ? selectedSelfies.filter((s) => s !== id)
         : [...selectedSelfies, id],
     );
-  // A snap can be tagged with any number of looks, so offer all of them
-  // (this look's snaps come pre-selected).
+  // A snap can be tagged with any number of edits, so offer all of them
+  // (this edit's snaps come pre-selected).
   const availableSelfies = selfies || [];
-  const scopeObj = scopeCollection
-    ? (collections || []).find((c) => c.id === scopeCollection)
-    : null;
-  const scopedItems = scopeObj
-    ? items.filter((i) => scopeObj.itemIds.includes(i.id))
-    : items;
-  const filtered = scopedItems.filter(
+  const filtered = items.filter(
     (i) =>
       (!categoryFilter || i.category === categoryFilter) &&
       (activeStatuses.length === 0 ||
@@ -74,19 +65,21 @@ function BuilderView({
   const handleSave = () => {
     if (!canSave) return;
     if (isEdit) {
-      onSaveOutfit({
-        ...outfit,
+      onSaveEdit({
+        ...edit,
         name: name.trim(),
         note: note.trim(),
+        type,
         itemIds: selected,
         selfieIds: selectedSelfies,
         seasons,
         occasions,
       });
     } else {
-      onSaveOutfit({
+      onSaveEdit({
         name: name.trim(),
         note: note.trim(),
+        type,
         itemIds: selected,
         selfieIds: selectedSelfies,
         seasons,
@@ -115,10 +108,10 @@ function BuilderView({
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
-                Look Builder
+                Edit Builder
               </p>
               <h3 className="font-display text-2xl sm:text-3xl">
-                {isEdit ? "Edit Look" : "New Look"}
+                {isEdit ? "Editing" : "New Edit"}
               </h3>
             </div>
             <button onClick={onCancel} className="text-ink-500 p-2">
@@ -166,7 +159,7 @@ function BuilderView({
               data-testid="builder-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Name this look…"
+              placeholder="Name this edit…"
               className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none font-display font-bold text-xl py-1"
             />
           </div>
@@ -181,6 +174,23 @@ function BuilderView({
               placeholder="a vibe, a memory…"
               className="w-full bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm italic py-1"
             />
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Type
+            </p>
+            <div data-testid="builder-types" className="flex gap-2 flex-wrap">
+              {EDIT_TYPE_OPTIONS.map((t) => (
+                <Chip
+                  key={t}
+                  tone="collection"
+                  active={type === t}
+                  onClick={() => setType(type === t ? null : t)}
+                >
+                  {t}
+                </Chip>
+              ))}
+            </div>
           </div>
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
@@ -217,32 +227,11 @@ function BuilderView({
             </div>
           </div>
 
-          {(collections || []).length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sky2-700 mb-2">
-                Choose from
-              </p>
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-                <button
-                  onClick={() => setScopeCollection(null)}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${scopeCollection === null ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
-                >
-                  Entire Closet
-                </button>
-                {collections.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setScopeCollection(c.id)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${scopeCollection === c.id ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
-                  >
-                    <I.suitcase size={11} />
-                    {c.name}
-                    <span className="opacity-70">·{c.itemIds.length}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Divider: edit attributes above, piece-picker filters below */}
+          <div
+            data-testid="builder-divider"
+            className="border-t-2 border-cream-100 -mx-4 sm:-mx-6"
+          />
 
           <div>
             <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-500 mb-2">
@@ -409,7 +398,7 @@ function BuilderView({
             disabled={!canSave}
             className="flex-[2] flex items-center justify-center gap-2 py-3.5 bg-petal-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase disabled:opacity-40 rounded-full active:scale-95 shadow-pop"
           >
-            <I.check size={14} /> {isEdit ? "Save Changes" : "Save Look"}
+            <I.check size={14} /> {isEdit ? "Save Changes" : "Save Edit"}
           </button>
         </div>
       </div>
@@ -417,4 +406,4 @@ function BuilderView({
   );
 }
 
-export { BuilderView };
+export { EditBuilder };

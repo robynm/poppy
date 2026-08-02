@@ -12,12 +12,10 @@ function BulkSheet({
   selectedIds,
   items,
   customTags,
-  collections,
-  outfits,
+  edits,
   onSaveItems,
   onSaveCustomTags,
-  onSaveCollections,
-  onSaveOutfits,
+  onSaveEdits,
   onClose,
 }) {
   useBodyScrollLock();
@@ -45,41 +43,23 @@ function BulkSheet({
     setNewTag("");
   };
 
-  // Collections / Outfits: track desired state per id ("all" | "some" | "none")
-  const [collState, setCollState] = useState(() => {
+  // Edits: track desired membership per id ("all" | "some" | "none")
+  const [editState, setEditState] = useState(() => {
     const ids = [...selectedIds];
     const m = {};
-    (collections || []).forEach((c) => {
-      const allIn = ids.every((id) => c.itemIds.includes(id));
-      m[c.id] = allIn
+    (edits || []).forEach((e) => {
+      const allIn = ids.every((id) => e.itemIds.includes(id));
+      m[e.id] = allIn
         ? "all"
-        : ids.some((id) => c.itemIds.includes(id))
-          ? "some"
-          : "none";
-    });
-    return m;
-  });
-  const [outfitState, setOutfitState] = useState(() => {
-    const ids = [...selectedIds];
-    const m = {};
-    (outfits || []).forEach((o) => {
-      const allIn = ids.every((id) => o.itemIds.includes(id));
-      m[o.id] = allIn
-        ? "all"
-        : ids.some((id) => o.itemIds.includes(id))
+        : ids.some((id) => e.itemIds.includes(id))
           ? "some"
           : "none";
     });
     return m;
   });
 
-  const toggleColl = (id) =>
-    setCollState((prev) => ({
-      ...prev,
-      [id]: prev[id] === "all" ? "none" : "all",
-    }));
-  const toggleOutfit = (id) =>
-    setOutfitState((prev) => ({
+  const toggleEdit = (id) =>
+    setEditState((prev) => ({
       ...prev,
       [id]: prev[id] === "all" ? "none" : "all",
     }));
@@ -100,32 +80,18 @@ function BulkSheet({
           };
         }),
       );
-    } else if (type === "collections") {
-      onSaveCollections(
-        (collections || []).map((c) => {
-          const d = collState[c.id];
+    } else if (type === "edits") {
+      onSaveEdits(
+        (edits || []).map((e) => {
+          const d = editState[e.id];
           if (d === "all")
-            return { ...c, itemIds: [...new Set([...c.itemIds, ...arr])] };
+            return { ...e, itemIds: [...new Set([...e.itemIds, ...arr])] };
           if (d === "none")
             return {
-              ...c,
-              itemIds: c.itemIds.filter((id) => !selectedIds.has(id)),
+              ...e,
+              itemIds: e.itemIds.filter((id) => !selectedIds.has(id)),
             };
-          return c;
-        }),
-      );
-    } else if (type === "outfits") {
-      onSaveOutfits(
-        (outfits || []).map((o) => {
-          const d = outfitState[o.id];
-          if (d === "all")
-            return { ...o, itemIds: [...new Set([...o.itemIds, ...arr])] };
-          if (d === "none")
-            return {
-              ...o,
-              itemIds: o.itemIds.filter((id) => !selectedIds.has(id)),
-            };
-          return o;
+          return e;
         }),
       );
     }
@@ -134,8 +100,7 @@ function BulkSheet({
 
   const titles = {
     tags: "Apply Tags",
-    collections: "Collections",
-    outfits: "Outfits",
+    edits: "Edits",
   };
 
   return (
@@ -296,53 +261,22 @@ function BulkSheet({
             </>
           )}
 
-          {type === "collections" &&
-            ((collections || []).length === 0 ? (
-              <p className="text-sm text-ink-500 italic">No collections yet.</p>
+          {type === "edits" &&
+            ((edits || []).length === 0 ? (
+              <p className="text-sm text-ink-500 italic">No edits yet.</p>
             ) : (
               <div className="space-y-2">
-                {(collections || []).map((c) => {
-                  const st = collState[c.id] || "none";
+                {(edits || []).map((e) => {
+                  const st = editState[e.id] || "none";
                   return (
                     <button
-                      key={c.id}
-                      onClick={() => toggleColl(c.id)}
-                      className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-sky2-200"}`}
-                    >
-                      <I.suitcase size={16} className="shrink-0" />
-                      <span className="flex-1 font-display font-bold text-lg truncate">
-                        {toTitle(c.name)}
-                      </span>
-                      {st === "some" && (
-                        <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">
-                          partial
-                        </span>
-                      )}
-                      {st === "all" && (
-                        <I.check size={16} className="shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-
-          {type === "outfits" &&
-            ((outfits || []).length === 0 ? (
-              <p className="text-sm text-ink-500 italic">No outfits yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {(outfits || []).map((o) => {
-                  const st = outfitState[o.id] || "none";
-                  return (
-                    <button
-                      key={o.id}
-                      onClick={() => toggleOutfit(o.id)}
+                      key={e.id}
+                      onClick={() => toggleEdit(e.id)}
                       className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left ${st === "all" ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700 active:border-petal-200"}`}
                     >
-                      <I.sunglasses size={16} className="shrink-0" />
+                      <I.layers size={16} className="shrink-0" />
                       <span className="flex-1 font-display font-bold text-lg truncate">
-                        {toTitle(o.name)}
+                        {toTitle(e.name)}
                       </span>
                       {st === "some" && (
                         <span className="text-[9px] font-bold tracking-[0.15em] uppercase opacity-70">

@@ -4,13 +4,11 @@ import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- VIEW DRAWER (read-only details) --------------------------------------
-function ViewDrawer({ item, image, collections, onClose, onEdit }) {
+function ViewDrawer({ item, image, edits, onClose, onEdit }) {
   useBodyScrollLock();
   useBackButton(true, onClose);
   if (!item) return null;
-  const inCollections = (collections || []).filter((c) =>
-    c.itemIds.includes(item.id),
-  );
+  const inEdits = (edits || []).filter((e) => e.itemIds.includes(item.id));
 
   return (
     <div data-testid="view-drawer" className="fixed inset-0 z-50 flex sm:justify-end">
@@ -148,18 +146,18 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
             </div>
           )}
 
-          {inCollections.length > 0 && (
+          {inEdits.length > 0 && (
             <div>
               <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
-                In Collections
+                In Edits
               </p>
               <div className="flex flex-wrap gap-2">
-                {inCollections.map((c) => (
+                {inEdits.map((e) => (
                   <span
-                    key={c.id}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-sky2-500 text-white border-sky2-500 shadow-pop"
+                    key={e.id}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-petal-500 text-white border-petal-500 shadow-pop"
                   >
-                    <I.folder size={11} /> {toTitle(c.name)}
+                    <I.layers size={11} /> {toTitle(e.name)}
                   </span>
                 ))}
               </div>
@@ -170,9 +168,9 @@ function ViewDrawer({ item, image, collections, onClose, onEdit }) {
           {(!item.seasons || item.seasons.length === 0) &&
             (!item.occasions || item.occasions.length === 0) &&
             (!item.custom || item.custom.length === 0) &&
-            inCollections.length === 0 && (
+            inEdits.length === 0 && (
               <p className="text-sm italic text-ink-500 text-center">
-                No tags or collections yet — tap Edit to add some.
+                No tags or edits yet — tap Edit to add some.
               </p>
             )}
 

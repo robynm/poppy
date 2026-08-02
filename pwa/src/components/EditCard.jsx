@@ -1,8 +1,8 @@
-import { OutfitCardPreview } from "./OutfitCardPreview.jsx";
+import { EditCardPreview } from "./EditCardPreview.jsx";
 import { I } from "../lib/icons.jsx";
 
-function OutfitCard({
-  outfit,
+function EditCard({
+  edit,
   items,
   images,
   selfies,
@@ -17,8 +17,8 @@ function OutfitCard({
   return (
     <div
       id={id}
-      data-testid="outfit-card"
-      data-outfit-id={outfit.id}
+      data-testid="edit-card"
+      data-edit-id={edit.id}
       ref={cardRef}
       onClick={onOpen}
       className={`fade-up relative text-left bg-white border-2 rounded-2xl overflow-hidden shadow-card transition-all ${reorderHandle ? "select-none" : "cursor-pointer active:scale-[0.98]"} ${isDragging ? "opacity-0" : isDropTarget ? "border-petal-500 ring-4 ring-petal-500/25" : "border-cream-200"}`}
@@ -27,8 +27,8 @@ function OutfitCard({
         ...(isDragging && { animation: "none", opacity: 0 }),
       }}
     >
-      <OutfitCardPreview
-        outfit={outfit}
+      <EditCardPreview
+        edit={edit}
         items={items}
         images={images}
         selfies={selfies}
@@ -47,4 +47,4 @@ function OutfitCard({
   );
 }
 
-export { OutfitCard };
+export { EditCard };

@@ -191,26 +191,22 @@ function AboutModal({ onClose }) {
               season, and the year you bought it. The more you fill in, the
               richer your stats get.
             </HowTo>
-            <HowTo icon={I.sunglasses} title="Create outfits (Looks)">
-              Head to the <strong>Looks</strong> tab and start a new look. Pick
-              pieces from your closet to combine them into a complete outfit,
-              then save it. Looks are perfect for planning what to wear or
-              remembering combos you love.
+            <HowTo icon={I.layers} title="Curate edits">
+              Head to the <strong>Edits</strong> tab and start a new edit. An
+              edit is any named set of pieces — a complete outfit, or a themed
+              group like "Summer capsule," "Work," or "Italy trip." Pick pieces
+              from your closet, then save it. Open any edit and tap{" "}
+              <strong>Open in Closet</strong> to filter your closet down to just
+              those pieces.
             </HowTo>
             <HowTo icon={I.camera} title="Save snaps">
               Open the <strong>Snaps</strong> tab to add photos of yourself
               wearing an outfit. They're organized by the date each photo was
-              taken and grouped by month. Link a snap to a look — from the look
+              taken and grouped by month. Link a snap to an edit — from the edit
               builder or the snap's own screen — to remember how you actually
               wore it. Every snap also counts as a wear for each piece in that
-              look, so your <strong>Most worn</strong> stats reflect what you
+              edit, so your <strong>Most worn</strong> stats reflect what you
               really reach for.
-            </HowTo>
-            <HowTo icon={I.suitcase} title="Build collections">
-              Open the <strong>Collections</strong> tab to group items and looks
-              around a theme — think "Summer capsule," "Work," or "Italy trip."
-              Tap any collection to filter your closet down to just those
-              pieces.
             </HowTo>
             <HowTo icon={I.tag} title="Add tags">
               While editing an item, add your own <strong>custom tags</strong>{" "}
@@ -222,7 +218,7 @@ function AboutModal({ onClose }) {
               Open <strong>Stats</strong> from this menu to see your closet by
               the numbers — breakdowns by category, season, and brand, your
               most-worn pieces, and how much of your closet you actually put
-              into looks.
+              into edits.
             </HowTo>
           </div>
         </Section>
@@ -235,8 +231,8 @@ function AboutModal({ onClose }) {
         >
           <p>
             Short version: <strong>your closet stays yours.</strong> Poppy
-            stores everything — your items, photos, looks, collections, and tags
-            — locally on your own device. Nothing is uploaded to a server, and
+            stores everything — your items, photos, edits, snaps, and tags —
+            locally on your own device. Nothing is uploaded to a server, and
             there are no accounts, ads, or trackers.
           </p>
           <p>

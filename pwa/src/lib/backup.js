@@ -7,15 +7,9 @@ import { IDB } from "./storage.js";
 // Backups remain a single portable JSON with data URLs inside (format unchanged),
 // so backups written on the old build still restore, and backups written here
 // restore anywhere. The on-device representation is blobs; we convert at the
-// boundary.
-async function exportBackup({
-  items,
-  outfits,
-  customTags,
-  brands,
-  collections,
-  selfies,
-}) {
+// boundary. New backups carry a unified `edits` array; older backups carry
+// `outfits` + `collections`, which we fold into edits on import.
+async function exportBackup({ items, edits, customTags, brands, selfies }) {
   // Read blobs straight from IDB so we don't depend on what's currently in
   // React state (defensive: if the cache is partial for any reason).
   const blobs = await IDB.entries();
@@ -28,17 +22,15 @@ async function exportBackup({
     exportedAt: new Date().toISOString(),
     counts: {
       items: items.length,
-      outfits: outfits.length,
-      collections: (collections || []).length,
+      edits: (edits || []).length,
       selfies: (selfies || []).length,
     },
     data: {
       items,
       images,
-      outfits,
+      edits: edits || [],
       customTags,
       brands: brands || [],
-      collections: collections || [],
       selfies: selfies || [],
     },
   };
@@ -61,6 +53,26 @@ async function exportBackup({
   return { sizeBytes: blob.size };
 }
 
+// Fold a legacy backup's outfits + collections into the unified edits shape.
+function legacyToEdits(d) {
+  const fromOutfits = (d.outfits || []).map((o) => ({
+    ...o,
+    note: o.note || "",
+    updatedAt: o.updatedAt || o.createdAt,
+  }));
+  const fromCollections = (d.collections || []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    itemIds: c.itemIds || [],
+    seasons: c.seasons || [],
+    occasions: c.occasions || [],
+    note: c.description || "",
+    createdAt: c.createdAt,
+    updatedAt: c.createdAt,
+  }));
+  return [...fromOutfits, ...fromCollections];
+}
+
 function validateBackup(parsed) {
   if (!parsed || typeof parsed !== "object")
     return { ok: false, error: "File is not a valid JSON object." };
@@ -75,8 +87,6 @@ function validateBackup(parsed) {
     return { ok: false, error: "Backup is missing its data section." };
   if (!Array.isArray(d.items))
     return { ok: false, error: "Backup items are malformed." };
-  if (!Array.isArray(d.outfits))
-    return { ok: false, error: "Backup outfits are malformed." };
   if (!Array.isArray(d.customTags))
     return { ok: false, error: "Backup custom tags are malformed." };
   if (!d.images || typeof d.images !== "object")
@@ -89,17 +99,25 @@ function validateBackup(parsed) {
         error: `An item is missing id or name (id: ${it.id || "?"}).`,
       };
   }
-  // collections, brands and selfies are optional for backward compatibility with older backups
-  if (d.collections !== undefined && !Array.isArray(d.collections)) {
+  // Legacy shape checks (optional): older backups carry outfits/collections.
+  if (d.outfits !== undefined && !Array.isArray(d.outfits))
+    return { ok: false, error: "Backup outfits are malformed." };
+  if (d.collections !== undefined && !Array.isArray(d.collections))
     return { ok: false, error: "Backup collections are malformed." };
-  }
-  if (d.brands !== undefined && !Array.isArray(d.brands)) {
+  if (d.edits !== undefined && !Array.isArray(d.edits))
+    return { ok: false, error: "Backup edits are malformed." };
+  if (d.brands !== undefined && !Array.isArray(d.brands))
     return { ok: false, error: "Backup brands are malformed." };
-  }
-  if (d.selfies !== undefined && !Array.isArray(d.selfies)) {
+  if (d.selfies !== undefined && !Array.isArray(d.selfies))
     return { ok: false, error: "Backup snaps are malformed." };
+  // Normalize to the unified edits shape: prefer an explicit edits array,
+  // otherwise fold any legacy outfits + collections into edits.
+  if (!Array.isArray(d.edits)) {
+    d.edits =
+      d.outfits !== undefined || d.collections !== undefined
+        ? legacyToEdits(d)
+        : [];
   }
-  if (!d.collections) d.collections = [];
   if (!d.brands) d.brands = [];
   if (!d.selfies) d.selfies = [];
   // Normalize items missing the new fields
@@ -132,10 +150,21 @@ function mergeBackup(current, incoming) {
 
   const images = incoming.images || {}; // data-URL map; caller writes these to IDB
 
-  const outfitMap = new Map(current.outfits.map((o) => [o.id, o]));
-  for (const o of incoming.outfits)
-    if (!outfitMap.has(o.id)) outfitMap.set(o.id, o);
-  const outfits = Array.from(outfitMap.values()).sort(
+  // Edits: union by id. On collision, keep existing metadata but union the
+  // item lists (so re-importing a grown edit doesn't drop pieces).
+  const editMap = new Map((current.edits || []).map((e) => [e.id, e]));
+  for (const e of incoming.edits || []) {
+    if (editMap.has(e.id)) {
+      const existing = editMap.get(e.id);
+      const merged = Array.from(
+        new Set([...(existing.itemIds || []), ...(e.itemIds || [])]),
+      );
+      editMap.set(e.id, { ...existing, itemIds: merged });
+    } else {
+      editMap.set(e.id, e);
+    }
+  }
+  const edits = Array.from(editMap.values()).sort(
     (a, b) => (b.createdAt || 0) - (a.createdAt || 0),
   );
 
@@ -153,21 +182,6 @@ function mergeBackup(current, incoming) {
   }
   const brands = Array.from(brandLowerSeen.values());
 
-  const collectionMap = new Map(
-    (current.collections || []).map((c) => [c.id, c]),
-  );
-  for (const c of incoming.collections || []) {
-    if (collectionMap.has(c.id)) {
-      // merge item lists for collections with the same id
-      const existing = collectionMap.get(c.id);
-      const merged = Array.from(new Set([...existing.itemIds, ...c.itemIds]));
-      collectionMap.set(c.id, { ...existing, itemIds: merged });
-    } else {
-      collectionMap.set(c.id, c);
-    }
-  }
-  const collections = Array.from(collectionMap.values());
-
   const selfieMap = new Map((current.selfies || []).map((s) => [s.id, s]));
   for (const s of incoming.selfies || [])
     if (!selfieMap.has(s.id)) selfieMap.set(s.id, s);
@@ -175,7 +189,7 @@ function mergeBackup(current, incoming) {
     (a, b) => (b.dateTaken || 0) - (a.dateTaken || 0),
   );
 
-  return { items, images, outfits, customTags, brands, collections, selfies };
+  return { items, images, edits, customTags, brands, selfies };
 }
 
 export { exportBackup, validateBackup, readFileAsText, mergeBackup };
