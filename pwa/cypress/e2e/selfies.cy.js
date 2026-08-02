@@ -124,6 +124,45 @@ describe("Selfies gallery", () => {
     readSelfies().then((s) => expect(s[0].crop.zoom).to.eq(2));
   });
 
+  it("replaces the snap's photo", () => {
+    cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').click();
+    cy.get('[data-testid="selfie-replace-file"]').selectFile(
+      "cypress/fixtures/sample-item.jpg",
+      { force: true },
+    );
+    // The new photo lands in IndexedDB for this snap (poll until written).
+    const hasImage = () =>
+      cy.window().then(
+        (win) =>
+          new Cypress.Promise((resolve) => {
+            const req = win.indexedDB.open("wardrobe", 1);
+            req.onsuccess = () => {
+              const db = req.result;
+              const g = db
+                .transaction("images", "readonly")
+                .objectStore("images")
+                .get("s_1");
+              g.onsuccess = () => {
+                db.close();
+                resolve(!!g.result);
+              };
+            };
+          }),
+      );
+    const wait = (n) =>
+      hasImage().then((ok) => {
+        if (!ok && n > 0) {
+          cy.wait(100);
+          wait(n - 1);
+        } else {
+          expect(ok, "snap photo written to IDB").to.be.true;
+        }
+      });
+    wait(30);
+  });
+
   it("discards edits when closed without saving", () => {
     cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
     cy.tab("selfies");
@@ -245,6 +284,33 @@ describe("Selfie ↔ look association (1-to-many)", () => {
     cy.tab("looks");
     cy.get('[data-testid="outfit-card"]').click();
     cy.get('[data-testid="detail-selfie-thumb"]').should("have.length", 1);
+  });
+
+  it("offers only unlinked snaps in the look builder", () => {
+    cy.gotoApp({
+      items,
+      selfies: [selfie("s_free", JULY_A), selfie("s_taken", JULY_A, "o1")],
+      outfits: [look()],
+    });
+    cy.tab("looks");
+    cy.get('[data-testid="new-look-btn"]').click();
+    cy.get('[data-testid="builder-selfie"]').should("have.length", 1);
+    cy.get('[data-testid="builder-selfie"][data-selfie-id="s_free"]').should(
+      "exist",
+    );
+    cy.get('[data-testid="builder-selfie"][data-selfie-id="s_taken"]').should(
+      "not.exist",
+    );
+  });
+
+  it("shows the linked look's name on the snap thumbnail", () => {
+    cy.gotoApp({
+      items,
+      selfies: [selfie("s_1", JULY_A, "o1")],
+      outfits: [look()],
+    });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card-look"]').should("contain", "Sunny Day");
   });
 
   it("shows the selfie count on the look thumbnail", () => {

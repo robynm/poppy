@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CroppedImage } from "./CroppedImage.jsx";
 import { SelfieDetailModal } from "./SelfieDetailModal.jsx";
-import { groupByMonth } from "../lib/format.js";
+import { groupByMonth, toTitle } from "../lib/format.js";
 import { readDateTaken } from "../lib/exif.js";
 import { I } from "../lib/icons.jsx";
 import { resizeImageToBlob } from "../lib/images.js";
@@ -35,7 +35,7 @@ function SelfiesView({
         onSetHeaderAction(
           entry.isIntersecting
             ? null
-            : { label: "Add Snaps", tone: "poppy", onClick: openPicker },
+            : { label: "Add Snaps", tone: "buttercup", onClick: openPicker },
         ),
       { threshold: 0.5, rootMargin: "-68px 0px 0px 0px" },
     );
@@ -71,6 +71,9 @@ function SelfiesView({
 
   const groups = groupByMonth(selfies);
   const viewing = selfies.find((s) => s.id === viewingId);
+  const outfitName = Object.fromEntries(
+    (outfits || []).map((o) => [o.id, o.name]),
+  );
 
   return (
     <>
@@ -143,22 +146,35 @@ function SelfiesView({
                       {group.items.length}
                     </span>
                   </h4>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {group.items.map((s) => (
-                      <button
-                        key={s.id}
-                        data-testid="selfie-card"
-                        data-selfie-id={s.id}
-                        onClick={() => setViewingId(s.id)}
-                        className="bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform"
-                      >
-                        <CroppedImage
-                          url={images[s.id]}
-                          crop={s.crop}
-                          className="w-full aspect-[3/4]"
-                        />
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 items-start">
+                    {group.items.map((s) => {
+                      const look = s.outfitId && outfitName[s.outfitId];
+                      return (
+                        <button
+                          key={s.id}
+                          data-testid="selfie-card"
+                          data-selfie-id={s.id}
+                          onClick={() => setViewingId(s.id)}
+                          className="bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform text-left"
+                        >
+                          <CroppedImage
+                            url={images[s.id]}
+                            crop={s.crop}
+                            className="w-full aspect-[3/4]"
+                          />
+                          {look && (
+                            <div className="p-2 border-t-2 border-cream-100">
+                              <p
+                                data-testid="selfie-card-look"
+                                className="font-display font-semibold text-xs leading-tight truncate text-ink-900"
+                              >
+                                {toTitle(look)}
+                              </p>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </section>
               ))}
@@ -173,6 +189,7 @@ function SelfiesView({
           imageUrl={images[viewing.id]}
           outfits={outfits}
           onSaveSelfies={onSaveSelfies}
+          onReplaceImage={onPutImage}
           selfies={selfies}
           onDelete={() => {
             onDeleteSelfie(viewing.id);
