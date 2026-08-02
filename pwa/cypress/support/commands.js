@@ -7,14 +7,14 @@
 
 const KEYS = {
   items: "closet:items:v1",
-  outfits: "closet:outfits:v1",
+  edits: "closet:edits:v1",
   customTags: "closet:custom_tags:v1",
   brands: "closet:brands:v1",
-  collections: "closet:collections:v1",
   selfies: "closet:selfies:v1",
   seeded: "closet:seeded:v1",
   imagesMigrated: "closet:images_migrated:v1",
   selfiesMigrated: "closet:selfies_migrated:v1",
+  editsMerged: "closet:edits_merged:v1",
   theme: "closet:theme",
   splashDismissed: "closet:splash_dismissed:v1",
 };
@@ -30,7 +30,7 @@ function dataUrlToBlob(dataUrl) {
 }
 
 // Visit the app in a fully-controlled state.
-//   state: { items, outfits, collections, customTags, brands, theme,
+//   state: { items, edits, customTags, brands, selfies, theme,
 //            skipGating (default false — set true to test the splash screen) }
 Cypress.Commands.add("gotoApp", (state = {}) => {
   cy.visit("/", {
@@ -48,14 +48,14 @@ Cypress.Commands.add("gotoApp", (state = {}) => {
         set(KEYS.seeded, true);
         set(KEYS.imagesMigrated, true);
         set(KEYS.selfiesMigrated, true);
+        set(KEYS.editsMerged, true);
         set(KEYS.splashDismissed, true);
       }
 
       set(KEYS.items, state.items || []);
-      set(KEYS.outfits, state.outfits || []);
+      set(KEYS.edits, state.edits || []);
       set(KEYS.customTags, state.customTags || []);
       set(KEYS.brands, state.brands || []);
-      set(KEYS.collections, state.collections || []);
       set(KEYS.selfies, state.selfies || []);
       if (state.theme) set(KEYS.theme, state.theme);
 

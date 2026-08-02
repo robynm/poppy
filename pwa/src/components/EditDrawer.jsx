@@ -15,10 +15,10 @@ function EditDrawer({
   customTags,
   usedCustomTags,
   brands,
-  collections,
+  edits,
   onCustomTagsChange,
   onBrandsChange,
-  onCollectionsChange,
+  onEditsChange,
   onReplaceImage,
   onClose,
   onSave,
@@ -47,18 +47,18 @@ function EditDrawer({
     if (!cur.includes(t)) setDraft({ ...draft, custom: [...cur, t] });
     setNewTag("");
   };
-  const toggleCollection = (collectionId) => {
-    const next = (collections || []).map((c) => {
-      if (c.id !== collectionId) return c;
-      const inIt = c.itemIds.includes(item.id);
+  const toggleEditMembership = (editId) => {
+    const next = (edits || []).map((e) => {
+      if (e.id !== editId) return e;
+      const inIt = e.itemIds.includes(item.id);
       return {
-        ...c,
+        ...e,
         itemIds: inIt
-          ? c.itemIds.filter((x) => x !== item.id)
-          : [...c.itemIds, item.id],
+          ? e.itemIds.filter((x) => x !== item.id)
+          : [...e.itemIds, item.id],
       };
     });
-    onCollectionsChange(next);
+    onEditsChange(next);
   };
   const handleReplaceImage = async (file) => {
     if (!file) return;
@@ -286,24 +286,24 @@ function EditDrawer({
           </div>
 
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
-            Collections
+            Edits
           </p>
-          <div className="flex flex-wrap gap-2 mb-8" data-testid="edit-collections">
-            {(collections || []).length === 0 && (
+          <div className="flex flex-wrap gap-2 mb-8" data-testid="edit-edits">
+            {(edits || []).length === 0 && (
               <span className="text-xs text-ink-400 italic">
-                no collections yet — create one from the Closet
+                no edits yet — create one from the Edits tab
               </span>
             )}
-            {(collections || []).map((c) => {
-              const inIt = c.itemIds.includes(item.id);
+            {(edits || []).map((e) => {
+              const inIt = e.itemIds.includes(item.id);
               return (
                 <button
-                  key={c.id}
-                  onClick={() => toggleCollection(c.id)}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${inIt ? "bg-sky2-500 text-white border-sky2-500 shadow-pop" : "bg-sky2-50 text-sky2-700 border-sky2-100"}`}
+                  key={e.id}
+                  onClick={() => toggleEditMembership(e.id)}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full transition-all ${inIt ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-petal-50 text-petal-700 border-petal-100"}`}
                 >
-                  <I.folder size={11} />
-                  {toTitle(c.name)}
+                  <I.layers size={11} />
+                  {toTitle(e.name)}
                 </button>
               );
             })}

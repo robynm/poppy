@@ -241,27 +241,29 @@ describe("Selfies gallery", () => {
     readSelfies().then((s) => expect(s).to.have.length(0));
   });
 
-  it("migrates a legacy per-look selfie into the gallery", () => {
+  it("migrates a legacy per-look selfie, folding the look into edits", () => {
     const created = 1650000000000;
-    cy.gotoApp({
-      items: [owned("i1", "White Tee", "top")],
-      outfits: [
-        {
-          id: "o1",
-          name: "Old Look",
-          itemIds: ["i1"],
-          seasons: [],
-          occasions: [],
-          note: "",
-          createdAt: created,
-          updatedAt: created,
-        },
-      ],
-    });
+    const legacyOutfit = {
+      id: "o1",
+      name: "Old Look",
+      itemIds: ["i1"],
+      seasons: [],
+      occasions: [],
+      note: "",
+      createdAt: created,
+      updatedAt: created,
+    };
+    cy.gotoApp({ items: [owned("i1", "White Tee", "top")], edits: [] });
     cy.seedImages({ selfie_o1: PNG });
-    cy.window().then((w) =>
-      w.localStorage.removeItem("closet:selfies_migrated:v1"),
-    );
+    // Recreate a pre-merge legacy install: the look lives in the old outfits
+    // key with no edits yet, and the selfie + edits migration flags are cleared
+    // so both migrations run on reload.
+    cy.window().then((w) => {
+      w.localStorage.setItem("closet:outfits:v1", JSON.stringify([legacyOutfit]));
+      w.localStorage.removeItem("closet:edits:v1");
+      w.localStorage.removeItem("closet:edits_merged:v1");
+      w.localStorage.removeItem("closet:selfies_migrated:v1");
+    });
     cy.reload();
     cy.get('[data-testid="nav-closet"]').should("exist");
 
@@ -272,6 +274,9 @@ describe("Selfies gallery", () => {
       expect(s[0].dateTaken).to.eq(created);
       expect(s[0].outfitIds).to.include("o1"); // single link → outfitIds[]
       expect(s[0].itemIds).to.include("i1"); // seeded from the look's pieces
+      // The legacy look folded into the unified edits list.
+      const edits = JSON.parse(w.localStorage.getItem("closet:edits:v1"));
+      expect(edits.map((e) => e.id)).to.include("o1");
     });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').should("have.length", 1);
@@ -300,7 +305,7 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.gotoApp({
       items,
       selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1"] })],
-      outfits: [look(), look({ id: "o2", name: "Rainy Day" })],
+      edits: [look(), look({ id: "o2", name: "Rainy Day" })],
     });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
@@ -340,7 +345,7 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.gotoApp({
       items: wide,
       selfies: [selfie("s_1", JULY_A)],
-      outfits: [
+      edits: [
         mk("o1", "Sunny Day", ["i1", "i2"]), // shares 2
         mk("o2", "Tee Combo", ["i1", "i3"]), // shares 1
         mk("o3", "Rainy Day", ["i3", "i4"]), // shares 0
@@ -379,7 +384,7 @@ describe("Selfie tagging (pieces + looks)", () => {
   });
 
   it("tags individual pieces directly on a snap", () => {
-    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [] });
+    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], edits: [] });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
     cy.get('[data-testid="selfie-pieces-toggle"]').click(); // expand to edit
@@ -393,7 +398,7 @@ describe("Selfie tagging (pieces + looks)", () => {
   });
 
   it("tagging a look auto-adds its pieces; untagging the look leaves them", () => {
-    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [look()] });
+    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], edits: [look()] });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
     cy.get('[data-testid="selfie-looks-toggle"]').click(); // expand to edit
@@ -410,11 +415,11 @@ describe("Selfie tagging (pieces + looks)", () => {
   });
 
   it("links a look via the builder and shows the snap in the look detail", () => {
-    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [] });
+    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], edits: [] });
     cy.seedImages({ s_1: PNG }); // detail only renders snaps that have a photo
 
-    cy.tab("looks");
-    cy.get('[data-testid="new-look-btn"]').click();
+    cy.tab("edits");
+    cy.get('[data-testid="new-edit-btn"]').click();
     cy.get('[data-testid="builder-name"]').type("Sunny Day");
     cy.get('[data-testid="builder-piece"]').first().click();
     cy.get('[data-testid="builder-selfie"][data-selfie-id="s_1"]').click();
@@ -424,13 +429,13 @@ describe("Selfie tagging (pieces + looks)", () => {
       expect(s[0].outfitIds).to.have.length(1);
       expect(s[0].itemIds).to.include("i1"); // the look's piece was added
     });
-    cy.get('[data-testid="outfit-card"]').click();
+    cy.get('[data-testid="edit-card"]').click();
     cy.get('[data-testid="detail-selfies"]').should("be.visible");
     cy.get('[data-testid="detail-selfie-thumb"]').should("have.length", 1);
   });
 
   it("tags a look from the edit-selfie screen (adds its pieces)", () => {
-    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], outfits: [look()] });
+    cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], edits: [look()] });
     cy.seedImages({ s_1: PNG });
 
     cy.tab("selfies");
@@ -444,8 +449,8 @@ describe("Selfie tagging (pieces + looks)", () => {
       expect(s[0].itemIds).to.include.members(["i1", "i2"]);
     });
 
-    cy.tab("looks");
-    cy.get('[data-testid="outfit-card"]').click();
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').click();
     cy.get('[data-testid="detail-selfie-thumb"]').should("have.length", 1);
   });
 
@@ -456,10 +461,10 @@ describe("Selfie tagging (pieces + looks)", () => {
         selfie("s_free", JULY_A),
         selfie("s_taken", JULY_A, { outfitIds: ["o1"], itemIds: ["i1", "i2"] }),
       ],
-      outfits: [look()],
+      edits: [look()],
     });
-    cy.tab("looks");
-    cy.get('[data-testid="new-look-btn"]').click();
+    cy.tab("edits");
+    cy.get('[data-testid="new-edit-btn"]').click();
     cy.get('[data-testid="builder-selfie"]').should("have.length", 2);
   });
 
@@ -467,7 +472,7 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.gotoApp({
       items,
       selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1", "i2"] })],
-      outfits: [look()],
+      edits: [look()],
     });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card-look"]').should("contain", "Sunny Day");
@@ -476,15 +481,15 @@ describe("Selfie tagging (pieces + looks)", () => {
   it("shows the snap count on the look thumbnail", () => {
     cy.gotoApp({
       items,
-      outfits: [look()],
+      edits: [look()],
       selfies: [
         selfie("s_1", JULY_A, { outfitIds: ["o1"] }),
         selfie("s_2", JULY_B, { outfitIds: ["o1"] }),
         selfie("s_3", MAY),
       ],
     });
-    cy.tab("looks");
-    cy.get('[data-testid="outfit-card"]').should("contain", "2 snaps");
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').should("contain", "2 snaps");
   });
 
   it("deleting a snap removes it from the look it was tagged in", () => {
@@ -492,7 +497,7 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.gotoApp({
       items,
       selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1"] })],
-      outfits: [look()],
+      edits: [look()],
     });
     cy.seedImages({ s_1: PNG });
 
@@ -501,8 +506,8 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.get('[data-testid="selfie-delete"]').click();
 
     readSelfies2().then((s) => expect(s).to.have.length(0));
-    cy.tab("looks");
-    cy.get('[data-testid="outfit-card"]').click();
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').click();
     cy.get('[data-testid="detail-selfies"]').should("not.exist");
   });
 
@@ -511,13 +516,13 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.gotoApp({
       items,
       selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1"] })],
-      outfits: [look()],
+      edits: [look()],
     });
-    cy.tab("looks");
-    cy.get('[data-testid="outfit-card"]').click();
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').click();
     cy.get('[data-testid="detail-delete"]').click();
 
-    cy.get('[data-testid="outfit-card"]').should("not.exist");
+    cy.get('[data-testid="edit-card"]').should("not.exist");
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').should("have.length", 1);
     readSelfies2().then((s) => {

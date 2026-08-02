@@ -15,15 +15,15 @@ describe("Device back button", () => {
     cy.get('[data-testid="nav-closet"]').should("be.visible"); // still in app
   });
 
-  it("closes the look builder", () => {
+  it("closes the edit builder", () => {
     cy.gotoApp({ items: [] });
-    cy.tab("looks");
-    cy.get('[data-testid="new-look-btn"]').click();
+    cy.tab("edits");
+    cy.get('[data-testid="new-edit-btn"]').click();
     cy.get('[data-testid="builder"]').should("be.visible");
 
     back();
     cy.get('[data-testid="builder"]').should("not.exist");
-    cy.get('[data-testid="new-look-btn"]').should("be.visible");
+    cy.get('[data-testid="new-edit-btn"]').should("be.visible");
   });
 
   it("stays balanced when a modal is closed via its X, then Back", () => {
@@ -58,9 +58,9 @@ describe("Device back button", () => {
           yearPurchased: "",
         },
       ],
-      outfits: [
+      edits: [
         {
-          id: "o1",
+          id: "e1",
           name: "Look",
           itemIds: ["i1"],
           seasons: [],
@@ -71,14 +71,14 @@ describe("Device back button", () => {
         },
       ],
     });
-    cy.tab("looks");
-    cy.get('[data-testid="outfit-card"]').click();
-    cy.get('[data-testid="outfit-detail"]').should("be.visible");
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').click();
+    cy.get('[data-testid="edit-detail"]').should("be.visible");
     cy.get('[data-testid="detail-edit"]').click(); // detail closes, builder opens
     cy.get('[data-testid="builder"]').should("be.visible");
 
-    back(); // closes builder, back to the looks grid
+    back(); // closes builder, back to the edits grid
     cy.get('[data-testid="builder"]').should("not.exist");
-    cy.get('[data-testid="new-look-btn"]').should("be.visible");
+    cy.get('[data-testid="new-edit-btn"]').should("be.visible");
   });
 });

@@ -8,8 +8,7 @@ import { I } from "../lib/icons.jsx";
 // --- Backup Modal ---------------------------------------------------------
 function StatsModal({
   items,
-  outfits,
-  collections,
+  edits,
   customTags,
   brands,
   selfies = [],
@@ -72,14 +71,16 @@ function StatsModal({
     });
     const allTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
 
-    // Closet utilization — owned items appearing in ≥1 outfit
+    // Closet utilization — owned items appearing in ≥1 edit
     const lookCount = {};
-    outfits.forEach((o) =>
-      (o.itemIds || []).forEach((id) => {
+    edits.forEach((e) =>
+      (e.itemIds || []).forEach((id) => {
         lookCount[id] = (lookCount[id] || 0) + 1;
       }),
     );
-    const usedCount = owned.filter((i) => lookCount[i.id]).length;
+    // Utilization = share of the owned closet actually worn in a snap.
+    const wornItemIds = new Set(selfies.flatMap((s) => s.itemIds || []));
+    const usedCount = owned.filter((i) => wornItemIds.has(i.id)).length;
     const utilizationPct = owned.length
       ? Math.round((usedCount / owned.length) * 100)
       : 0;
@@ -104,18 +105,17 @@ function StatsModal({
       .filter((x) => x.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    const avgItemsPerLook = outfits.length
+    const avgItemsPerEdit = edits.length
       ? (
-          outfits.reduce((s, o) => s + (o.itemIds?.length || 0), 0) /
-          outfits.length
+          edits.reduce((s, e) => s + (e.itemIds?.length || 0), 0) / edits.length
         ).toFixed(1)
       : "0";
 
     return {
       totalItems: items.length,
       ownedCount: owned.length,
-      outfitCount: outfits.length,
-      collectionCount: collections.length,
+      editCount: edits.length,
+      snapCount: selfies.length,
       brandTotal: Object.keys(brandCount).length,
       tagTotal: Object.keys(tagCount).length,
       byCat,
@@ -130,9 +130,9 @@ function StatsModal({
       allTags,
       usedCount,
       utilizationPct,
-      avgItemsPerLook,
+      avgItemsPerEdit,
     };
-  }, [items, outfits, collections, customTags, selfies]);
+  }, [items, edits, customTags, selfies]);
 
   const Bar = ({ label, count, max, color }) => {
     const pct = max > 0 ? (count / max) * 100 : 0;
@@ -434,14 +434,14 @@ function StatsModal({
                   color: "text-poppy-600",
                 },
                 {
-                  n: stats.outfitCount,
-                  label: "looks",
+                  n: stats.editCount,
+                  label: "edits",
                   color: "text-petal-500",
                 },
                 {
-                  n: stats.collectionCount,
-                  label: "collections",
-                  color: "text-sky2-500",
+                  n: stats.snapCount,
+                  label: "snaps",
+                  color: "text-buttercup-500",
                 },
               ].map((s) => (
                 <div
@@ -499,11 +499,11 @@ function StatsModal({
                 <span className="font-bold text-ink-800">
                   {stats.usedCount}
                 </span>{" "}
-                of {stats.ownedCount} pieces appear in at least one look · avg{" "}
+                of {stats.ownedCount} pieces worn in at least one snap · avg{" "}
                 <span className="font-bold text-ink-800">
-                  {stats.avgItemsPerLook}
+                  {stats.avgItemsPerEdit}
                 </span>{" "}
-                pieces per look
+                pieces per edit
               </p>
             </div>
 
@@ -633,7 +633,7 @@ function StatsModal({
                         {toTitle(name)}
                       </span>
                       <span className="shrink-0 text-[11px] font-bold bg-petal-100 text-petal-700 rounded-full px-2 py-0.5">
-                        {count} {count === 1 ? "look" : "looks"}
+                        {count} {count === 1 ? "edit" : "edits"}
                       </span>
                     </div>
                   ))}

@@ -1,5 +1,5 @@
 // Bulk select-mode actions: select all/none, bulk tags (season/custom/status),
-// bulk collection assignment, bulk look assignment.
+// bulk edit membership.
 
 const owned = (id, name, category) => ({
   id,
@@ -23,16 +23,10 @@ const readItems = () =>
   cy
     .window()
     .then((win) => JSON.parse(win.localStorage.getItem("closet:items:v1")));
-const readCollections = () =>
+const readEdits = () =>
   cy
     .window()
-    .then((win) =>
-      JSON.parse(win.localStorage.getItem("closet:collections:v1")),
-    );
-const readOutfits = () =>
-  cy
-    .window()
-    .then((win) => JSON.parse(win.localStorage.getItem("closet:outfits:v1")));
+    .then((win) => JSON.parse(win.localStorage.getItem("closet:edits:v1")));
 
 const selectItem = (id) =>
   cy
@@ -107,39 +101,13 @@ describe("Closet — bulk actions", () => {
     });
   });
 
-  it("bulk-assigns selected items to a collection", () => {
+  it("bulk-assigns selected items to an edit", () => {
     cy.gotoApp({
       items,
-      collections: [
+      edits: [
         {
-          id: "c1",
+          id: "e1",
           name: "Capsule",
-          description: "",
-          seasons: [],
-          occasions: [],
-          itemIds: [],
-          createdAt: 1700000000000,
-        },
-      ],
-    });
-    selectItem("i1");
-    selectItem("i2");
-    cy.get('[data-testid="bulk-collections"]').click();
-    cy.get('[data-testid="bulk-sheet"]').contains("Capsule").click();
-    cy.get('[data-testid="bulk-apply"]').click();
-
-    readCollections().then((cols) => {
-      expect(cols[0].itemIds).to.have.members(["i1", "i2"]);
-    });
-  });
-
-  it("bulk-assigns selected items to a look", () => {
-    cy.gotoApp({
-      items,
-      outfits: [
-        {
-          id: "o1",
-          name: "Weekend",
           itemIds: [],
           seasons: [],
           occasions: [],
@@ -150,13 +118,13 @@ describe("Closet — bulk actions", () => {
       ],
     });
     selectItem("i1");
-    selectItem("i3");
-    cy.get('[data-testid="bulk-looks"]').click();
-    cy.get('[data-testid="bulk-sheet"]').contains("Weekend").click();
+    selectItem("i2");
+    cy.get('[data-testid="bulk-edits"]').click();
+    cy.get('[data-testid="bulk-sheet"]').contains("Capsule").click();
     cy.get('[data-testid="bulk-apply"]').click();
 
-    readOutfits().then((outfits) => {
-      expect(outfits[0].itemIds).to.have.members(["i1", "i3"]);
+    readEdits().then((edits) => {
+      expect(edits[0].itemIds).to.have.members(["i1", "i2"]);
     });
   });
 });

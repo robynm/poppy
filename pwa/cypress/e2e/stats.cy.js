@@ -46,7 +46,7 @@ describe("Stats — times worn", () => {
         owned("i3", "Sun Hat", "accessory"),
       ],
       // o1 has two snaps (each carrying o1's pieces); o2 has none.
-      outfits: [look("o1", ["i1", "i2"]), look("o2", ["i2", "i3"])],
+      edits: [look("o1", ["i1", "i2"]), look("o2", ["i2", "i3"])],
       selfies: [snap("s1", ["i1", "i2"]), snap("s2", ["i1", "i2"])],
     });
     openStats();
@@ -75,7 +75,7 @@ describe("Stats — times worn", () => {
     );
     cy.gotoApp({
       items,
-      outfits: [look("o1", items.map((i) => i.id))],
+      edits: [look("o1", items.map((i) => i.id))],
       selfies: [snap("s1", items.map((i) => i.id))],
     });
     openStats();
@@ -92,10 +92,28 @@ describe("Stats — times worn", () => {
     cy.get('[data-testid="versatile-toggle"]').should("contain", "Show all 6");
   });
 
+  it("bases closet utilization on pieces worn in snaps, not edits", () => {
+    cy.gotoApp({
+      items: [
+        owned("i1", "A", "top"),
+        owned("i2", "B", "top"),
+        owned("i3", "C", "top"),
+        owned("i4", "D", "top"),
+      ],
+      // All four pieces sit in an edit, but only i1 + i2 have been worn in a snap.
+      edits: [look("o1", ["i1", "i2", "i3", "i4"])],
+      selfies: [snap("s1", ["i1"]), snap("s2", ["i2"])],
+    });
+    openStats();
+    cy.get('[data-testid="stats-modal"]').contains("Closet utilization");
+    cy.get('[data-testid="stats-modal"]').contains("50%"); // 2 of 4 worn
+    cy.get('[data-testid="stats-modal"]').contains("worn in at least one snap");
+  });
+
   it("omits the Most-worn section when no look has a snap", () => {
     cy.gotoApp({
       items: [owned("i1", "White Tee", "top")],
-      outfits: [look("o1", ["i1"])],
+      edits: [look("o1", ["i1"])],
       selfies: [], // no snaps at all
     });
     openStats();

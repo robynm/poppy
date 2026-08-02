@@ -1,11 +1,11 @@
 import { toTitle } from "../lib/format.js";
 import { I } from "../lib/icons.jsx";
 
-// The thumbnail + label block of a look tile — shared by the card and the drag ghost.
-function OutfitCardPreview({ outfit, items, images, selfies = [] }) {
-  const pieces = items.filter((i) => outfit.itemIds.includes(i.id));
+// The thumbnail + label block of an edit tile — shared by the card and the drag ghost.
+function EditCardPreview({ edit, items, images, selfies = [] }) {
+  const pieces = items.filter((i) => edit.itemIds.includes(i.id));
   const selfieCount = selfies.filter((s) =>
-    (s.outfitIds || []).includes(outfit.id),
+    (s.outfitIds || []).includes(edit.id),
   ).length;
   const thumbs = pieces.slice(0, 4).map((p) => ({ id: p.id, url: images[p.id] }));
   return (
@@ -15,7 +15,7 @@ function OutfitCardPreview({ outfit, items, images, selfies = [] }) {
       >
         {thumbs.length === 0 ? (
           <div className="flex items-center justify-center text-petal-300">
-            <I.sunglasses size={28} />
+            <I.layers size={28} />
           </div>
         ) : (
           thumbs.map((t) => (
@@ -36,7 +36,7 @@ function OutfitCardPreview({ outfit, items, images, selfies = [] }) {
       </div>
       <div className="p-2">
         <h3 className="font-display font-bold text-xs sm:text-sm truncate text-ink-900">
-          {toTitle(outfit.name)}
+          {toTitle(edit.name)}
         </h3>
         <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-petal-600 mt-0.5">
           {pieces.length} {pieces.length === 1 ? "piece" : "pieces"}
@@ -52,4 +52,4 @@ function OutfitCardPreview({ outfit, items, images, selfies = [] }) {
   );
 }
 
-export { OutfitCardPreview };
+export { EditCardPreview };

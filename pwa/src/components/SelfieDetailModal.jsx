@@ -34,7 +34,7 @@ const RATINGS = [
 function SelfieDetailModal({
   selfie,
   imageUrl,
-  outfits,
+  edits,
   items,
   images,
   selfies,
@@ -124,7 +124,7 @@ function SelfieDetailModal({
   const suggestedOutfits = useMemo(() => {
     if (draftItems.length === 0) return [];
     const tagged = new Set(draftItems);
-    return (outfits || [])
+    return (edits || [])
       .filter((o) => !draftOutfitIds.includes(o.id))
       .map((o) => {
         const ids = o.itemIds || [];
@@ -135,7 +135,7 @@ function SelfieDetailModal({
       .filter((x) => x.shared > 0)
       .sort((a, b) => b.score - a.score || b.shared - a.shared)
       .slice(0, 3);
-  }, [outfits, draftItems, draftOutfitIds]);
+  }, [edits, draftItems, draftOutfitIds]);
 
   const save = () => {
     onSaveSelfies(
@@ -306,7 +306,7 @@ function SelfieDetailModal({
               <label className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
                 Worn in
               </label>
-              {(outfits || []).length > 0 && (
+              {(edits || []).length > 0 && (
                 <button
                   type="button"
                   data-testid="selfie-looks-toggle"
@@ -317,19 +317,19 @@ function SelfieDetailModal({
                 </button>
               )}
             </div>
-            {(outfits || []).length === 0 ? (
+            {(edits || []).length === 0 ? (
               <p className="text-xs italic text-ink-400">
-                No looks yet — create one from the Looks tab.
+                No edits yet — create one from the Edits tab.
               </p>
             ) : !looksOpen && draftOutfitIds.length === 0 ? (
               <p className="text-xs italic text-ink-400">
-                Not tagged in any looks yet.
+                Not tagged in any edits yet.
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5" data-testid="selfie-looks">
                 {(looksOpen
-                  ? outfits
-                  : outfits.filter((o) => draftOutfitIds.includes(o.id))
+                  ? edits
+                  : edits.filter((o) => draftOutfitIds.includes(o.id))
                 ).map((o) => {
                   const active = draftOutfitIds.includes(o.id);
                   return (
@@ -424,7 +424,7 @@ function SelfieDetailModal({
             <div>
               <label className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-1.5">
                 <I.sparkles size={11} className="text-buttercup-500" />
-                Suggested looks
+                Suggested edits
               </label>
               <div
                 className="flex flex-wrap gap-1.5"
