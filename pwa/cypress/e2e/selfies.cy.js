@@ -121,6 +121,40 @@ describe("Selfies gallery", () => {
     );
   });
 
+  it("filters the gallery by mood rating", () => {
+    cy.gotoApp({
+      selfies: [
+        selfie("s_happy", JULY_A, { rating: "happy" }),
+        selfie("s_meh", JULY_B, { rating: "meh" }),
+        selfie("s_none", MAY),
+      ],
+    });
+    cy.tab("selfies");
+    cy.get('[data-testid="selfie-card"]').should("have.length", 3);
+
+    // Happy only.
+    cy.get('[data-testid="selfie-filter-btn"][data-rating="happy"]').click();
+    cy.get('[data-testid="selfie-card"]').should("have.length", 1);
+    cy.get('[data-testid="selfie-card"][data-selfie-id="s_happy"]').should(
+      "exist",
+    );
+
+    // Add meh → happy + meh (multi-select).
+    cy.get('[data-testid="selfie-filter-btn"][data-rating="meh"]').click();
+    cy.get('[data-testid="selfie-card"]').should("have.length", 2);
+
+    // Switch to sad only → nothing matches.
+    cy.get('[data-testid="selfie-filter-btn"][data-rating="happy"]').click();
+    cy.get('[data-testid="selfie-filter-btn"][data-rating="meh"]').click();
+    cy.get('[data-testid="selfie-filter-btn"][data-rating="sad"]').click();
+    cy.get('[data-testid="selfie-card"]').should("not.exist");
+    cy.contains("No snaps match.").should("be.visible");
+
+    // Clear → everything returns.
+    cy.get('[data-testid="selfie-filter-clear"]').click();
+    cy.get('[data-testid="selfie-card"]').should("have.length", 3);
+  });
+
   it("saves a zoom/crop adjustment on the snap", () => {
     cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
     cy.tab("selfies");

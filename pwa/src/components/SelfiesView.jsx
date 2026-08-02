@@ -12,6 +12,11 @@ import { Log } from "../lib/log.js";
 // uploaded here (date-taken read from EXIF, falling back to the file date) and
 // can be associated with looks from the look builder.
 const RATING_ICON = { happy: I.smile, meh: I.meh, sad: I.frown };
+const RATING_FILTERS = [
+  { key: "happy", Glyph: I.smile },
+  { key: "meh", Glyph: I.meh },
+  { key: "sad", Glyph: I.frown },
+];
 
 function SelfiesView({
   selfies,
@@ -24,7 +29,13 @@ function SelfiesView({
   onSetHeaderAction,
 }) {
   const [viewingId, setViewingId] = useState(null);
+  const [activeRatings, setActiveRatings] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  const toggleRating = (key) =>
+    setActiveRatings((prev) =>
+      prev.includes(key) ? prev.filter((r) => r !== key) : [...prev, key],
+    );
   const fileInputRef = useRef(null);
   const addButtonRef = useRef(null);
 
@@ -72,7 +83,11 @@ function SelfiesView({
     setUploading(false);
   };
 
-  const groups = groupByMonth(selfies);
+  const filteredSelfies =
+    activeRatings.length > 0
+      ? selfies.filter((s) => activeRatings.includes(s.rating))
+      : selfies;
+  const groups = groupByMonth(filteredSelfies);
   const viewing = selfies.find((s) => s.id === viewingId);
   const outfitName = Object.fromEntries(
     (outfits || []).map((o) => [o.id, o.name]),
@@ -116,6 +131,44 @@ function SelfiesView({
             className="hidden"
           />
 
+          {selfies.length > 0 && (
+            <div className="mb-6 flex items-center gap-2">
+              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-ink-400">
+                Mood
+              </span>
+              <div className="flex gap-1.5" data-testid="selfie-rating-filter">
+                {RATING_FILTERS.map(({ key, Glyph }) => {
+                  const active = activeRatings.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      data-testid="selfie-filter-btn"
+                      data-rating={key}
+                      aria-pressed={active}
+                      onClick={() => toggleRating(key)}
+                      className={`w-9 h-9 flex items-center justify-center rounded-full border-2 transition-all active:scale-95 ${
+                        active
+                          ? "border-buttercup-500 bg-buttercup-50 text-buttercup-600 shadow-pop"
+                          : "border-cream-100 bg-white text-ink-300"
+                      }`}
+                    >
+                      <Glyph size={18} />
+                    </button>
+                  );
+                })}
+              </div>
+              {activeRatings.length > 0 && (
+                <button
+                  data-testid="selfie-filter-clear"
+                  onClick={() => setActiveRatings([])}
+                  className="text-[10px] font-bold tracking-[0.15em] uppercase text-ink-400 underline active:text-ink-700"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
+
           {selfies.length === 0 ? (
             <div className="py-16 text-center border-2 border-dashed border-buttercup-200 bg-buttercup-50/40 rounded-3xl">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-buttercup-100 flex items-center justify-center">
@@ -134,6 +187,18 @@ function SelfiesView({
               >
                 Add your first <I.chevron size={14} />
               </button>
+            </div>
+          ) : filteredSelfies.length === 0 ? (
+            <div className="py-16 text-center border-2 border-dashed border-cream-200 bg-cream-50/50 rounded-3xl">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-buttercup-100 flex items-center justify-center">
+                <I.search size={26} className="text-buttercup-600" />
+              </div>
+              <p className="font-display font-bold text-xl text-ink-900">
+                No snaps match.
+              </p>
+              <p className="text-xs font-bold tracking-widest uppercase text-buttercup-700 mt-2">
+                Try another mood
+              </p>
             </div>
           ) : (
             <div className="space-y-8">
