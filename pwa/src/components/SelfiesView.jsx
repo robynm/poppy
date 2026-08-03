@@ -31,6 +31,7 @@ function SelfiesView({
   const [viewingId, setViewingId] = useState(null);
   const [activeRatings, setActiveRatings] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null); // { done, total }
 
   const toggleRating = (key) =>
     setActiveRatings((prev) =>
@@ -64,23 +65,43 @@ function SelfiesView({
     const files = Array.from(fileList || []);
     if (!files.length) return;
     setUploading(true);
+    setUploadProgress({ done: 0, total: files.length });
+    // Snapshot the pre-upload list once; each success is persisted against it so
+    // a mid-batch interruption (e.g. the browser reclaiming a busy tab while it
+    // decodes many large photos) keeps whatever finished instead of losing it all.
+    const base = selfies;
     const additions = [];
+    let failed = 0;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
         // Capture the date BEFORE re-encoding (canvas strips EXIF).
         const dateTaken = (await readDateTaken(file)) ?? file.lastModified;
         const blob = await resizeImageToBlob(file, 1200, 0.88);
-        if (!blob) continue;
+        if (!blob) {
+          failed++;
+          continue;
+        }
         const id = `s_${Date.now()}_${i}`;
         await onPutImage(id, blob);
         additions.push({ id, createdAt: Date.now(), dateTaken });
+        onSaveSelfies([...additions, ...base]); // persist progress after each
       } catch (e) {
+        failed++;
         Log.error("selfie.uploadFailed", { name: file?.name, error: String(e) });
       }
+      setUploadProgress({ done: i + 1, total: files.length });
+      // Yield between images so the UI updates and the browser can reclaim the
+      // decoded-bitmap memory before the next one — avoids OOM on big batches.
+      await new Promise((r) => setTimeout(r));
     }
-    if (additions.length) onSaveSelfies([...additions, ...selfies]);
     setUploading(false);
+    setUploadProgress(null);
+    if (failed > 0) {
+      alert(
+        `Added ${additions.length} of ${files.length} snaps. ${failed} couldn't be processed — try adding ${failed === 1 ? "it" : "those"} again, or in a smaller batch.`,
+      );
+    }
   };
 
   const filteredSelfies =
@@ -113,7 +134,12 @@ function SelfiesView({
                 style={{ flexShrink: 0 }}
                 className="flex items-center gap-2 px-5 py-3 bg-buttercup-500 text-white text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop disabled:opacity-40"
               >
-                <I.plus size={16} /> {uploading ? "Adding…" : "Add Snaps"}
+                <I.plus size={16} />{" "}
+                {uploading
+                  ? uploadProgress
+                    ? `${uploadProgress.done}/${uploadProgress.total}`
+                    : "Adding…"
+                  : "Add Snaps"}
               </button>
             </div>
           </div>
@@ -130,6 +156,31 @@ function SelfiesView({
             }}
             className="hidden"
           />
+
+          {uploadProgress && (
+            <div
+              data-testid="upload-progress"
+              className="mb-6 p-4 bg-buttercup-50 border-2 border-buttercup-100 rounded-2xl fade-up"
+            >
+              <div className="flex items-baseline justify-between mb-2">
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-buttercup-700">
+                  Adding snaps
+                </p>
+                <span className="text-xs font-bold text-ink-700">
+                  {uploadProgress.done} of {uploadProgress.total}
+                </span>
+              </div>
+              <div className="h-2 bg-white rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-buttercup-500 rounded-full"
+                  style={{
+                    width: `${(uploadProgress.done / uploadProgress.total) * 100}%`,
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {selfies.length > 0 && (
             <div className="mb-6 flex items-center gap-2">

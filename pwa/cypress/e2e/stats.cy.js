@@ -108,6 +108,7 @@ describe("Stats — times worn", () => {
     cy.get('[data-testid="stats-modal"]').contains("Closet utilization");
     cy.get('[data-testid="stats-modal"]').contains("50%"); // 2 of 4 worn
     cy.get('[data-testid="stats-modal"]').contains("worn in at least one snap");
+    cy.get('[data-testid="stats-modal"]').contains("pieces per snap");
   });
 
   it("omits the Most-worn section when no look has a snap", () => {

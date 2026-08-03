@@ -81,6 +81,24 @@ describe("Selfies gallery", () => {
     readSelfies().then((s) => expect(s).to.have.length(1));
   });
 
+  it("uploads many photos at once, persisting every one", () => {
+    cy.gotoApp({ selfies: [] });
+    cy.tab("selfies");
+    // 10 files in one go — larger than the batch size that used to fail silently.
+    const many = Array.from(
+      { length: 10 },
+      () => "cypress/fixtures/sample-item.jpg",
+    );
+    cy.get('[data-testid="selfies-file"]').selectFile(many, { force: true });
+    cy.get('[data-testid="upload-progress"]').should("be.visible"); // shows during the batch
+    cy.get('[data-testid="selfie-card"]', { timeout: 30000 }).should(
+      "have.length",
+      10,
+    );
+    cy.get('[data-testid="upload-progress"]').should("not.exist"); // clears when done
+    readSelfies().then((s) => expect(s).to.have.length(10));
+  });
+
   it("editing a selfie's date moves it to another month", () => {
     cy.gotoApp({ selfies: [selfie("s_1", JULY_A)] });
     cy.tab("selfies");

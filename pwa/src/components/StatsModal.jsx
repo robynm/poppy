@@ -105,9 +105,10 @@ function StatsModal({
       .filter((x) => x.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    const avgItemsPerEdit = edits.length
+    const avgItemsPerSnap = selfies.length
       ? (
-          edits.reduce((s, e) => s + (e.itemIds?.length || 0), 0) / edits.length
+          selfies.reduce((s, sn) => s + (sn.itemIds?.length || 0), 0) /
+          selfies.length
         ).toFixed(1)
       : "0";
 
@@ -130,7 +131,7 @@ function StatsModal({
       allTags,
       usedCount,
       utilizationPct,
-      avgItemsPerEdit,
+      avgItemsPerSnap,
     };
   }, [items, edits, customTags, selfies]);
 
@@ -501,9 +502,9 @@ function StatsModal({
                 </span>{" "}
                 of {stats.ownedCount} pieces worn in at least one snap · avg{" "}
                 <span className="font-bold text-ink-800">
-                  {stats.avgItemsPerEdit}
+                  {stats.avgItemsPerSnap}
                 </span>{" "}
-                pieces per edit
+                pieces per snap
               </p>
             </div>
 
