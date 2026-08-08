@@ -12,10 +12,9 @@ function EditBuilder({
   items,
   images,
   selfies = [],
-  customTags = [],
+  tagSuggestions = [], // edit-tag vocabulary — separate from item custom tags
   edit,
   onSaveEdit,
-  onSaveCustomTags,
   onCancel,
 }) {
   useBodyScrollLock();
@@ -41,7 +40,6 @@ function EditBuilder({
   const addCustom = () => {
     const t = newTag.trim().toLowerCase();
     if (!t) return;
-    if (!customTags.includes(t)) onSaveCustomTags?.([...customTags, t]);
     if (!custom.includes(t)) setCustom((prev) => [...prev, t]);
     setNewTag("");
   };
@@ -245,7 +243,9 @@ function EditBuilder({
               Tags
             </p>
             {(() => {
-              const shownTags = [...new Set([...(customTags || []), ...custom])];
+              const shownTags = [
+                ...new Set([...(tagSuggestions || []), ...custom]),
+              ];
               return (
                 <div
                   data-testid="builder-tags"

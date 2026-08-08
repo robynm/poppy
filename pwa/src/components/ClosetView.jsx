@@ -716,6 +716,7 @@ function ClosetView({
                   key={item.id}
                   item={item}
                   image={images[item.id]}
+                  wears={wearCount[item.id] || 0}
                   onClick={dragMode ? undefined : () => setViewing(item.id)}
                   onSelectToggle={
                     dragMode ? undefined : () => toggleItemSelect(item.id)

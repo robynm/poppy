@@ -184,7 +184,7 @@ function EditDetailModal({
                 {(edit.seasons || []).map((s) => (
                   <span
                     key={`s-${s}`}
-                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-poppy-600 bg-poppy-50 px-2 py-1 rounded-full"
+                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-leaf-700 bg-leaf-50 px-2 py-1 rounded-full"
                   >
                     {s}
                   </span>
@@ -192,7 +192,7 @@ function EditDetailModal({
                 {(edit.occasions || []).map((o) => (
                   <span
                     key={`o-${o}`}
-                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full"
+                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-petal-700 bg-petal-50 px-2 py-1 rounded-full"
                   >
                     {o}
                   </span>
@@ -201,7 +201,7 @@ function EditDetailModal({
                   <span
                     key={`c-${t}`}
                     data-testid="detail-custom-tag"
-                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-buttercup-700 bg-buttercup-50 px-2 py-1 rounded-full"
+                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-700 bg-plum-50 px-2 py-1 rounded-full"
                   >
                     {t}
                   </span>
