@@ -202,6 +202,66 @@ describe("Edits — builder & lifecycle", () => {
     cy.contains("Beach Day").should("be.visible");
   });
 
+  it("filters edits by a closet piece via the picker modal", () => {
+    cy.gotoApp({
+      items,
+      edits: [
+        edit({ id: "e1", name: "Beach Day", itemIds: ["i1", "i2"] }),
+        edit({ id: "e2", name: "Hat Day", itemIds: ["i3"] }),
+      ],
+    });
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').should("have.length", 2);
+
+    cy.get('[data-testid="edit-item-filter-btn"]').click();
+    cy.get('[data-testid="edit-item-filter-modal"]').should("be.visible");
+    cy.get('[data-testid="filter-item"][data-item-id="i3"]').click();
+    cy.get('[data-testid="edit-item-filter-done"]').click();
+    cy.get('[data-testid="edit-item-filter-modal"]').should("not.exist");
+
+    cy.get('[data-testid="edit-item-filters"]').should("contain", "Sun Hat");
+    cy.get('[data-testid="edit-card"]').should("have.length", 1);
+    cy.contains("Hat Day").should("be.visible");
+
+    // Remove the piece via its chip → everything returns.
+    cy.get('[data-testid="edit-item-filter-chip"][data-item-id="i3"]').click();
+    cy.get('[data-testid="edit-card"]').should("have.length", 2);
+  });
+
+  it("sorts edits by wears and by date added", () => {
+    const wear = (id, editId) => ({
+      id,
+      createdAt: 1,
+      dateTaken: 1,
+      outfitIds: [editId],
+      itemIds: [],
+      rating: null,
+    });
+    cy.gotoApp({
+      items,
+      edits: [
+        edit({ id: "eA", name: "Alpha", createdAt: 300 }),
+        edit({ id: "eB", name: "Bravo", createdAt: 200 }),
+        edit({ id: "eC", name: "Charlie", createdAt: 100 }),
+      ],
+      selfies: [wear("s1", "eB"), wear("s2", "eB"), wear("s3", "eC")],
+    });
+    cy.tab("edits");
+    const firstCard = () => cy.get('[data-testid="edit-card"]').first();
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-worn-desc"]').click();
+    firstCard().should("have.attr", "data-edit-id", "eB"); // 2 snaps
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-newest"]').click();
+    firstCard().should("have.attr", "data-edit-id", "eA"); // createdAt 300
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-oldest"]').click();
+    firstCard().should("have.attr", "data-edit-id", "eC"); // createdAt 100
+  });
+
   it("opens an edit and jumps to a filtered closet", () => {
     cy.gotoApp({ items, edits: [edit()] }); // e1 holds White Tee + Blue Jeans
     cy.tab("edits");

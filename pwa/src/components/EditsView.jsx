@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Chip } from "./Chip.jsx";
 import { FilterRow } from "./FilterRow.jsx";
 import { EditCard } from "./EditCard.jsx";
 import { EditCardPreview } from "./EditCardPreview.jsx";
 import { EditDetailModal } from "./EditDetailModal.jsx";
+import { EditItemFilterModal } from "./EditItemFilterModal.jsx";
+import { SortMenu } from "./SortMenu.jsx";
 import { EDIT_TYPE_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS } from "../lib/constants.js";
+import { toTitle } from "../lib/format.js";
 import { reorderByVisible, useDragReorder } from "../lib/hooks.js";
 import { I } from "../lib/icons.jsx";
 
@@ -31,15 +34,31 @@ function EditsView({
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
   const [activeCustom, setActiveCustom] = useState([]);
+  const [activeItems, setActiveItems] = useState([]); // filter edits by pieces
+  const [showItemPicker, setShowItemPicker] = useState(false);
+  const [sortMode, setSortMode] = useState("custom");
   const newEditButtonRef = useRef(null);
+
+  // An edit's "wears" = snaps tagged with it (the snap count on its card).
+  const wearCount = useMemo(() => {
+    const m = {};
+    (selfies || []).forEach((s) =>
+      (s.outfitIds || []).forEach((id) => {
+        m[id] = (m[id] || 0) + 1;
+      }),
+    );
+    return m;
+  }, [selfies]);
 
   const toggle = (list, setList, v) =>
     setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const toggleActiveItem = (id) => toggle(activeItems, setActiveItems, id);
   const filterCount =
     activeTypes.length +
     activeSeasons.length +
     activeOccasions.length +
-    activeCustom.length;
+    activeCustom.length +
+    activeItems.length;
 
   // Tags actually applied to at least one edit — unused ones don't surface.
   const editTags = [
@@ -54,8 +73,27 @@ function EditsView({
       (activeOccasions.length === 0 ||
         activeOccasions.some((oc) => (e.occasions || []).includes(oc))) &&
       (activeCustom.length === 0 ||
-        activeCustom.some((t) => (e.custom || []).includes(t))),
+        activeCustom.some((t) => (e.custom || []).includes(t))) &&
+      (activeItems.length === 0 ||
+        activeItems.some((id) => (e.itemIds || []).includes(id))),
   );
+
+  // Sorting is view-only (doesn't touch stored order). "custom" keeps the
+  // manual/drag order; the reorder handle only shows in custom mode.
+  const sortedEdits = useMemo(() => {
+    if (sortMode === "custom") return filteredEdits;
+    const arr = [...filteredEdits];
+    if (sortMode === "worn-desc" || sortMode === "worn-asc") {
+      const w = (e) => wearCount[e.id] || 0;
+      arr.sort((a, b) =>
+        sortMode === "worn-desc" ? w(b) - w(a) : w(a) - w(b),
+      );
+    } else {
+      const t = (e) => e.createdAt || 0;
+      arr.sort((a, b) => (sortMode === "newest" ? t(b) - t(a) : t(a) - t(b)));
+    }
+    return arr;
+  }, [filteredEdits, sortMode, wearCount]);
 
   const handleReorder = (from, to) => {
     const next = reorderByVisible(
@@ -171,14 +209,23 @@ function EditsView({
             )}
           </div>
 
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`relative px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${filterCount > 0 ? "bg-petal-500 text-white border-petal-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
             >
               Filters{filterCount > 0 && ` · ${filterCount}`}
             </button>
-            {filteredEdits.length > 1 && (
+            <button
+              data-testid="edit-item-filter-btn"
+              onClick={() => setShowItemPicker(true)}
+              className={`relative flex items-center gap-1.5 px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${activeItems.length > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
+            >
+              <I.shirt size={13} /> By Piece
+              {activeItems.length > 0 && ` · ${activeItems.length}`}
+            </button>
+            <SortMenu value={sortMode} onChange={setSortMode} />
+            {sortMode === "custom" && filteredEdits.length > 1 && (
               <button
                 onClick={() => setDragMode(!dragMode)}
                 aria-label={dragMode ? "Exit reorder mode" : "Reorder edits"}
@@ -188,6 +235,41 @@ function EditsView({
               </button>
             )}
           </div>
+
+          {activeItems.length > 0 && (
+            <div
+              data-testid="edit-item-filters"
+              className="mb-4 flex flex-wrap gap-2"
+            >
+              {activeItems.map((id) => {
+                const it = items.find((i) => i.id === id);
+                if (!it) return null;
+                return (
+                  <button
+                    key={id}
+                    data-testid="edit-item-filter-chip"
+                    data-item-id={id}
+                    onClick={() => toggleActiveItem(id)}
+                    className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1.5 bg-white border-2 border-poppy-200 rounded-full text-[11px] font-bold text-ink-700 active:scale-95"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-poppy-gradient overflow-hidden flex items-center justify-center shrink-0">
+                      {images[id] ? (
+                        <img
+                          src={images[id]}
+                          alt=""
+                          className="w-full h-full object-contain p-0.5"
+                        />
+                      ) : (
+                        <I.shirt size={11} className="text-poppy-300" />
+                      )}
+                    </span>
+                    {toTitle(it.name)}
+                    <I.x size={11} className="text-ink-400" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {showFilters && (
             <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
@@ -250,6 +332,7 @@ function EditsView({
                     setActiveSeasons([]);
                     setActiveOccasions([]);
                     setActiveCustom([]);
+                    setActiveItems([]);
                   }}
                   className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
                 >
@@ -291,7 +374,7 @@ function EditsView({
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {filteredEdits.map((e, i) => (
+              {sortedEdits.map((e, i) => (
                 <EditCard
                   key={e.id}
                   id={`edit-${e.id}`}
@@ -387,6 +470,16 @@ function EditsView({
             setViewingId(null);
             onOpenInCloset?.(id);
           }}
+        />
+      )}
+      {showItemPicker && (
+        <EditItemFilterModal
+          items={items}
+          images={images}
+          selected={activeItems}
+          onToggle={toggleActiveItem}
+          onClear={() => setActiveItems([])}
+          onClose={() => setShowItemPicker(false)}
         />
       )}
     </>
