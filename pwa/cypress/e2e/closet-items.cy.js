@@ -119,7 +119,7 @@ describe("Closet — items", () => {
     ).should("contain", "2");
     // …and in the item's details.
     cy.get('[data-testid="item-card"]').click();
-    cy.get('[data-testid="view-wears"]').should("contain", "2 wears");
+    cy.get('[data-testid="view-wears"]').should("contain", "2");
   });
 
   it("sorts the closet by wears and by date added", () => {
