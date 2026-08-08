@@ -170,6 +170,7 @@ function EditDetailModal({
             {(edit.type ||
               (edit.seasons || []).length > 0 ||
               (edit.occasions || []).length > 0 ||
+              (edit.custom || []).length > 0 ||
               pieces.length > 0) && (
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {edit.type && (
@@ -194,6 +195,15 @@ function EditDetailModal({
                     className="text-[9px] font-bold tracking-[0.1em] uppercase text-plum-600 bg-plum-50 px-2 py-1 rounded-full"
                   >
                     {o}
+                  </span>
+                ))}
+                {(edit.custom || []).map((t) => (
+                  <span
+                    key={`c-${t}`}
+                    data-testid="detail-custom-tag"
+                    className="text-[9px] font-bold tracking-[0.1em] uppercase text-buttercup-700 bg-buttercup-50 px-2 py-1 rounded-full"
+                  >
+                    {t}
                   </span>
                 ))}
                 {pieces.map((p) => (

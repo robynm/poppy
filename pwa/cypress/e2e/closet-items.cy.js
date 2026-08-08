@@ -103,6 +103,20 @@ describe("Closet — items", () => {
     });
   });
 
+  it("shows how many times a piece has been worn", () => {
+    const snap = (id) => ({
+      id,
+      createdAt: 1,
+      dateTaken: 1,
+      outfitIds: [],
+      itemIds: ["i_seed_1"],
+      rating: null,
+    });
+    cy.gotoApp({ items: [item()], selfies: [snap("s1"), snap("s2")] });
+    cy.get('[data-testid="item-card"]').click();
+    cy.get('[data-testid="view-wears"]').should("contain", "2 times");
+  });
+
   it("deletes a piece when the confirm is accepted", () => {
     cy.confirmDialogs(true);
     cy.gotoApp({ items: [item()] });

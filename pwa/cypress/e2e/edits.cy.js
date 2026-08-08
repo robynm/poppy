@@ -96,6 +96,22 @@ describe("Edits — builder & lifecycle", () => {
     });
   });
 
+  it("adds a custom tag to an edit and shows it in the detail", () => {
+    cy.gotoApp({ items, edits: [] });
+    cy.tab("edits");
+    cy.get('[data-testid="new-edit-btn"]').click();
+    cy.get('[data-testid="builder-name"]').type("Beach Day");
+    cy.get('[data-testid="builder-piece"]').first().click();
+    cy.get('[data-testid="builder-tag-input"]').type("vacation");
+    cy.get('[data-testid="builder-tag-add"]').click();
+    cy.get('[data-testid="builder-tags"]').contains("vacation").should("exist");
+    cy.get('[data-testid="builder-save"]').click();
+
+    readEdits().then((edits) => expect(edits[0].custom).to.include("vacation"));
+    cy.get('[data-testid="edit-card"]').click();
+    cy.get('[data-testid="detail-custom-tag"]').should("contain", "vacation");
+  });
+
   it("opens an edit's detail modal", () => {
     cy.gotoApp({ items, edits: [edit()] });
     cy.tab("edits");
@@ -167,6 +183,23 @@ describe("Edits — builder & lifecycle", () => {
     cy.get('[data-testid="edit-card"]').should("have.length", 1);
     cy.get('[data-testid="edits-count"]').should("contain", "Showing 1 of 2");
     cy.contains("Italy Trip").should("be.visible");
+  });
+
+  it("filters edits by custom tag", () => {
+    cy.gotoApp({
+      items,
+      edits: [
+        edit({ id: "e1", name: "Beach Day", custom: ["vacation"] }),
+        edit({ id: "e2", name: "Work Week", custom: ["office"] }),
+      ],
+    });
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').should("have.length", 2);
+    cy.contains("Filters").click();
+    cy.get('[data-filter-label="Tags"]').contains("vacation").click();
+    cy.get('[data-testid="edit-card"]').should("have.length", 1);
+    cy.get('[data-testid="edits-count"]').should("contain", "Showing 1 of 2");
+    cy.contains("Beach Day").should("be.visible");
   });
 
   it("opens an edit and jumps to a filtered closet", () => {

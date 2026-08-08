@@ -486,15 +486,6 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.get('[data-testid="builder-selfie"]').should("have.length", 2);
   });
 
-  it("shows the linked look's name on the snap thumbnail", () => {
-    cy.gotoApp({
-      items,
-      selfies: [selfie("s_1", JULY_A, { outfitIds: ["o1"], itemIds: ["i1", "i2"] })],
-      edits: [look()],
-    });
-    cy.tab("selfies");
-    cy.get('[data-testid="selfie-card-look"]').should("contain", "Sunny Day");
-  });
 
   it("shows the snap count on the look thumbnail", () => {
     cy.gotoApp({

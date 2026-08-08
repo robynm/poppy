@@ -536,6 +536,7 @@ function ClosetApp() {
           customTags={customTags}
           brands={brands}
           edits={edits}
+          selfies={selfies}
           activeEdit={activeEdit}
           onSetActiveEdit={setActiveEdit}
           onSaveItems={saveItems}
@@ -590,6 +591,8 @@ function ClosetApp() {
           items={items}
           images={images}
           selfies={selfies}
+          customTags={customTags}
+          onSaveCustomTags={saveCustomTags}
           edit={editingEdit}
           onSaveEdit={(o) => {
             // The builder returns the selected snap ids; the snap→edit link is

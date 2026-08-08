@@ -20,6 +20,7 @@ function ClosetView({
   customTags,
   brands,
   edits,
+  selfies,
   activeEdit,
   onSetActiveEdit,
   onSaveItems,
@@ -788,6 +789,7 @@ function ClosetView({
           item={items.find((i) => i.id === viewing)}
           image={images[viewing]}
           edits={edits}
+          selfies={selfies}
           onClose={() => setViewing(null)}
           onEdit={() => {
             setEditing(viewing);

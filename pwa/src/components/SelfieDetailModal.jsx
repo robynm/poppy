@@ -118,6 +118,12 @@ function SelfieDetailModal({
         : [...draftItems, id],
     );
 
+  // The picker only offers owned pieces — planned/donated items aren't taggable
+  // — but any already-tagged piece stays visible so it can still be removed.
+  const pickableItems = (items || []).filter(
+    (it) => (it.status || "owned") === "owned" || draftItems.includes(it.id),
+  );
+
   // Looks that overlap the tagged pieces, ranked by closeness of match
   // (Jaccard similarity, so a tight match beats a big look sharing one piece).
   // Already-tagged looks are excluded — they've graduated to "Worn in".
@@ -359,7 +365,7 @@ function SelfieDetailModal({
               <label className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
                 Pieces ({draftItems.length})
               </label>
-              {(items || []).length > 0 && (
+              {pickableItems.length > 0 && (
                 <button
                   type="button"
                   data-testid="selfie-pieces-toggle"
@@ -370,7 +376,7 @@ function SelfieDetailModal({
                 </button>
               )}
             </div>
-            {(items || []).length === 0 ? (
+            {pickableItems.length === 0 ? (
               <p className="text-xs italic text-ink-400">
                 No pieces in your closet yet.
               </p>
@@ -379,8 +385,8 @@ function SelfieDetailModal({
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {(piecesOpen
-                  ? items
-                  : items.filter((it) => draftItems.includes(it.id))
+                  ? pickableItems
+                  : pickableItems.filter((it) => draftItems.includes(it.id))
                 ).map((it) => {
                   const active = draftItems.includes(it.id);
                   return (

@@ -30,12 +30,21 @@ function EditsView({
   const [activeTypes, setActiveTypes] = useState([]);
   const [activeSeasons, setActiveSeasons] = useState([]);
   const [activeOccasions, setActiveOccasions] = useState([]);
+  const [activeCustom, setActiveCustom] = useState([]);
   const newEditButtonRef = useRef(null);
 
   const toggle = (list, setList, v) =>
     setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const filterCount =
-    activeTypes.length + activeSeasons.length + activeOccasions.length;
+    activeTypes.length +
+    activeSeasons.length +
+    activeOccasions.length +
+    activeCustom.length;
+
+  // Tags actually applied to at least one edit — unused ones don't surface.
+  const editTags = [
+    ...new Set(edits.flatMap((e) => e.custom || [])),
+  ].sort((a, b) => a.localeCompare(b));
 
   const filteredEdits = edits.filter(
     (e) =>
@@ -43,7 +52,9 @@ function EditsView({
       (activeSeasons.length === 0 ||
         activeSeasons.some((s) => (e.seasons || []).includes(s))) &&
       (activeOccasions.length === 0 ||
-        activeOccasions.some((oc) => (e.occasions || []).includes(oc))),
+        activeOccasions.some((oc) => (e.occasions || []).includes(oc))) &&
+      (activeCustom.length === 0 ||
+        activeCustom.some((t) => (e.custom || []).includes(t))),
   );
 
   const handleReorder = (from, to) => {
@@ -119,7 +130,7 @@ function EditsView({
             </h2>
             <div className="flex items-end justify-between gap-4">
               <h3 className="font-display font-bold text-4xl sm:text-6xl leading-[1.05] text-ink-900">
-                <em className="text-petal-600">worth keeping.</em>
+                <em className="text-petal-600">styled to keep.</em>
               </h3>
               <button
                 data-testid="new-edit-btn"
@@ -218,12 +229,27 @@ function EditsView({
                   </Chip>
                 ))}
               </FilterRow>
+              {editTags.length > 0 && (
+                <FilterRow label="Tags">
+                  {editTags.map((t) => (
+                    <Chip
+                      key={t}
+                      tone="custom"
+                      active={activeCustom.includes(t)}
+                      onClick={() => toggle(activeCustom, setActiveCustom, t)}
+                    >
+                      {t}
+                    </Chip>
+                  ))}
+                </FilterRow>
+              )}
               {filterCount > 0 && (
                 <button
                   onClick={() => {
                     setActiveTypes([]);
                     setActiveSeasons([]);
                     setActiveOccasions([]);
+                    setActiveCustom([]);
                   }}
                   className="mt-2 text-[10px] tracking-[0.2em] uppercase text-ink-500 underline"
                 >
