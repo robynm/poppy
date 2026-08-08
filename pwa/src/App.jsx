@@ -121,10 +121,12 @@ function ClosetApp() {
         await migrateLegacyImagesIfNeeded();
       }
 
-      // Migration: backfill status="owned" and brand="" on any existing items that pre-date these fields
+      // Migration: backfill status="owned", brand="", and createdAt on any
+      // existing items that pre-date these fields.
       const rawItems = lsGet(STORAGE_KEYS.items, []);
       let migrated = false;
-      const items2 = rawItems.map((i) => {
+      const nowTs = Date.now();
+      const items2 = rawItems.map((i, idx) => {
         const next = { ...i };
         if (!next.status) {
           next.status = "owned";
@@ -132,6 +134,13 @@ function ClosetApp() {
         }
         if (next.brand === undefined) {
           next.brand = "";
+          migrated = true;
+        }
+        if (next.createdAt == null) {
+          // Prefer the timestamp embedded in user-added ids (i_<ts>); otherwise
+          // synthesize one that preserves the current order (index 0 = newest).
+          const m = /^i_(\d+)$/.exec(next.id || "");
+          next.createdAt = m ? Number(m[1]) : nowTs - idx;
           migrated = true;
         }
         return next;
@@ -536,6 +545,7 @@ function ClosetApp() {
           customTags={customTags}
           brands={brands}
           edits={edits}
+          selfies={selfies}
           activeEdit={activeEdit}
           onSetActiveEdit={setActiveEdit}
           onSaveItems={saveItems}
@@ -590,6 +600,8 @@ function ClosetApp() {
           items={items}
           images={images}
           selfies={selfies}
+          customTags={customTags}
+          onSaveCustomTags={saveCustomTags}
           edit={editingEdit}
           onSaveEdit={(o) => {
             // The builder returns the selected snap ids; the snap→edit link is

@@ -376,6 +376,18 @@ const I = {
       }
     />
   ),
+  sort: (p) => (
+    <Icon
+      {...p}
+      d={
+        <>
+          <path d="M4 6h16" />
+          <path d="M4 12h10" />
+          <path d="M4 18h5" />
+        </>
+      }
+    />
+  ),
   smile: (p) => (
     <Icon
       {...p}

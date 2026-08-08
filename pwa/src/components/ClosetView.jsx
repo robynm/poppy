@@ -6,6 +6,7 @@ import { EditDrawer } from "./EditDrawer.jsx";
 import { FilterRow } from "./FilterRow.jsx";
 import { ItemCard } from "./ItemCard.jsx";
 import { RemovableChip } from "./RemovableChip.jsx";
+import { SortMenu } from "./SortMenu.jsx";
 import { ViewDrawer } from "./ViewDrawer.jsx";
 import { CATEGORY_OPTIONS, OCCASION_OPTIONS, SEASON_OPTIONS, STATUS_OPTIONS } from "../lib/constants.js";
 import { toTitle } from "../lib/format.js";
@@ -20,6 +21,7 @@ function ClosetView({
   customTags,
   brands,
   edits,
+  selfies,
   activeEdit,
   onSetActiveEdit,
   onSaveItems,
@@ -70,7 +72,19 @@ function ClosetView({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkSheet, setBulkSheet] = useState(null); // "tags" | "edits"
   const [dragMode, setDragMode] = useState(false);
+  const [sortMode, setSortMode] = useState("custom");
   const setActiveEdit = onSetActiveEdit;
+
+  // A piece's "wears" = snaps it's tagged in (mirrors the Most-worn stat).
+  const wearCount = useMemo(() => {
+    const m = {};
+    (selfies || []).forEach((s) =>
+      (s.itemIds || []).forEach((id) => {
+        m[id] = (m[id] || 0) + 1;
+      }),
+    );
+    return m;
+  }, [selfies]);
 
   const toggle = (list, setList, v) =>
     setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -149,6 +163,23 @@ function ClosetView({
     ],
   );
 
+  // Sorting is view-only (leaves the stored order untouched). "custom" keeps
+  // the manual/drag order; the reorder handle only shows in custom mode.
+  const sorted = useMemo(() => {
+    if (sortMode === "custom") return filtered;
+    const arr = [...filtered];
+    if (sortMode === "worn-desc" || sortMode === "worn-asc") {
+      const w = (it) => wearCount[it.id] || 0;
+      arr.sort((a, b) =>
+        sortMode === "worn-desc" ? w(b) - w(a) : w(a) - w(b),
+      );
+    } else {
+      const t = (it) => it.createdAt || 0;
+      arr.sort((a, b) => (sortMode === "newest" ? t(b) - t(a) : t(a) - t(b)));
+    }
+    return arr;
+  }, [filtered, sortMode, wearCount]);
+
   // Distinct purchase years present in the closet, most recent first
   const years = useMemo(
     () =>
@@ -185,6 +216,7 @@ function ClosetView({
       status: "owned",
       brand: "",
       yearPurchased: "",
+      createdAt: Date.now(),
     };
     onSaveItems([newItem, ...items]);
     if (blob) await onPutImage(id, blob);
@@ -375,16 +407,7 @@ function ClosetView({
           </div>
 
           {/* Search + filter toggle */}
-          <div className="mb-4 flex gap-2">
-            {/* <div className="flex-1 flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-cream-100 rounded-full min-w-0 shadow-card">
-          <I.search size={15} className="text-poppy-500 shrink-0" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="search your closet…"
-            className="flex-1 bg-transparent outline-none text-sm placeholder-ink-400 min-w-0 font-medium"
-          />
-        </div> */}
+          <div className="mb-4 flex flex-wrap gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
               data-testid="filters-toggle"
@@ -392,13 +415,16 @@ function ClosetView({
             >
               Filters{filterCount > 0 && ` · ${filterCount}`}
             </button>
-            <button
-              onClick={() => (dragMode ? setDragMode(false) : enterDragMode())}
-              aria-label={dragMode ? "Exit reorder mode" : "Reorder items"}
-              className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
-            >
-              {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
-            </button>
+            <SortMenu value={sortMode} onChange={setSortMode} />
+            {sortMode === "custom" && (
+              <button
+                onClick={() => (dragMode ? setDragMode(false) : enterDragMode())}
+                aria-label={dragMode ? "Exit reorder mode" : "Reorder items"}
+                className={`relative w-[42px] h-[42px] flex items-center justify-center border-2 rounded-full active:scale-95 shrink-0 transition-colors ${dragMode ? "bg-ink-800 text-white border-ink-800" : "bg-white border-cream-100 text-ink-700"}`}
+              >
+                {dragMode ? <I.check size={16} /> : <I.grip size={16} />}
+              </button>
+            )}
           </div>
 
           {/* Collapsible filters */}
@@ -685,7 +711,7 @@ function ClosetView({
             </div>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2">
-              {filtered.map((item, i) => (
+              {sorted.map((item, i) => (
                 <ItemCard
                   key={item.id}
                   item={item}
@@ -788,6 +814,7 @@ function ClosetView({
           item={items.find((i) => i.id === viewing)}
           image={images[viewing]}
           edits={edits}
+          selfies={selfies}
           onClose={() => setViewing(null)}
           onEdit={() => {
             setEditing(viewing);

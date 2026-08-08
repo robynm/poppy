@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CroppedImage } from "./CroppedImage.jsx";
 import { SelfieDetailModal } from "./SelfieDetailModal.jsx";
-import { groupByMonth, toTitle } from "../lib/format.js";
+import { groupByMonth } from "../lib/format.js";
 import { readDateTaken } from "../lib/exif.js";
 import { I } from "../lib/icons.jsx";
 import { resizeImageToBlob } from "../lib/images.js";
@@ -110,9 +110,6 @@ function SelfiesView({
       : selfies;
   const groups = groupByMonth(filteredSelfies);
   const viewing = selfies.find((s) => s.id === viewingId);
-  const editName = Object.fromEntries(
-    (edits || []).map((e) => [e.id, e.name]),
-  );
 
   return (
     <>
@@ -266,52 +263,34 @@ function SelfiesView({
                     </span>
                   </h4>
                   <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 items-start">
-                    {group.items.map((s) => {
-                      const firstLook = (s.outfitIds || [])[0];
-                      const look = firstLook && editName[firstLook];
-                      const extra = (s.outfitIds || []).length - 1;
-                      return (
-                        <button
-                          key={s.id}
-                          data-testid="selfie-card"
-                          data-selfie-id={s.id}
-                          onClick={() => setViewingId(s.id)}
-                          className="relative bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform text-left"
-                        >
-                          <CroppedImage
-                            url={images[s.id]}
-                            crop={s.crop}
-                            className="w-full aspect-[1/2]"
-                          />
-                          {s.rating &&
-                            (() => {
-                              const Glyph = RATING_ICON[s.rating];
-                              return (
-                                <span
-                                  data-testid="selfie-card-rating"
-                                  data-rating={s.rating}
-                                  className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-white/85 text-buttercup-600 shadow-card"
-                                >
-                                  <Glyph size={14} />
-                                </span>
-                              );
-                            })()}
-                          {look && (
-                            <div className="p-2 border-t-2 border-cream-100">
-                              <p
-                                data-testid="selfie-card-look"
-                                className="font-display font-semibold text-xs leading-tight truncate text-ink-900"
+                    {group.items.map((s) => (
+                      <button
+                        key={s.id}
+                        data-testid="selfie-card"
+                        data-selfie-id={s.id}
+                        onClick={() => setViewingId(s.id)}
+                        className="relative bg-white border-2 border-cream-100 rounded-2xl overflow-hidden shadow-card active:scale-[0.98] transition-transform text-left"
+                      >
+                        <CroppedImage
+                          url={images[s.id]}
+                          crop={s.crop}
+                          className="w-full aspect-[1/2]"
+                        />
+                        {s.rating &&
+                          (() => {
+                            const Glyph = RATING_ICON[s.rating];
+                            return (
+                              <span
+                                data-testid="selfie-card-rating"
+                                data-rating={s.rating}
+                                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-white/85 text-buttercup-600 shadow-card"
                               >
-                                {toTitle(look)}
-                                {extra > 0 && (
-                                  <span className="text-ink-400"> +{extra}</span>
-                                )}
-                              </p>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
+                                <Glyph size={14} />
+                              </span>
+                            );
+                          })()}
+                      </button>
+                    ))}
                   </div>
                 </section>
               ))}

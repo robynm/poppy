@@ -103,6 +103,64 @@ describe("Closet — items", () => {
     });
   });
 
+  it("shows how many times a piece has been worn", () => {
+    const snap = (id) => ({
+      id,
+      createdAt: 1,
+      dateTaken: 1,
+      outfitIds: [],
+      itemIds: ["i_seed_1"],
+      rating: null,
+    });
+    cy.gotoApp({ items: [item()], selfies: [snap("s1"), snap("s2")] });
+    cy.get('[data-testid="item-card"]').click();
+    cy.get('[data-testid="view-wears"]').should("contain", "2 times");
+  });
+
+  it("sorts the closet by wears and by date added", () => {
+    const mk = (id, name, createdAt) => ({
+      id,
+      name,
+      category: "top",
+      seasons: [],
+      occasions: [],
+      custom: [],
+      status: "owned",
+      brand: "",
+      yearPurchased: "",
+      createdAt,
+    });
+    const wear = (id, itemId) => ({
+      id,
+      createdAt: 1,
+      dateTaken: 1,
+      outfitIds: [],
+      itemIds: [itemId],
+      rating: null,
+    });
+    cy.gotoApp({
+      items: [mk("iA", "Alpha", 300), mk("iB", "Bravo", 200), mk("iC", "Charlie", 100)],
+      selfies: [wear("s1", "iB"), wear("s2", "iB"), wear("s3", "iC")],
+    });
+    const firstCard = () => cy.get('[data-testid="item-card"]').first();
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-worn-desc"]').click();
+    firstCard().should("have.attr", "data-item-id", "iB"); // 2 wears
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-worn-asc"]').click();
+    firstCard().should("have.attr", "data-item-id", "iA"); // 0 wears
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-newest"]').click();
+    firstCard().should("have.attr", "data-item-id", "iA"); // createdAt 300
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-oldest"]').click();
+    firstCard().should("have.attr", "data-item-id", "iC"); // createdAt 100
+  });
+
   it("deletes a piece when the confirm is accepted", () => {
     cy.confirmDialogs(true);
     cy.gotoApp({ items: [item()] });

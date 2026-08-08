@@ -12,8 +12,10 @@ function EditBuilder({
   items,
   images,
   selfies = [],
+  customTags = [],
   edit,
   onSaveEdit,
+  onSaveCustomTags,
   onCancel,
 }) {
   useBodyScrollLock();
@@ -32,8 +34,17 @@ function EditBuilder({
   const [type, setType] = useState(edit ? edit.type || null : null);
   const [seasons, setSeasons] = useState(edit ? edit.seasons || [] : []);
   const [occasions, setOccasions] = useState(edit ? edit.occasions || [] : []);
+  const [custom, setCustom] = useState(edit ? edit.custom || [] : []);
+  const [newTag, setNewTag] = useState("");
   const toggleTag = (list, setList, v) =>
     setList(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const addCustom = () => {
+    const t = newTag.trim().toLowerCase();
+    if (!t) return;
+    if (!customTags.includes(t)) onSaveCustomTags?.([...customTags, t]);
+    if (!custom.includes(t)) setCustom((prev) => [...prev, t]);
+    setNewTag("");
+  };
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [activeStatuses, setActiveStatuses] = useState(["owned"]);
   const [piecesOpen, setPiecesOpen] = useState(true);
@@ -74,6 +85,7 @@ function EditBuilder({
         selfieIds: selectedSelfies,
         seasons,
         occasions,
+        custom,
       });
     } else {
       onSaveEdit({
@@ -84,6 +96,7 @@ function EditBuilder({
         selfieIds: selectedSelfies,
         seasons,
         occasions,
+        custom,
       });
     }
   };
@@ -224,6 +237,55 @@ function EditBuilder({
                   {o}
                 </Chip>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Tags
+            </p>
+            {(() => {
+              const shownTags = [...new Set([...(customTags || []), ...custom])];
+              return (
+                <div
+                  data-testid="builder-tags"
+                  className="flex flex-wrap gap-2 mb-2"
+                >
+                  {shownTags.map((t) => (
+                    <Chip
+                      key={t}
+                      tone="custom"
+                      active={custom.includes(t)}
+                      onClick={() => toggleTag(custom, setCustom, t)}
+                    >
+                      {t}
+                    </Chip>
+                  ))}
+                  {shownTags.length === 0 && (
+                    <span className="text-xs text-ink-400 italic">
+                      none yet — add one below
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+            <div className="flex gap-2">
+              <input
+                data-testid="builder-tag-input"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCustom()}
+                placeholder="new tag…"
+                className="flex-1 bg-transparent border-b border-cream-200 focus:border-poppy-500 outline-none text-sm py-1"
+              />
+              <button
+                type="button"
+                data-testid="builder-tag-add"
+                onClick={addCustom}
+                className="px-4 py-1.5 bg-poppy-500 text-white text-[10px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 shadow-pop"
+              >
+                Add
+              </button>
             </div>
           </div>
 

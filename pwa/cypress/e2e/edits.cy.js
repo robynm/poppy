@@ -96,6 +96,22 @@ describe("Edits — builder & lifecycle", () => {
     });
   });
 
+  it("adds a custom tag to an edit and shows it in the detail", () => {
+    cy.gotoApp({ items, edits: [] });
+    cy.tab("edits");
+    cy.get('[data-testid="new-edit-btn"]').click();
+    cy.get('[data-testid="builder-name"]').type("Beach Day");
+    cy.get('[data-testid="builder-piece"]').first().click();
+    cy.get('[data-testid="builder-tag-input"]').type("vacation");
+    cy.get('[data-testid="builder-tag-add"]').click();
+    cy.get('[data-testid="builder-tags"]').contains("vacation").should("exist");
+    cy.get('[data-testid="builder-save"]').click();
+
+    readEdits().then((edits) => expect(edits[0].custom).to.include("vacation"));
+    cy.get('[data-testid="edit-card"]').click();
+    cy.get('[data-testid="detail-custom-tag"]').should("contain", "vacation");
+  });
+
   it("opens an edit's detail modal", () => {
     cy.gotoApp({ items, edits: [edit()] });
     cy.tab("edits");
@@ -167,6 +183,83 @@ describe("Edits — builder & lifecycle", () => {
     cy.get('[data-testid="edit-card"]').should("have.length", 1);
     cy.get('[data-testid="edits-count"]').should("contain", "Showing 1 of 2");
     cy.contains("Italy Trip").should("be.visible");
+  });
+
+  it("filters edits by custom tag", () => {
+    cy.gotoApp({
+      items,
+      edits: [
+        edit({ id: "e1", name: "Beach Day", custom: ["vacation"] }),
+        edit({ id: "e2", name: "Work Week", custom: ["office"] }),
+      ],
+    });
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').should("have.length", 2);
+    cy.contains("Filters").click();
+    cy.get('[data-filter-label="Tags"]').contains("vacation").click();
+    cy.get('[data-testid="edit-card"]').should("have.length", 1);
+    cy.get('[data-testid="edits-count"]').should("contain", "Showing 1 of 2");
+    cy.contains("Beach Day").should("be.visible");
+  });
+
+  it("filters edits by a closet piece via the picker modal", () => {
+    cy.gotoApp({
+      items,
+      edits: [
+        edit({ id: "e1", name: "Beach Day", itemIds: ["i1", "i2"] }),
+        edit({ id: "e2", name: "Hat Day", itemIds: ["i3"] }),
+      ],
+    });
+    cy.tab("edits");
+    cy.get('[data-testid="edit-card"]').should("have.length", 2);
+
+    cy.get('[data-testid="edit-item-filter-btn"]').click();
+    cy.get('[data-testid="edit-item-filter-modal"]').should("be.visible");
+    cy.get('[data-testid="filter-item"][data-item-id="i3"]').click();
+    cy.get('[data-testid="edit-item-filter-done"]').click();
+    cy.get('[data-testid="edit-item-filter-modal"]').should("not.exist");
+
+    cy.get('[data-testid="edit-item-filters"]').should("contain", "Sun Hat");
+    cy.get('[data-testid="edit-card"]').should("have.length", 1);
+    cy.contains("Hat Day").should("be.visible");
+
+    // Remove the piece via its chip → everything returns.
+    cy.get('[data-testid="edit-item-filter-chip"][data-item-id="i3"]').click();
+    cy.get('[data-testid="edit-card"]').should("have.length", 2);
+  });
+
+  it("sorts edits by wears and by date added", () => {
+    const wear = (id, editId) => ({
+      id,
+      createdAt: 1,
+      dateTaken: 1,
+      outfitIds: [editId],
+      itemIds: [],
+      rating: null,
+    });
+    cy.gotoApp({
+      items,
+      edits: [
+        edit({ id: "eA", name: "Alpha", createdAt: 300 }),
+        edit({ id: "eB", name: "Bravo", createdAt: 200 }),
+        edit({ id: "eC", name: "Charlie", createdAt: 100 }),
+      ],
+      selfies: [wear("s1", "eB"), wear("s2", "eB"), wear("s3", "eC")],
+    });
+    cy.tab("edits");
+    const firstCard = () => cy.get('[data-testid="edit-card"]').first();
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-worn-desc"]').click();
+    firstCard().should("have.attr", "data-edit-id", "eB"); // 2 snaps
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-newest"]').click();
+    firstCard().should("have.attr", "data-edit-id", "eA"); // createdAt 300
+
+    cy.get('[data-testid="sort-btn"]').click();
+    cy.get('[data-testid="sort-option-oldest"]').click();
+    firstCard().should("have.attr", "data-edit-id", "eC"); // createdAt 100
   });
 
   it("opens an edit and jumps to a filtered closet", () => {
