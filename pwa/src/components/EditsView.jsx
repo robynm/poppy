@@ -216,14 +216,6 @@ function EditsView({
             >
               Filters{filterCount > 0 && ` · ${filterCount}`}
             </button>
-            <button
-              data-testid="edit-item-filter-btn"
-              onClick={() => setShowItemPicker(true)}
-              className={`relative flex items-center gap-1.5 px-4 py-2.5 border-2 rounded-full text-[10px] font-bold tracking-[0.15em] uppercase active:scale-95 shrink-0 transition-colors ${activeItems.length > 0 ? "bg-poppy-500 text-white border-poppy-500 shadow-pop" : "bg-white border-cream-100 text-ink-700"}`}
-            >
-              <I.shirt size={13} /> By Piece
-              {activeItems.length > 0 && ` · ${activeItems.length}`}
-            </button>
             <SortMenu value={sortMode} onChange={setSortMode} />
             {sortMode === "custom" && filteredEdits.length > 1 && (
               <button
@@ -235,41 +227,6 @@ function EditsView({
               </button>
             )}
           </div>
-
-          {activeItems.length > 0 && (
-            <div
-              data-testid="edit-item-filters"
-              className="mb-4 flex flex-wrap gap-2"
-            >
-              {activeItems.map((id) => {
-                const it = items.find((i) => i.id === id);
-                if (!it) return null;
-                return (
-                  <button
-                    key={id}
-                    data-testid="edit-item-filter-chip"
-                    data-item-id={id}
-                    onClick={() => toggleActiveItem(id)}
-                    className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1.5 bg-white border-2 border-poppy-200 rounded-full text-[11px] font-bold text-ink-700 active:scale-95"
-                  >
-                    <span className="w-6 h-6 rounded-full bg-poppy-gradient overflow-hidden flex items-center justify-center shrink-0">
-                      {images[id] ? (
-                        <img
-                          src={images[id]}
-                          alt=""
-                          className="w-full h-full object-contain p-0.5"
-                        />
-                      ) : (
-                        <I.shirt size={11} className="text-poppy-300" />
-                      )}
-                    </span>
-                    {toTitle(it.name)}
-                    <I.x size={11} className="text-ink-400" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
 
           {showFilters && (
             <div className="mb-6 p-4 sm:p-5 bg-white border-2 border-cream-100 rounded-3xl fade-up shadow-card">
@@ -325,6 +282,45 @@ function EditsView({
                   ))}
                 </FilterRow>
               )}
+              <FilterRow label="Piece">
+                <button
+                  type="button"
+                  data-testid="edit-item-filter-btn"
+                  onClick={() => setShowItemPicker(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 border-dashed border-poppy-200 bg-poppy-50 text-poppy-700 rounded-full active:scale-95"
+                >
+                  <I.plus size={11} />
+                  {activeItems.length > 0 ? "Add or change" : "Choose pieces"}
+                </button>
+                {activeItems.map((id) => {
+                  const it = items.find((i) => i.id === id);
+                  if (!it) return null;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      data-testid="edit-item-filter-chip"
+                      data-item-id={id}
+                      onClick={() => toggleActiveItem(id)}
+                      className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1.5 bg-poppy-500 text-white border-2 border-poppy-500 shadow-pop rounded-full text-[11px] font-bold uppercase tracking-[0.1em] active:scale-95"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-white/25 overflow-hidden flex items-center justify-center shrink-0">
+                        {images[id] ? (
+                          <img
+                            src={images[id]}
+                            alt=""
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <I.shirt size={10} />
+                        )}
+                      </span>
+                      {toTitle(it.name)}
+                      <I.x size={11} />
+                    </button>
+                  );
+                })}
+              </FilterRow>
               {filterCount > 0 && (
                 <button
                   onClick={() => {

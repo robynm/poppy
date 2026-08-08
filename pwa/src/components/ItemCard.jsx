@@ -13,6 +13,7 @@ function ItemCard({
   cardRef,
   isSelected,
   compact,
+  wears = 0,
 }) {
   return (
     <div
@@ -63,13 +64,23 @@ function ItemCard({
         )}
       </div>
       {!compact && (
-        <div className="p-2 border-t-2 border-cream-100">
-          <p className="font-display font-semibold text-xs leading-tight truncate text-ink-900">
-            {toTitle(item.name)}
-          </p>
-          <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-poppy-600 mt-0.5 truncate">
-            {item.category}
-          </p>
+        <div className="p-2 border-t-2 border-cream-100 flex items-end justify-between gap-1">
+          <div className="min-w-0">
+            <p className="font-display font-semibold text-xs leading-tight truncate text-ink-900">
+              {toTitle(item.name)}
+            </p>
+            <p className="text-[8px] font-bold tracking-[0.12em] uppercase text-poppy-600 mt-0.5 truncate">
+              {item.category}
+            </p>
+          </div>
+          {wears > 0 && (
+            <span
+              data-testid="item-card-wears"
+              className="shrink-0 inline-flex items-center gap-0.5 pl-1 pr-1.5 h-5 rounded-full bg-white text-ink-700 border border-cream-200 text-[9px] font-bold"
+            >
+              <I.camera size={9} /> {wears}
+            </span>
+          )}
         </div>
       )}
     </div>

@@ -213,13 +213,17 @@ describe("Edits — builder & lifecycle", () => {
     cy.tab("edits");
     cy.get('[data-testid="edit-card"]').should("have.length", 2);
 
+    cy.contains("Filters").click(); // the piece filter lives in the drawer
     cy.get('[data-testid="edit-item-filter-btn"]').click();
     cy.get('[data-testid="edit-item-filter-modal"]').should("be.visible");
     cy.get('[data-testid="filter-item"][data-item-id="i3"]').click();
     cy.get('[data-testid="edit-item-filter-done"]').click();
     cy.get('[data-testid="edit-item-filter-modal"]').should("not.exist");
 
-    cy.get('[data-testid="edit-item-filters"]').should("contain", "Sun Hat");
+    cy.get('[data-testid="edit-item-filter-chip"][data-item-id="i3"]').should(
+      "contain",
+      "Sun Hat",
+    );
     cy.get('[data-testid="edit-card"]').should("have.length", 1);
     cy.contains("Hat Day").should("be.visible");
 

@@ -715,12 +715,12 @@ function StatsModal({
                     return tags.map(([t, n]) => (
                       <div
                         key={t}
-                        className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-buttercup-50 border-2 border-buttercup-100 rounded-full"
+                        className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-plum-50 border-2 border-plum-100 rounded-full"
                       >
                         <span className="text-[12px] font-bold text-ink-800">
                           {t}
                         </span>
-                        <span className="text-[11px] font-bold bg-buttercup-200 text-ink-700 rounded-full px-1.5 min-w-[20px] text-center leading-5">
+                        <span className="text-[11px] font-bold bg-plum-200 text-plum-800 rounded-full px-1.5 min-w-[20px] text-center leading-5">
                           {n}
                         </span>
                       </div>

@@ -600,8 +600,7 @@ function ClosetApp() {
           items={items}
           images={images}
           selfies={selfies}
-          customTags={customTags}
-          onSaveCustomTags={saveCustomTags}
+          tagSuggestions={[...new Set(edits.flatMap((e) => e.custom || []))]}
           edit={editingEdit}
           onSaveEdit={(o) => {
             // The builder returns the selected snap ids; the snap→edit link is

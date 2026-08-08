@@ -113,8 +113,13 @@ describe("Closet — items", () => {
       rating: null,
     });
     cy.gotoApp({ items: [item()], selfies: [snap("s1"), snap("s2")] });
+    // Wear count shows on the thumbnail…
+    cy.get(
+      '[data-testid="item-card"] [data-testid="item-card-wears"]',
+    ).should("contain", "2");
+    // …and in the item's details.
     cy.get('[data-testid="item-card"]').click();
-    cy.get('[data-testid="view-wears"]').should("contain", "2 times");
+    cy.get('[data-testid="view-wears"]').should("contain", "2");
   });
 
   it("sorts the closet by wears and by date added", () => {

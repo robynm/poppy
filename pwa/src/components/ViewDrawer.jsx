@@ -15,7 +15,10 @@ function ViewDrawer({ item, image, edits, selfies, onClose, onEdit }) {
   ).length;
 
   return (
-    <div data-testid="view-drawer" className="fixed inset-0 z-50 flex sm:justify-end">
+    <div
+      data-testid="view-drawer"
+      className="fixed inset-0 z-50 flex sm:justify-end"
+    >
       <div
         className="absolute inset-0 bg-ink-900/40 backdrop-blur-sm"
         onClick={onClose}
@@ -56,15 +59,22 @@ function ViewDrawer({ item, image, edits, selfies, onClose, onEdit }) {
           <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mt-1">
             {item.category}
           </p>
-          <div
-            data-testid="view-wears"
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-buttercup-50 text-buttercup-700 text-[11px] font-bold tracking-[0.1em] uppercase"
-          >
-            <I.camera size={12} /> Worn {wears} {wears === 1 ? "time" : "times"}
-          </div>
         </div>
 
         <div className="px-4 sm:px-6 pb-6 space-y-5">
+          <div>
+            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
+              Times worn
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span
+                data-testid="view-wears"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop"
+              >
+                <I.camera size={12} /> {wears}
+              </span>
+            </div>
+          </div>
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
               Status
