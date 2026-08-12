@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AboutModal } from "./components/AboutModal.jsx";
 import { BackupModal } from "./components/BackupModal.jsx";
 import { BottomTab } from "./components/BottomTab.jsx";
@@ -25,6 +25,20 @@ import {
   lsSet,
   migrateLegacyImagesIfNeeded,
 } from "./lib/storage.js";
+import {
+  cloudEnabled,
+  onCloudStatus,
+  emitCloudStatus,
+  ensureAnonAuth,
+  pullState,
+  pushState,
+  scheduleStatePush,
+  pushImage,
+  downloadImage,
+  listCloudImageIds,
+  markDirty,
+  clearDirty,
+} from "./lib/cloudSync.js";
 
 // --- Main App --------------------------------------------------------------
 function ClosetApp() {
@@ -48,6 +62,33 @@ function ClosetApp() {
   const [showMenu, setShowMenu] = useState(false);
   // Device Back closes the header menu before leaving the app.
   useBackButton(showMenu, () => setShowMenu(false));
+
+  // Cloud sync (Supabase mirror). `stateRef` always holds the latest state so
+  // the debounced pusher and the sync orchestration read fresh values.
+  const [cloudState, setCloudState] = useState({ status: "idle", at: null });
+  const stateRef = useRef({});
+  stateRef.current = { items, edits, customTags, brands, selfies, images };
+  const getMeta = useCallback(() => {
+    const s = stateRef.current;
+    return {
+      items: s.items,
+      edits: s.edits,
+      customTags: s.customTags,
+      brands: s.brands,
+      selfies: s.selfies,
+    };
+  }, []);
+  const cloudPush = () => cloudEnabled && scheduleStatePush(getMeta);
+  const cloudLabel =
+    cloudState.status === "syncing"
+      ? "Syncing…"
+      : cloudState.status === "offline"
+        ? "Offline"
+        : cloudState.status === "error"
+          ? "Retry"
+          : cloudState.status === "synced"
+            ? "Synced"
+            : "Ready";
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme === "winter" ? "winter" : "";
@@ -280,22 +321,27 @@ function ClosetApp() {
   const saveItems = (n) => {
     setItems(n);
     lsSet(STORAGE_KEYS.items, n);
+    cloudPush();
   };
   const saveEdits = (n) => {
     setEdits(n);
     lsSet(STORAGE_KEYS.edits, n);
+    cloudPush();
   };
   const saveCustomTags = (n) => {
     setCustomTags(n);
     lsSet(STORAGE_KEYS.customTags, n);
+    cloudPush();
   };
   const saveBrands = (n) => {
     setBrands(n);
     lsSet(STORAGE_KEYS.brands, n);
+    cloudPush();
   };
   const saveSelfies = (n) => {
     setSelfies(n);
     lsSet(STORAGE_KEYS.selfies, n);
+    cloudPush();
   };
   // Delete a selfie: remove the record and its photo. The look↔selfie link
   // lives on the selfie, so nothing else needs updating.
@@ -310,6 +356,10 @@ function ClosetApp() {
       await IDB.put(id, blob);
       const url = ObjectUrlCache.set(id, blob); // revokes any old URL for this id
       setImages((prev) => ({ ...prev, [id]: url }));
+      if (cloudEnabled)
+        pushImage(id, blob).then((ok) => {
+          if (!ok) markDirty();
+        });
     } catch (e) {
       Log.error("putImage.failed", { id, error: String(e) });
       if (!window.__quotaWarned) {
@@ -381,6 +431,116 @@ function ClosetApp() {
     });
     return { total: ids.length, written, failed };
   };
+
+  // --- Cloud sync orchestration --------------------------------------------
+  // Reconcile local ⇄ cloud. Metadata: local is authoritative (respects
+  // deletions); we only adopt cloud when local is empty (a rare full wipe).
+  // Photos: additive heal — download anything referenced but missing locally
+  // (the IndexedDB-wipe recovery), and upload anything missing from the cloud.
+  const doCloudSync = async () => {
+    if (!cloudEnabled) return;
+    if (!navigator.onLine) {
+      emitCloudStatus("offline");
+      return;
+    }
+    emitCloudStatus("syncing");
+    // Establish identity first — if this fails (unreachable/misconfigured
+    // Supabase), don't pretend we synced.
+    const uid = await ensureAnonAuth();
+    if (!uid) {
+      markDirty();
+      emitCloudStatus("error");
+      return;
+    }
+    let ok = true;
+    const s = stateRef.current;
+    const localEmpty =
+      s.items.length === 0 && s.edits.length === 0 && s.selfies.length === 0;
+    let meta;
+    if (localEmpty) {
+      const cloud = await pullState();
+      if (cloud && (cloud.items?.length || cloud.selfies?.length)) {
+        saveItems(cloud.items || []);
+        saveEdits(cloud.edits || []);
+        saveCustomTags(cloud.customTags || []);
+        saveBrands(cloud.brands || []);
+        saveSelfies(cloud.selfies || []);
+        meta = cloud;
+        Log.info("cloud.adopted", {
+          items: (cloud.items || []).length,
+          edits: (cloud.edits || []).length,
+        });
+      } else {
+        meta = getMeta();
+      }
+    } else {
+      meta = getMeta();
+      ok = await pushState(meta);
+    }
+
+    // Photos both ways.
+    const cloudIds = await listCloudImageIds();
+    const referenced = new Set([
+      ...(meta.items || []).map((i) => i.id),
+      ...(meta.selfies || []).map((x) => x.id),
+    ]);
+    let healed = 0;
+    for (const id of referenced) {
+      if (!s.images[id] && cloudIds.has(id)) {
+        const blob = await downloadImage(id);
+        if (blob) {
+          try {
+            await IDB.put(id, blob);
+            const url = ObjectUrlCache.set(id, blob);
+            setImages((prev) => ({ ...prev, [id]: url }));
+            healed++;
+          } catch (e) {
+            Log.error("cloud.heal.writeFailed", { id, error: String(e) });
+          }
+        }
+      }
+    }
+    for (const id of referenced) {
+      if (s.images[id] && !cloudIds.has(id)) {
+        try {
+          const blob = await IDB.get(id);
+          if (blob) await pushImage(id, blob);
+        } catch {
+          /* best-effort upload */
+        }
+      }
+    }
+    if (healed) Log.info("cloud.healed", { photos: healed });
+    if (ok) {
+      clearDirty();
+      emitCloudStatus("synced", { at: Date.now() });
+    } else {
+      markDirty();
+      emitCloudStatus("error");
+    }
+  };
+  // Keep a fresh reference so effects and the menu always call the latest closure.
+  const cloudSyncRef = useRef(() => {});
+  cloudSyncRef.current = doCloudSync;
+
+  // Broadcast cloud status into React state for the menu indicator.
+  useEffect(() => {
+    onCloudStatus((status, extra) =>
+      setCloudState({ status, at: extra?.at ?? null }),
+    );
+    return () => onCloudStatus(null);
+  }, []);
+
+  // Run a sync once the local data is loaded, and again on reconnect.
+  useEffect(() => {
+    if (loaded && cloudEnabled) cloudSyncRef.current();
+  }, [loaded]);
+  useEffect(() => {
+    if (!cloudEnabled) return;
+    const onOnline = () => cloudSyncRef.current();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   // Browser visitors (not the installed app) land on a splash page instead of
   // an empty-looking closet, unless they've chosen to continue in the browser.
@@ -519,6 +679,22 @@ function ClosetApp() {
                       <I.archive size={15} className="shrink-0" /> Save &amp;
                       restore
                     </button>
+                    {cloudEnabled && (
+                      <>
+                        <div className="h-px bg-cream-100 mx-3" />
+                        <button
+                          onClick={() => cloudSyncRef.current()}
+                          data-testid="menu-cloud"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
+                        >
+                          <I.cloud size={15} className="shrink-0" />
+                          <span className="flex-1">Cloud sync</span>
+                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">
+                            {cloudLabel}
+                          </span>
+                        </button>
+                      </>
+                    )}
                     <div className="h-px bg-cream-100 mx-3" />
                     <button
                       onClick={() => {

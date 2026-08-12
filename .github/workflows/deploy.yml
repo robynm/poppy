@@ -52,6 +52,12 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: pwa
+        env:
+          # Cloud sync config — set these as repository Variables
+          # (Settings → Secrets and variables → Actions → Variables).
+          # Public values (the publishable key ships in the bundle anyway).
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
