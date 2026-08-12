@@ -32,6 +32,7 @@ function ClosetView({
   onSaveEdits,
   onSetHeaderAction,
   onOpenStats,
+  onOpenSnap,
 }) {
   const [activeCategories, setActiveCategories] = useState([]);
   const [activeSeasons, setActiveSeasons] = useState([]);
@@ -819,6 +820,10 @@ function ClosetView({
           onClose={() => setViewing(null)}
           onEdit={() => {
             setEditing(viewing);
+          }}
+          onOpenSnap={(id) => {
+            setViewing(null);
+            onOpenSnap?.(id);
           }}
         />
       )}

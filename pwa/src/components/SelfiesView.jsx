@@ -27,8 +27,18 @@ function SelfiesView({
   onPutImage,
   onDeleteSelfie,
   onSetHeaderAction,
+  openId,
+  onOpened,
 }) {
   const [viewingId, setViewingId] = useState(null);
+
+  // Deep-link from elsewhere (e.g. an item's "Worn in" links): open the
+  // requested snap once, then clear the request so it doesn't reopen.
+  useEffect(() => {
+    if (!openId) return;
+    if (selfies.some((s) => s.id === openId)) setViewingId(openId);
+    onOpened?.();
+  }, [openId]);
   const [activeRatings, setActiveRatings] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(null); // { done, total }

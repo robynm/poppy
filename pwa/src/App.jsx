@@ -58,6 +58,7 @@ function ClosetApp() {
   const [headerAction, setHeaderAction] = useState(null);
   const [activeEdit, setActiveEdit] = useState(null); // currently selected edit id (closet filter)
   const [scrollToEditId, setScrollToEditId] = useState(null);
+  const [openSelfieId, setOpenSelfieId] = useState(null); // snap to open when landing on the Snaps view
   const [theme, setTheme] = useState(() => lsGet(STORAGE_KEYS.theme, "spring"));
   const [showMenu, setShowMenu] = useState(false);
   // Device Back closes the header menu before leaving the app.
@@ -732,6 +733,10 @@ function ClosetApp() {
           onSaveEdits={saveEdits}
           onSetHeaderAction={setHeaderAction}
           onOpenStats={() => setShowStats(true)}
+          onOpenSnap={(id) => {
+            setOpenSelfieId(id);
+            setView("selfies");
+          }}
         />
       )}
       {view === "edits" && (
@@ -769,6 +774,8 @@ function ClosetApp() {
           onPutImage={putImage}
           onDeleteSelfie={deleteSelfie}
           onSetHeaderAction={setHeaderAction}
+          openId={openSelfieId}
+          onOpened={() => setOpenSelfieId(null)}
         />
       )}
       {builderOpen && (
@@ -797,24 +804,17 @@ function ClosetApp() {
                 ...edits,
               ]);
             }
-            // Tag the chosen snaps with this edit (add to outfitIds and merge
-            // its pieces into itemIds); un-tag the edit from any dropped snap,
-            // but leave that snap's tagged items in place.
+            // Tag the chosen snaps with this edit (add to outfitIds); un-tag
+            // the edit from any dropped snap. A snap is a curated *subset* of an
+            // edit, so linking never touches the snap's own tagged items.
             const chosen = new Set(selfieIds);
-            const editItemIds = rest.itemIds || [];
             saveSelfies(
               selfies.map((s) => {
                 const linked = (s.outfitIds || []).includes(editId);
                 if (chosen.has(s.id)) {
-                  return {
-                    ...s,
-                    outfitIds: linked
-                      ? s.outfitIds
-                      : [...(s.outfitIds || []), editId],
-                    itemIds: [
-                      ...new Set([...(s.itemIds || []), ...editItemIds]),
-                    ],
-                  };
+                  return linked
+                    ? s
+                    : { ...s, outfitIds: [...(s.outfitIds || []), editId] };
                 }
                 if (linked)
                   return {
