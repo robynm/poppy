@@ -1,5 +1,6 @@
 // Selfies: month-grouped gallery, upload, edit date, delete, mood rating, and
-// tagging (pieces directly + looks, which auto-add their pieces).
+// tagging. A snap is a curated *subset* of an edit, so linking or unlinking an
+// edit never changes the snap's own tagged pieces.
 
 const PNG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -415,20 +416,19 @@ describe("Selfie tagging (pieces + looks)", () => {
     });
   });
 
-  it("tagging a look auto-adds its pieces; untagging the look leaves them", () => {
+  it("tagging a look links it without touching the snap's pieces (snap is a subset)", () => {
     cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], edits: [look()] });
     cy.tab("selfies");
     cy.get('[data-testid="selfie-card"]').click();
     cy.get('[data-testid="selfie-looks-toggle"]').click(); // expand to edit
-    // Tag the look → its pieces are added.
-    cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').click();
-    // Untag the look → pieces remain.
+    // Tag the look → it is linked, but the snap's (empty) piece list is untouched.
     cy.get('[data-testid="selfie-look-option"][data-outfit-id="o1"]').click();
     cy.get('[data-testid="selfie-save"]').click();
 
     readSelfies2().then((s) => {
-      expect(s[0].outfitIds).to.not.include("o1");
-      expect(s[0].itemIds).to.include.members(["i1", "i2"]);
+      expect(s[0].outfitIds).to.include("o1");
+      expect(s[0].itemIds || []).to.not.include("i1");
+      expect(s[0].itemIds || []).to.not.include("i2");
     });
   });
 
@@ -445,14 +445,14 @@ describe("Selfie tagging (pieces + looks)", () => {
 
     readSelfies2().then((s) => {
       expect(s[0].outfitIds).to.have.length(1);
-      expect(s[0].itemIds).to.include("i1"); // the look's piece was added
+      expect(s[0].itemIds || []).to.not.include("i1"); // linking never adds the edit's pieces
     });
     cy.get('[data-testid="edit-card"]').click();
     cy.get('[data-testid="detail-selfies"]').should("be.visible");
     cy.get('[data-testid="detail-selfie-thumb"]').should("have.length", 1);
   });
 
-  it("tags a look from the edit-selfie screen (adds its pieces)", () => {
+  it("tags a look from the edit-selfie screen without adding its pieces", () => {
     cy.gotoApp({ items, selfies: [selfie("s_1", JULY_A)], edits: [look()] });
     cy.seedImages({ s_1: PNG });
 
@@ -464,7 +464,8 @@ describe("Selfie tagging (pieces + looks)", () => {
     cy.get('[data-testid="selfie-detail"]').should("not.exist");
     readSelfies2().then((s) => {
       expect(s[0].outfitIds).to.include("o1");
-      expect(s[0].itemIds).to.include.members(["i1", "i2"]);
+      expect(s[0].itemIds || []).to.not.include("i1");
+      expect(s[0].itemIds || []).to.not.include("i2");
     });
 
     cy.tab("edits");
