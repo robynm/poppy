@@ -101,15 +101,14 @@ function SelfieDetailModal({
     dragRef.current = null;
   };
 
-  // Toggle a look. Adding also merges its pieces into the tagged items;
-  // removing leaves the tagged items untouched.
+  // Toggle a look. A snap is a curated *subset* of an edit, so linking or
+  // unlinking an edit never changes the snap's own tagged items.
   const toggleOutfit = (o) => {
-    if (draftOutfitIds.includes(o.id)) {
-      setDraftOutfitIds(draftOutfitIds.filter((x) => x !== o.id));
-    } else {
-      setDraftOutfitIds([...draftOutfitIds, o.id]);
-      setDraftItems((prev) => [...new Set([...prev, ...(o.itemIds || [])])]);
-    }
+    setDraftOutfitIds(
+      draftOutfitIds.includes(o.id)
+        ? draftOutfitIds.filter((x) => x !== o.id)
+        : [...draftOutfitIds, o.id],
+    );
   };
   const toggleItem = (id) =>
     setDraftItems(
@@ -124,9 +123,10 @@ function SelfieDetailModal({
     (it) => (it.status || "owned") === "owned" || draftItems.includes(it.id),
   );
 
-  // Looks that overlap the tagged pieces, ranked by closeness of match
-  // (Jaccard similarity, so a tight match beats a big look sharing one piece).
-  // Already-tagged looks are excluded — they've graduated to "Worn in".
+  // Edits that overlap the tagged pieces, ranked by how fully they *contain*
+  // the snap. A snap is a subset of an edit, so an edit that includes every
+  // tagged piece is a 100% match no matter how many extra pieces it carries.
+  // Already-tagged edits are excluded — they've graduated to "Worn in".
   const suggestedOutfits = useMemo(() => {
     if (draftItems.length === 0) return [];
     const tagged = new Set(draftItems);
@@ -135,8 +135,7 @@ function SelfieDetailModal({
       .map((o) => {
         const ids = o.itemIds || [];
         const shared = ids.filter((id) => tagged.has(id)).length;
-        const union = new Set([...ids, ...draftItems]).size;
-        return { o, shared, score: union ? shared / union : 0 };
+        return { o, shared, score: shared / draftItems.length };
       })
       .filter((x) => x.shared > 0)
       .sort((a, b) => b.score - a.score || b.shared - a.shared)

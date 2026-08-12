@@ -1,18 +1,19 @@
-import { toTitle } from "../lib/format.js";
+import { toTitle, dateLabel } from "../lib/format.js";
 import { useBodyScrollLock } from "../lib/hooks.js";
 import { useBackButton } from "../lib/backNav.js";
 import { I } from "../lib/icons.jsx";
 
 // --- VIEW DRAWER (read-only details) --------------------------------------
-function ViewDrawer({ item, image, edits, selfies, onClose, onEdit }) {
+function ViewDrawer({ item, image, edits, selfies, onClose, onEdit, onOpenSnap }) {
   useBodyScrollLock();
   useBackButton(true, onClose);
   if (!item) return null;
   const inEdits = (edits || []).filter((e) => e.itemIds.includes(item.id));
-  // Wears = snaps this piece is tagged in (mirrors the "Most worn" stat).
-  const wears = (selfies || []).filter((s) =>
-    (s.itemIds || []).includes(item.id),
-  ).length;
+  // Snaps this piece is tagged in (mirrors the "Most worn" stat), newest first.
+  const wornIn = (selfies || [])
+    .filter((s) => (s.itemIds || []).includes(item.id))
+    .sort((a, b) => (b.dateTaken || 0) - (a.dateTaken || 0));
+  const wears = wornIn.length;
 
   return (
     <div
@@ -62,19 +63,6 @@ function ViewDrawer({ item, image, edits, selfies, onClose, onEdit }) {
         </div>
 
         <div className="px-4 sm:px-6 pb-6 space-y-5">
-          <div>
-            <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
-              Times worn
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span
-                data-testid="view-wears"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop"
-              >
-                <I.camera size={12} /> {wears}
-              </span>
-            </div>
-          </div>
           <div>
             <p className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2">
               Status
@@ -184,10 +172,38 @@ function ViewDrawer({ item, image, edits, selfies, onClose, onEdit }) {
             </div>
           )}
 
+          {wornIn.length > 0 && (
+            <div>
+              <p
+                data-testid="view-wears"
+                className="text-[10px] tracking-[0.3em] uppercase text-ink-500 mb-2"
+              >
+                Worn {wears} {wears === 1 ? "time" : "times"}
+              </p>
+              <div className="flex flex-wrap gap-2" data-testid="view-worn-in">
+                {wornIn.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    data-testid="view-worn-snap"
+                    data-selfie-id={s.id}
+                    onClick={() => onOpenSnap?.(s.id)}
+                    aria-label={`Open snap${s.dateTaken ? ` from ${dateLabel(s.dateTaken)}` : ""}`}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.1em] border-2 rounded-full bg-buttercup-500 text-white border-buttercup-500 shadow-pop active:scale-95"
+                  >
+                    <I.camera size={11} />
+                    {s.dateTaken ? dateLabel(s.dateTaken) : "Snap"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* No tags at all? friendly hint */}
           {(!item.seasons || item.seasons.length === 0) &&
             (!item.occasions || item.occasions.length === 0) &&
             (!item.custom || item.custom.length === 0) &&
+            wornIn.length === 0 &&
             inEdits.length === 0 && (
               <p className="text-sm italic text-ink-500 text-center">
                 No tags or edits yet — tap Edit to add some.
