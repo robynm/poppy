@@ -680,22 +680,6 @@ function ClosetApp() {
                       <I.archive size={15} className="shrink-0" /> Save &amp;
                       restore
                     </button>
-                    {cloudEnabled && (
-                      <>
-                        <div className="h-px bg-cream-100 mx-3" />
-                        <button
-                          onClick={() => cloudSyncRef.current()}
-                          data-testid="menu-cloud"
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-bold text-ink-700 active:bg-cream-50"
-                        >
-                          <I.cloud size={15} className="shrink-0" />
-                          <span className="flex-1">Cloud sync</span>
-                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">
-                            {cloudLabel}
-                          </span>
-                        </button>
-                      </>
-                    )}
                     <div className="h-px bg-cream-100 mx-3" />
                     <button
                       onClick={() => {
@@ -888,6 +872,10 @@ function ClosetApp() {
           customTags={customTags}
           brands={brands}
           selfies={selfies}
+          cloudEnabled={cloudEnabled}
+          cloudLabel={cloudLabel}
+          cloudStatus={cloudState.status}
+          onCloudSync={() => cloudSyncRef.current()}
           onClose={() => setShowBackup(false)}
           onImport={async (next, strategy) => {
             saveItems(next.items);
