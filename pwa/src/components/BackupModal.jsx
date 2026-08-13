@@ -14,6 +14,10 @@ function BackupModal({
   customTags,
   brands,
   selfies,
+  cloudEnabled,
+  cloudLabel,
+  cloudStatus,
+  onCloudSync,
   onClose,
   onImport,
 }) {
@@ -304,6 +308,33 @@ function BackupModal({
           photos{storageLine ? ` · ${storageLine}` : ""}
         </div>
 
+        {/* CLOUD SYNC */}
+        {cloudEnabled && (
+          <div className="mb-8">
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">
+              Cloud sync
+            </p>
+            <p className="text-sm text-ink-600 mb-3">
+              Mirror your closet to the cloud so your photos survive if the
+              browser clears them. Runs automatically — tap to sync now.
+            </p>
+            <button
+              data-testid="backup-cloud-sync"
+              onClick={onCloudSync}
+              disabled={cloudStatus === "syncing"}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-white border-2 border-leaf-200 text-leaf-700 text-[11px] font-bold tracking-[0.15em] uppercase rounded-full active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+            >
+              <I.cloud size={14} />
+              {cloudStatus === "syncing" ? "Syncing…" : "Sync now"}
+              {cloudLabel && cloudStatus !== "syncing" && (
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-400">
+                  · {cloudLabel}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* EXPORT */}
         <div className="mb-8">
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">
@@ -422,24 +453,6 @@ function BackupModal({
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-leaf-700 mb-2">
             Diagnostics
           </p>
-          <div
-            className={`flex items-start gap-2 text-xs mb-3 p-2.5 rounded-2xl border-2 ${
-              persisted === true
-                ? "bg-leaf-50 border-leaf-200 text-leaf-700"
-                : persisted === false
-                  ? "bg-buttercup-50 border-buttercup-200 text-buttercup-700"
-                  : "bg-cream-50 border-cream-100 text-ink-600"
-            }`}
-          >
-            <I.alert size={14} className="shrink-0 mt-0.5" />
-            <span>
-              {persisted === true
-                ? "Photo storage is protected — the browser won't evict your photos."
-                : persisted === false
-                  ? "Photo storage is not protected yet — the browser may still clear photos. Installing to your home screen usually fixes this."
-                  : "Checking storage protection…"}
-            </span>
-          </div>
           <p className="text-sm text-ink-600 mb-3">
             If something looks wrong, copy the diagnostics log — it records
             recent events and storage health so an issue can be traced.

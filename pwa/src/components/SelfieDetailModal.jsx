@@ -305,59 +305,6 @@ function SelfieDetailModal({
             />
           </div>
 
-          {/* Looks (multi-select) — tagged only by default; expand to edit */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
-                Worn in
-              </label>
-              {(edits || []).length > 0 && (
-                <button
-                  type="button"
-                  data-testid="selfie-looks-toggle"
-                  onClick={() => setLooksOpen((o) => !o)}
-                  className="text-[10px] font-bold uppercase tracking-[0.1em] text-buttercup-600 active:text-buttercup-700"
-                >
-                  {looksOpen ? "Done" : "Edit"}
-                </button>
-              )}
-            </div>
-            {(edits || []).length === 0 ? (
-              <p className="text-xs italic text-ink-400">
-                No edits yet — create one from the Edits tab.
-              </p>
-            ) : !looksOpen && draftOutfitIds.length === 0 ? (
-              <p className="text-xs italic text-ink-400">
-                Not tagged in any edits yet.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5" data-testid="selfie-looks">
-                {(looksOpen
-                  ? edits
-                  : edits.filter((o) => draftOutfitIds.includes(o.id))
-                ).map((o) => {
-                  const active = draftOutfitIds.includes(o.id);
-                  return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      data-testid="selfie-look-option"
-                      data-outfit-id={o.id}
-                      onClick={() => toggleOutfit(o)}
-                      className={`text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 transition-all ${
-                        active
-                          ? "bg-petal-500 text-white border-petal-500 shadow-pop"
-                          : "bg-petal-50 text-petal-700 border-petal-100"
-                      }`}
-                    >
-                      {toTitle(o.name)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
           {/* Tagged pieces — tagged only by default; expand to edit */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -417,6 +364,59 @@ function SelfieDetailModal({
                           <I.check size={9} />
                         </div>
                       )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Looks (multi-select) — tagged only by default; expand to edit */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] tracking-[0.3em] uppercase text-ink-500">
+                Worn in
+              </label>
+              {(edits || []).length > 0 && (
+                <button
+                  type="button"
+                  data-testid="selfie-looks-toggle"
+                  onClick={() => setLooksOpen((o) => !o)}
+                  className="text-[10px] font-bold uppercase tracking-[0.1em] text-buttercup-600 active:text-buttercup-700"
+                >
+                  {looksOpen ? "Done" : "Edit"}
+                </button>
+              )}
+            </div>
+            {(edits || []).length === 0 ? (
+              <p className="text-xs italic text-ink-400">
+                No edits yet — create one from the Edits tab.
+              </p>
+            ) : !looksOpen && draftOutfitIds.length === 0 ? (
+              <p className="text-xs italic text-ink-400">
+                Not tagged in any edits yet.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5" data-testid="selfie-looks">
+                {(looksOpen
+                  ? edits
+                  : edits.filter((o) => draftOutfitIds.includes(o.id))
+                ).map((o) => {
+                  const active = draftOutfitIds.includes(o.id);
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      data-testid="selfie-look-option"
+                      data-outfit-id={o.id}
+                      onClick={() => toggleOutfit(o)}
+                      className={`text-[11px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-full border-2 transition-all ${
+                        active
+                          ? "bg-petal-500 text-white border-petal-500 shadow-pop"
+                          : "bg-petal-50 text-petal-700 border-petal-100"
+                      }`}
+                    >
+                      {toTitle(o.name)}
                     </button>
                   );
                 })}
